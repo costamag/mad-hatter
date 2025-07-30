@@ -1,0 +1,6 @@
+[submodule "lib/mockturtle"]
+	path = lib/mockturtle
+	url = https://github.com/lsils/mockturtle.git
+[submodule "lib/replxx"]
+	path = lib/replxx
+	url = https://github.com/AmokHuginnsson/replxx.git
