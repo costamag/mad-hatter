@@ -3,7 +3,7 @@
 
 int main() {
   replxx::Replxx repl;
-  std::string prompt = "> ";
+  std::string prompt = "mad> ";
 
   while (true) {
     char const* input = repl.input(prompt.c_str());
