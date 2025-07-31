@@ -6,7 +6,7 @@ option(HATTER_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(HATTER_ENABLE_TESTS "Build unit tests" ON)
 
 # Hide dependency options from ccmake by default
-mark_as_advanced(FORCE
+mark_as_advanced(
   MOCKTURTLE_BUILD_EXAMPLES
   MOCKTURTLE_BUILD_EXPERIMENTS
   MOCKTURTLE_ENABLE_COVERAGE

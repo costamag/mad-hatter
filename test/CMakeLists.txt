@@ -16,4 +16,8 @@ target_include_directories(run_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../incl
 target_link_libraries(run_tests PRIVATE mockturtle Catch2::Catch2WithMain)
 
 include(Catch)
-catch_discover_tests(run_tests)
+if (NOT MSVC)
+  include(CTest)
+  include(Catch)
+  catch_discover_tests(run_tests)
+endif()
