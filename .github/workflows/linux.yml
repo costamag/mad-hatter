@@ -1,0 +1,50 @@
+name: Linux CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g++-9, g++-12, clang++-13]
+        cxx_standard: [17]
+        asan: [OFF]
+        include:
+          - compiler: clang++-13
+            cxx_standard: 17
+            asan: ON
+    name: ${{ matrix.compiler }} (C++${{ matrix.cxx_standard }}, ASAN=${{ matrix.asan }})
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          if [[ "${{ matrix.compiler }}" == "g++-9" ]]; then sudo apt-get install -y g++-9; fi
+          if [[ "${{ matrix.compiler }}" == "g++-12" ]]; then sudo apt-get install -y g++-12; fi
+          if [[ "${{ matrix.compiler }}" == "clang++-13" ]]; then sudo apt-get install -y clang-13; fi
+
+      - name: Configure and build
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DCMAKE_CXX_STANDARD=${{ matrix.cxx_standard }} \
+            -DHATTER_ENABLE_TESTS=ON \
+            -DHATTER_ENABLE_ASAN=${{ matrix.asan }}
+          make -j2 run_tests
+
+      - name: Run tests
+        run: ./build/test/run_tests

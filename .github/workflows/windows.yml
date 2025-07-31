@@ -1,0 +1,44 @@
+name: Windows CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ windows-2022 ]
+        toolset: [ v143, ClangCL ] # You can switch v142→v143 for VS2022
+        include:
+          - os: windows-2022
+            env: "Visual Studio 17 2022"
+
+    name: ${{ matrix.os }} with ${{ matrix.env }} and ${{ matrix.toolset }} toolset
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Create build directory
+        run: cmake -E make_directory ${{ github.workspace }}\build
+
+      - name: Run CMake
+        run: cmake ${{ github.workspace }} -G "${{ matrix.env }}" -A x64 -T ${{ matrix.toolset }} -DCMAKE_BUILD_TYPE=Release
+        working-directory: ${{ github.workspace }}\build
+
+      - name: Build mad-hatter
+        run: cmake --build . --config Release -j2
+        working-directory: ${{ github.workspace }}\build
+        shell: cmd
+
+      - name: Run tests
+        run: |
+          cd build\test\Release
+          run_tests.exe

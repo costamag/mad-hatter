@@ -1,0 +1,56 @@
+name: macOS CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [clang14, clang15]
+        cxx_standard: [17]
+        asan: [OFF]
+        include:
+          - compiler: clang14
+            cxx_standard: 17
+            asan: ON
+
+    name: ${{ matrix.compiler }} (C++${{ matrix.cxx_standard }}, ASAN=${{ matrix.asan }})
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install compilers
+        run: |
+          brew update
+          if [[ "${{ matrix.compiler }}" == "clang15" ]]; then
+            brew install llvm@15
+          fi
+
+      - name: Configure and build
+        run: |
+          mkdir build
+          cd build
+          if [[ "${{ matrix.compiler }}" == "clang14" ]]; then
+            CXX=/usr/bin/clang++
+          elif [[ "${{ matrix.compiler }}" == "clang15" ]]; then
+            CXX=$(brew --prefix llvm@15)/bin/clang++
+          fi
+          cmake .. \
+            -DCMAKE_CXX_COMPILER=$CXX \
+            -DCMAKE_CXX_STANDARD=${{ matrix.cxx_standard }} \
+            -DHATTER_ENABLE_TESTS=ON \
+            -DHATTER_ENABLE_ASAN=${{ matrix.asan }}
+          make -j2 run_tests
+
+      - name: Run tests
+        run: ./build/test/run_tests
