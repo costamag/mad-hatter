@@ -32,16 +32,15 @@
 
 #pragma once
 
-#include <kitty/detail/mscfix.hpp>
-#include <kitty/kitty.hpp>
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>
+#include <kitty/detail/mscfix.hpp>
+#include <kitty/kitty.hpp>
 #include <mutex>
 #include <numeric>
 #include <unordered_map>
-
 
 /*! Check if the code is compiled on a platform that might support AVX2 */
 #ifndef KITTY_HAS_AVX2
