@@ -34,5 +34,5 @@
 #include "mad_hatter/databases/databases.hpp"
 #include "mad_hatter/evaluation/evaluation.hpp"
 #include "mad_hatter/libraries/libraries.hpp"
-#include "mad_hatter/networks/networks.hpp"
+#include "mad_hatter/network/network.hpp"
 #include "mad_hatter/synthesis/synthesis.hpp"

@@ -70,6 +70,36 @@ struct is_boolean_chain<mad_hatter::evaluation::chains::mig_chain> : std::true_t
 template<class T>
 inline constexpr bool is_boolean_chain_v = is_boolean_chain<T>::value;
 
+#pragma region has_signal_size
+template<class Ntk, class = void>
+struct has_signal_size : std::false_type
+{
+};
+
+template<class Ntk>
+struct has_signal_size<Ntk, std::void_t<decltype( std::declval<Ntk>().signal_size() )>> : std::true_type
+{
+};
+
+template<class Ntk>
+inline constexpr bool has_signal_size_v = has_signal_size<Ntk>::value;
+#pragma endregion
+
+#pragma region has_signal_to_index
+template<class Ntk, class = void>
+struct has_signal_to_index : std::false_type
+{
+};
+
+template<class Ntk>
+struct has_signal_to_index<Ntk, std::void_t<decltype( std::declval<Ntk>().signal_to_index( std::declval<mockturtle::signal<Ntk>>() ) )>> : std::true_type
+{
+};
+
+template<class Ntk>
+inline constexpr bool has_signal_to_index_v = has_signal_to_index<Ntk>::value;
+#pragma endregion
+
 } /* namespace traits */
 
 } // namespace mad_hatter

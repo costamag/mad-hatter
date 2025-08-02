@@ -57,11 +57,11 @@ namespace mad_hatter
 namespace libraries
 {
 
-template<networks::design_type_t DesignType>
+template<network::design_type_t DesignType>
 class augmented_library;
 
 template<>
-class augmented_library<networks::design_type_t::CELL_BASED>
+class augmented_library<network::design_type_t::CELL_BASED>
 {
 public:
   /* truth table used to express the gate functionality */
@@ -300,7 +300,7 @@ private:
 };
 
 template<>
-class augmented_library<networks::design_type_t::ARRAY_BASED>
+class augmented_library<network::design_type_t::ARRAY_BASED>
 {
 public:
   /* truth table used to express the gate functionality */

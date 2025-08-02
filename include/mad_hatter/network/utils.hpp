@@ -38,7 +38,7 @@
 namespace mad_hatter
 {
 
-namespace networks
+namespace network
 {
 
 /*!
@@ -221,6 +221,6 @@ size_t count_nodes( Ntk& ntk, typename Ntk::signal const& f )
   return count_nodes_r( f );
 }
 
-} // namespace networks
+} // namespace network
 
 } // namespace mad_hatter

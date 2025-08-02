@@ -51,7 +51,7 @@ namespace chains
  * The inputs are associated with the literals 0, ..., num_inputs - 1.
  * The subsequent literals identify the nodes in the chain.
  */
-template<networks::design_type_t DesignType>
+template<network::design_type_t DesignType>
 class bound_chain
 {
 public:
@@ -296,7 +296,7 @@ private:
 };
 
 /*! \brief Returns the longest path from the inputs to any output */
-template<networks::design_type_t DesignType, typename Lib>
+template<network::design_type_t DesignType, typename Lib>
 std::vector<double> get_longest_paths( bound_chain<DesignType>& chain, Lib& library )
 {
   std::vector<double> input_delays( chain.num_pis(), 0 );
@@ -326,7 +326,7 @@ std::vector<double> get_longest_paths( bound_chain<DesignType>& chain, Lib& libr
  *      3
  *
  * */
-template<networks::design_type_t DesignType, typename Lib>
+template<network::design_type_t DesignType, typename Lib>
 void time_canonize( bound_chain<DesignType>& chain, Lib& library, boolean::symmetries_t const& symm )
 {
   std::vector<uint8_t> inputs( chain.num_pis() );
@@ -384,7 +384,7 @@ void time_canonize( bound_chain<DesignType>& chain, Lib& library, boolean::symme
   } );
 }
 
-template<networks::design_type_t DesignType>
+template<network::design_type_t DesignType>
 void perm_canonize( bound_chain<DesignType>& chain, boolean::permutation_t const& perm )
 {
   chain.foreach_gate( [&]( auto& fanins, auto const& id, auto i ) {
@@ -407,7 +407,7 @@ void perm_canonize( bound_chain<DesignType>& chain, boolean::permutation_t const
   } );
 }
 
-template<typename Ntk, networks::design_type_t DesignType, bool DoStrash = true>
+template<typename Ntk, network::design_type_t DesignType, bool DoStrash = true>
 typename Ntk::signal_t insert( Ntk& ntk,
                                std::vector<typename Ntk::signal_t> const& inputs,
                                bound_chain<DesignType> const& chain )
@@ -428,7 +428,7 @@ typename Ntk::signal_t insert( Ntk& ntk,
   return fs[chain.po_at( 0 )];
 }
 
-template<typename Ntk, networks::design_type_t DesignType>
+template<typename Ntk, network::design_type_t DesignType>
 void extract( bound_chain<DesignType>& chain,
               Ntk& ntk,
               std::vector<typename Ntk::signal> const& inputs,

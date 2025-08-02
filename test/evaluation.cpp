@@ -15,7 +15,7 @@ using namespace mad_hatter::evaluation;
 using namespace mad_hatter::evaluation::chains;
 using namespace mad_hatter::libraries;
 
-TEST_CASE( "simulation of xag_boolean_chain with static truth tables", "[chain_simulator]" )
+TEST_CASE( "simulation of xag_boolean_chain with static truth tables", "[evaluation]" )
 {
   xag_network xag;
   auto const a = xag.create_pi();
@@ -68,7 +68,7 @@ TEST_CASE( "simulation of xag_boolean_chain with static truth tables", "[chain_s
   CHECK( kitty::equal( xs[6], tt6_unified ) );
 }
 
-TEST_CASE( "simulation of xag_chain with dynamic truth tables", "[chain_simulator]" )
+TEST_CASE( "simulation of xag_chain with dynamic truth tables", "[evaluation]" )
 {
   xag_network xag;
   auto const a = xag.create_pi();
@@ -120,7 +120,7 @@ TEST_CASE( "simulation of xag_chain with dynamic truth tables", "[chain_simulato
   CHECK( kitty::equal( xs[6], tt6_unified ) );
 }
 
-TEST_CASE( "simulation of mig_chain with static truth tables", "[chain_simulator]" )
+TEST_CASE( "simulation of mig_chain with static truth tables", "[evaluation]" )
 {
   mig_network mig;
   auto const a = mig.create_pi();
@@ -161,7 +161,7 @@ TEST_CASE( "simulation of mig_chain with static truth tables", "[chain_simulator
   CHECK( kitty::equal( xs[6], tt6 ) );
 }
 
-TEST_CASE( "simulation of mig_chain with dynamic truth tables", "[chain_simulator]" )
+TEST_CASE( "simulation of mig_chain with dynamic truth tables", "[evaluation]" )
 {
   mig_network mig;
   auto const a = mig.create_pi();
@@ -209,7 +209,7 @@ std::string const test_library = "GATE   zero    0 O=CONST0;\n"                 
                                  "GATE   nand    2 O=!(a*b);                  PIN * INV 1 999 1.0 0.2 1.0 0.2\n"    // 5
                                  "GATE   maj3    8 O=(a*b)+(a*c)+(b*c);       PIN * INV 1 999 3.0 0.4 3.0 0.4\n";   // 6
 
-TEST_CASE( "simulation of bound_chain with static truth tables", "[chain_simulator]" )
+TEST_CASE( "simulation of bound_chain with static truth tables", "[evaluation]" )
 {
 
   std::vector<gate> gates;
@@ -217,7 +217,7 @@ TEST_CASE( "simulation of bound_chain with static truth tables", "[chain_simulat
   auto result = lorina::read_genlib( in_genlib, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  bound_chain<mad_hatter::networks::design_type_t::CELL_BASED> chain;
+  bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
   chain.add_inputs( 4u );
   auto const a = chain.pi_at( 0 );
   auto const b = chain.pi_at( 1 );
@@ -245,8 +245,8 @@ TEST_CASE( "simulation of bound_chain with static truth tables", "[chain_simulat
     xs_r.emplace_back( &xs[i] );
   }
 
-  augmented_library<mad_hatter::networks::design_type_t::CELL_BASED> lib( gates );
-  chain_simulator<bound_chain<mad_hatter::networks::design_type_t::CELL_BASED>, kitty::static_truth_table<4u>> sim( lib );
+  augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  chain_simulator<bound_chain<mad_hatter::network::design_type_t::CELL_BASED>, kitty::static_truth_table<4u>> sim( lib );
   sim( chain, xs_r );
   for ( auto i = 0u; i < xs.size(); ++i )
   {

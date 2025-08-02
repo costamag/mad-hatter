@@ -33,7 +33,7 @@
 #pragma once
 
 #include "../evaluation/chains.hpp"
-#include "../networks/networks_utils.hpp"
+#include "../network/utils.hpp"
 #include "../traits.hpp"
 #include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
@@ -505,7 +505,7 @@ public:
    */
   size_t get_cost( signal const& f )
   {
-    return networks::count_nodes( database, f );
+    return network::count_nodes( database, f );
   }
 
 private:

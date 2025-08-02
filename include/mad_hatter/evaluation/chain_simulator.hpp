@@ -33,7 +33,7 @@
 #pragma once
 
 #include "../libraries/libraries.hpp"
-#include "../networks/networks.hpp"
+#include "../network/utils.hpp"
 #include "chains/bound_chain.hpp"
 #include "chains/mig_chain.hpp"
 #include "chains/muxig_chain.hpp"
@@ -233,7 +233,7 @@ private:
       sim( chain2, inputs2 );
    \endverbatim
  */
-template<networks::design_type_t DesignType, typename TT>
+template<network::design_type_t DesignType, typename TT>
 class chain_simulator<chains::bound_chain<DesignType>, TT>
 {
 public:
