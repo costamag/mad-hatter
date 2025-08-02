@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         run: |
           cd build
-          ctest --output-on-failure
+          ./test/run_tests
 
   build-gcc10:
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
       - name: Run tests
         run: |
           cd build
-          ctest --output-on-failure
+          ./test/run_tests
 
   build-gcc10-cpp20:
     runs-on: ubuntu-latest
@@ -69,12 +69,12 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_COMPILER=g++-10 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DHATTER_CXX_STANDARD=20 -DCMAKE_CXX_COMPILER=g++-10 -DHATTER_ENABLE_TESTS=ON ..
           make run_tests
       - name: Run tests
         run: |
           cd build
-          ctest --output-on-failure
+          ./test/run_tests
 
   build-gcc12:
     runs-on: ubuntu-latest
@@ -96,7 +96,7 @@ jobs:
       - name: Run tests
         run: |
           cd build
-          ctest --output-on-failure
+          ./test/run_tests
 
   build-clang11:
     runs-on: ubuntu-22.04
@@ -118,51 +118,51 @@ jobs:
       - name: Run tests
         run: |
           cd build
-          ctest --output-on-failure
+          ./test/run_tests
 
-  build-clang14:
+  build-clang13:
     runs-on: ubuntu-22.04
-    name: Clang 14
+    name: Clang 13
     steps:
       - uses: actions/checkout@v1
         with:
           submodules: true
-      - name: Install Clang 14
+      - name: Install Clang 13
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-14
+          sudo apt-get install -y clang-13
       - name: Build mad-hatter
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=clang++-14 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=clang++-13 -DHATTER_ENABLE_TESTS=ON ..
           make run_tests
       - name: Run tests
         run: |
           cd build
-          ctest --output-on-failure
+          ./test/run_tests
 
-  build-clang14-asan:
+  build-clang13-asan:
     runs-on: ubuntu-22.04
-    name: Clang 14 + ASAN
+    name: Clang 13 + ASAN
     steps:
       - uses: actions/checkout@v1
         with:
           submodules: true
-      - name: Install Clang 14
+      - name: Install Clang 13
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-14
+          sudo apt-get install -y clang-13
       - name: Build mad-hatter with ASAN
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=clang++-14 -DHATTER_ENABLE_ASAN=ON -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=clang++-13 -DENABLE_ASAN=ON -DHATTER_ENABLE_TESTS=ON ..
           make run_tests
       - name: Run tests with ASAN
         run: |
           cd build
-          ctest --output-on-failure
+          ./test/run_tests
 
   compile-gcc9:
     runs-on: ubuntu-latest
@@ -179,5 +179,5 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=g++-9 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=g++-9 -DHATTER_ENABLE_EXAMPLES=ON -DHATTER_ENABLE_EXPERIMENTS=ON -DHATTER_ENABLE_TESTS=ON ..
           make

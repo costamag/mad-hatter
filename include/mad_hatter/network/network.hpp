@@ -498,17 +498,23 @@ public:
   void replace_in_node( node_index_t const& old_node,
                         std::vector<signal_t> const& new_signals )
   {
-    assert( num_outputs( old_node ) == new_signals.size() &&
-            "Number of new signals must match the number of outputs" );
+    auto old_outputs = num_outputs( old_node );
+    if ( new_signals.size() != old_outputs )
+    {
+      throw std::runtime_error( "[ERROR] substitute_node: output count mismatch" );
+    }
 
-    /* iterate over all output pins of the node to be removed */
     _storage->foreach_output_pin( old_node, [&]( auto const& pin, auto i ) {
-      signal_t const old_signal = signal_t{ old_node, i };
-      /* replace the old signal in the fanout of the output pin */
+      signal_t const old_signal{ old_node, i };
+      auto const& new_signal = new_signals.at( i );
+
       _storage->foreach_fanout( pin, [&]( auto const& fanout_node, auto j ) {
-        (void)j; // unused variable
-        /* replace the old signal with the new signal in the fanout */
-        replace_in_node( fanout_node, old_signal, new_signals[i] );
+        (void)j;
+        if ( new_signal.output >= num_outputs( new_signal.index ) )
+        {
+          throw std::out_of_range( "[ERROR] substitute_node: new_signal pin index out of range" );
+        }
+        replace_in_node( fanout_node, old_signal, new_signal );
       } );
     } );
   }
@@ -780,7 +786,7 @@ public:
     return signal_t{ f.index, f.output + 1 };
   }
 
-  uint32_t node_to_index( node_index_t const& n ) const
+  uint32_t node_to_index( node const& n ) const
   {
     return static_cast<uint32_t>( n );
   }

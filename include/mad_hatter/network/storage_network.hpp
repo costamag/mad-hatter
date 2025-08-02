@@ -350,7 +350,7 @@ public:
     auto id = library.get_id( tt );
     if ( !id )
     {
-      std::cerr << "[e] No binding found for the AND gate in the library.\n";
+      std::cerr << "[e] No binding found in the library.\n";
     }
     node_t n = create_storage_node( children, std::vector<unsigned int>{ *id } );
     return create_node( children, n );
@@ -598,8 +598,8 @@ public:
     if ( it != hash.end() )
     {
       auto& list = it->second;
-      std::remove( list.begin(), list.end(), n );
-      // if ( list.empty() )
+      list.erase( std::remove( list.begin(), list.end(), n ), list.end() );
+      if ( list.empty() ) // commented
       {
         hash.erase( it );
       }
@@ -1052,7 +1052,7 @@ public:
    * \param n The index of the node whose children are to be retrieved.
    * \return A vector of node indices representing the children of the node.
    */
-  std::vector<node_index_t> const& get_fanins( node_index_t const& n ) const
+  std::vector<node_index_t> const get_fanins( node_index_t const& n ) const
   {
     std::vector<node_index_t> fanin;
     for ( auto const& child : nodes[n].children )

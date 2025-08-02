@@ -100,6 +100,21 @@ template<class Ntk>
 inline constexpr bool has_signal_to_index_v = has_signal_to_index<Ntk>::value;
 #pragma endregion
 
+#pragma region has_foreach_output
+template<class Ntk, class = void>
+struct has_foreach_output : std::false_type
+{
+};
+
+template<class Ntk>
+struct has_foreach_output<Ntk, std::void_t<decltype( std::declval<Ntk>().foreach_output( std::declval<mockturtle::node<Ntk>>(), std::declval<void( mockturtle::signal<Ntk> )>() ) )>> : std::true_type
+{
+};
+
+template<class Ntk>
+inline constexpr bool has_foreach_output_v = has_foreach_output<Ntk>::value;
+#pragma endregion
+
 } /* namespace traits */
 
 } // namespace mad_hatter

@@ -69,116 +69,49 @@ template<class T, class Ntk>
 class incomplete_signal_map
 {
 public:
-  using node = typename Ntk::node;
   using signal = typename Ntk::signal;
+  using container_type = std::vector<T>;
 
-  using container_type = std::vector<std::variant<std::monostate, T>>;
-
-public:
-  /*! \brief Default constructor. */
-  explicit incomplete_signal_map( Ntk const& ntk )
+  explicit incomplete_signal_map( Ntk const& ntk, T const& init_value = T() )
       : ntk( &ntk ),
-        data( std::make_shared<container_type>( ntk.signal_size() ) )
+        data( ntk.signal_size(), init_value )
   {
-    static_assert( !std::is_same_v<T, std::monostate>, "T cannot be std::monostate" );
     static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
-    static_assert( mad_hatter::traits::has_signal_size_v<Ntk>, "Ntk does not implement the signal size method" );
-    static_assert( mad_hatter::traits::has_signal_to_index_v<Ntk>, "Ntk does not implement the signal_to_index method" );
+    static_assert( mad_hatter::traits::has_signal_size_v<Ntk>, "Ntk does not implement signal_size" );
+    static_assert( mad_hatter::traits::has_signal_to_index_v<Ntk>, "Ntk does not implement signal_to_index" );
   }
 
-  /*! \brief Constructor with default value.
-   *
-   * Initializes all values in the container to `init_value`.
-   */
-  incomplete_signal_map( Ntk const& ntk, T const& init_value )
-      : ntk( &ntk ),
-        data( std::make_shared<container_type>( ntk.signal_size(), init_value ) )
-  {
-    static_assert( !std::is_same_v<T, std::monostate>, "T cannot be std::monostate" );
-    static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
-    static_assert( mad_hatter::traits::has_signal_size_v<Ntk>, "Ntk does not implement the signal size method" );
-    static_assert( mad_hatter::traits::has_signal_to_index_v<Ntk>, "Ntk does not implement the signal_to_index method" );
-  }
+  auto size() const { return data.size(); }
 
-  /*! \brief Number of keys stored in the data structure. */
-  auto size() const
-  {
-    return data->size();
-  }
-
-  /*! \brief Check if a key is already defined. */
-  bool has( signal const& f ) const
-  {
-    return std::holds_alternative<T>( ( *data )[ntk->signal_to_index( f )] );
-  }
-
-  /*! \brief Erase a key (if it exists). */
-  void erase( signal const& f )
-  {
-    ( *data )[ntk->signal_to_index( f )] = std::monostate();
-  }
-
-  /*! \brief Mutable access to value by signal. */
   T& operator[]( signal const& f )
   {
-    assert( ntk->signal_to_index( f ) < data->size() && "index out of bounds" );
-    if ( !has( f ) )
-    {
-      ( *data )[ntk->signal_to_index( f )] = T();
-    }
-    return std::get<T>( ( *data )[ntk->signal_to_index( f )] );
+    auto idx = ntk->signal_to_index( f );
+    if ( idx >= data.size() )
+      data.resize( idx + 1 );
+    return data[idx];
   }
 
-  /*! \brief Constant access to value by signal. */
   T const& operator[]( signal const& f ) const
   {
-    assert( ntk->signal_to_index( f ) < data->size() && "index out of bounds" );
-    assert( has( f ) );
-    return std::get<T>( ( *data )[ntk->signal_to_index( f )] );
+    auto idx = ntk->signal_to_index( f );
+    assert( idx < data.size() );
+    return data[idx];
   }
 
-  /*! \brief Resets the size of the map.
-   *
-   * This function should be called, if the network changed in size.  Then, the
-   * map is cleared, and resized to the current network's size.  All values are
-   * initialized with the place holder (empty) element.
-   */
-  void reset()
+  void reset( T const& init_value = T() )
   {
-    data->clear();
-    data->resize( ntk->signal_size() );
+    data.assign( ntk->signal_size(), init_value );
   }
 
-  /*! \brief Resets the size of the map.
-   *
-   * This function should be called, if the network changed in size.  Then, the
-   * map is cleared, and resized to the current network's size.  All values are
-   * initialized with `init_value`.
-   *
-   * \param init_value Initialization value after resize
-   */
-  void reset( T const& init_value )
-  {
-    data->clear();
-    data->resize( ntk->signal_size(), init_value );
-  }
-
-  /*! \brief Resizes the map.
-   *
-   * This function should be called, if the signal_map's size needs to
-   * be changed without clearing its data.
-   */
   void resize()
   {
-    if ( ntk->signal_size() > data->size() )
-    {
-      data->resize( ntk->signal_size() );
-    }
+    if ( ntk->signal_size() > data.size() )
+      data.resize( ntk->signal_size() );
   }
 
 private:
   Ntk const* ntk;
-  std::shared_ptr<container_type> data;
+  std::vector<T> data;
 };
 
 } /* namespace network */

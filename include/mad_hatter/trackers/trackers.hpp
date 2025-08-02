@@ -1,4 +1,4 @@
-/* mockturtle: C++ logic network library
+/* mad_hatter: C++ logic network library
  * Copyright (C) 2018-2022  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
@@ -24,16 +24,14 @@
  */
 
 /*!
-  \file mockturtle.hpp
-  \brief Main header file for mockturtle
+  \file mad_hatter.hpp
+  \brief Main header file for mad_hatter
 */
 
 #pragma once
 
-#include "mad_hatter/boolean/boolean.hpp"
-#include "mad_hatter/databases/databases.hpp"
-#include "mad_hatter/evaluation/evaluation.hpp"
-#include "mad_hatter/libraries/libraries.hpp"
-#include "mad_hatter/network/network.hpp"
-#include "mad_hatter/synthesis/synthesis.hpp"
-#include "mad_hatter/trackers/trackers.hpp"
+#include "arrival_times_tracker.hpp"
+#include "gate_load_tracker.hpp"
+#include "required_times_tracker.hpp"
+#include "sensing_times_tracker.hpp"
+#include "topo_sort_tracker.hpp"

@@ -9,48 +9,63 @@ on:
       - main
 
 jobs:
-  build:
+  build-gcc12:
+    name: GNU GCC 12
     runs-on: macOS-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: [clang14, clang15]
-        cxx_standard: [17]
-        asan: [OFF]
-        include:
-          - compiler: clang14
-            cxx_standard: 17
-            asan: ON
-
-    name: ${{ matrix.compiler }} (C++${{ matrix.cxx_standard }}, ASAN=${{ matrix.asan }})
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v1
         with:
           submodules: true
-
-      - name: Install compilers
-        run: |
-          brew update
-          if [[ "${{ matrix.compiler }}" == "clang15" ]]; then
-            brew install llvm@15
-          fi
-
-      - name: Configure and build
+      - name: Build mad-hatter
         run: |
           mkdir build
           cd build
-          if [[ "${{ matrix.compiler }}" == "clang14" ]]; then
-            CXX=/usr/bin/clang++
-          elif [[ "${{ matrix.compiler }}" == "clang15" ]]; then
-            CXX=$(brew --prefix llvm@15)/bin/clang++
-          fi
-          cmake .. \
-            -DCMAKE_CXX_COMPILER=$CXX \
-            -DCMAKE_CXX_STANDARD=${{ matrix.cxx_standard }} \
-            -DHATTER_ENABLE_TESTS=ON \
-            -DHATTER_ENABLE_ASAN=${{ matrix.asan }}
-          make -j2 run_tests
-
+          cmake -DCMAKE_CXX_COMPILER=$(which g++-12) -DHATTER_ENABLE_TESTS=ON ..
+          make run_tests
       - name: Run tests
-        run: ./build/test/run_tests
+        run: |
+          cd build
+          ./test/run_tests
+
+  build-clang14:
+    name: Clang 14
+    runs-on: macOS-latest
+
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+      - name: Build mad-hatter
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DHATTER_ENABLE_TESTS=ON ..
+          make run_tests
+      - name: Run tests
+        run: |
+          cd build
+          ./test/run_tests
+
+  build-clang15:
+    name: Clang 15
+    runs-on: macOS-latest
+
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+      - name: Install LLVM 15
+        run: |
+          brew update
+          brew install llvm@15
+      - name: Build mad-hatter
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++ -DHATTER_ENABLE_TESTS=ON ..
+          make run_tests
+      - name: Run tests
+        run: |
+          cd build
+          ./test/run_tests

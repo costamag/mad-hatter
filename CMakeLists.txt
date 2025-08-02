@@ -31,11 +31,18 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Enable AVX2 if available
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  message(STATUS "[mad_hatter] Enabling AVX2 for SIMD operations")
-  add_compile_options(-mavx2 -mfma)
-elseif (MSVC)
+# Enable AVX2 if available (mockturtle-style)
+if(UNIX)
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag("-mavx2" HAS_MAVX2)
+  check_cxx_compiler_flag("-mfma" HAS_MFMA)
+  if(HAS_MAVX2 AND HAS_MFMA)
+    message(STATUS "[mad_hatter] Enabling AVX2 for SIMD operations")
+    add_compile_options(-mavx2 -mfma)
+  endif()
+endif()
+
+if(MSVC)
   add_compile_options(/arch:AVX2)
 endif()
 
