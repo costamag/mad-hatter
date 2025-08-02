@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file muxig_boolean_chain.hpp
+  \file muxig_chain.hpp
   \brief List of indices to represent small Multiplexer Inverter Graphs (MUXIG)
 
   \author Andrea Costamagna
@@ -45,6 +45,9 @@ namespace mad_hatter
 namespace evaluation
 {
 
+namespace chains
+{
+
 /*! \brief Index list for mux-inverter graphs.
  *
  * Small network consisting of mux gates and inverters
@@ -54,18 +57,18 @@ namespace evaluation
  * `<<x1 ? x2 : x3> ? x2 : x4>` with 4 inputs, 1 output, and 2 gates:
  * `{4 | 1 << 8 | 2 << 16, 2, 4, 6, 4, 8, 10, 12}`
  */
-struct muxig_boolean_chain
+struct muxig_chain
 {
 public:
   using element_type = uint32_t;
 
 public:
-  explicit muxig_boolean_chain( uint32_t num_pis = 0 )
+  explicit muxig_chain( uint32_t num_pis = 0 )
       : values( { num_pis } )
   {
   }
 
-  explicit muxig_boolean_chain( std::vector<element_type> const& values )
+  explicit muxig_chain( std::vector<element_type> const& values )
       : values( std::begin( values ), std::end( values ) )
   {}
 
@@ -146,7 +149,7 @@ private:
   std::vector<element_type> values;
 };
 
-/*! \brief Inserts a muxig_boolean_chain into an existing network
+/*! \brief Inserts a muxig_chain into an existing network
  *
  * **Required network functions:**
  * - `get_constant`
@@ -159,7 +162,7 @@ private:
  * \param fn Callback function
  */
 template<bool useSignal = true, typename Ntk, typename BeginIter, typename EndIter, typename Fn>
-void insert( Ntk& ntk, BeginIter begin, EndIter end, muxig_boolean_chain const& indices, Fn&& fn )
+void insert( Ntk& ntk, BeginIter begin, EndIter end, muxig_chain const& indices, Fn&& fn )
 {
   static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
   static_assert( mockturtle::has_create_ite_v<Ntk>, "Ntk does not implement the create_maj method" );
@@ -208,12 +211,12 @@ void insert( Ntk& ntk, BeginIter begin, EndIter end, muxig_boolean_chain const& 
   } );
 }
 
-/*! \brief Converts an mig_boolean_chain to a string
+/*! \brief Converts an mig_chain to a string
  *
  * \param indices An index list
  * \return A string representation of the index list
  */
-inline std::string to_boolean_chain_string( muxig_boolean_chain const& indices )
+inline std::string to_chain_string( muxig_chain const& indices )
 {
   auto s = fmt::format( "{{{} pis | {} pos | {} gates", indices.num_pis(), indices.num_pos(), indices.num_gates() );
 
@@ -229,6 +232,8 @@ inline std::string to_boolean_chain_string( muxig_boolean_chain const& indices )
 
   return s;
 }
+
+} // namespace chains
 
 } // namespace evaluation
 

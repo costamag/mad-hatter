@@ -34,9 +34,9 @@
 
 #pragma once
 
-#include "chains/mig_boolean_chain.hpp"
-#include "chains/muxig_boolean_chain.hpp"
-#include "chains/xag_boolean_chain.hpp"
+#include "chains/mig_chain.hpp"
+#include "chains/muxig_chain.hpp"
+#include "chains/xag_chain.hpp"
 
 #include <vector>
 
@@ -46,7 +46,7 @@ namespace mad_hatter
 namespace evaluation
 {
 
-/*! \brief Generates a network from an boolean_chain
+/*! \brief Generates a network from an chain
  *
  * **Required network functions:**
  * - `create_pi`
@@ -71,29 +71,6 @@ void decode( Ntk& ntk, IndexList const& indices )
   insert( ntk, std::begin( signals ), std::end( signals ), indices,
           [&]( signal const& s ) { ntk.create_po( s ); } );
 }
-
-template<class T>
-struct is_boolean_chain : std::false_type
-{
-};
-
-template<>
-struct is_boolean_chain<xag_boolean_chain<true>> : std::true_type
-{
-};
-
-template<>
-struct is_boolean_chain<xag_boolean_chain<false>> : std::true_type
-{
-};
-
-template<>
-struct is_boolean_chain<mig_boolean_chain> : std::true_type
-{
-};
-
-template<class T>
-inline constexpr bool is_boolean_chain_v = is_boolean_chain<T>::value;
 
 } // namespace evaluation
 

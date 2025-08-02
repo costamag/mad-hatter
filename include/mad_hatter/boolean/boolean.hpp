@@ -1,7 +1,5 @@
-
-
-/* mad_hatter: C++ logic network library
- * Copyright (C) 2025 EPFL
+/* mockturtle: C++ logic network library
+ * Copyright (C) 2018-2022  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,50 +24,12 @@
  */
 
 /*!
-  \file traits.hpp
-  \brief Type traits and checkers for the network interface
-
-  \author Andrea Costamagna
+  \file mockturtle.hpp
+  \brief Main header file for mockturtle
 */
 
 #pragma once
 
-namespace mad_hatter
-{
-
-namespace traits
-{
-
-/*! \brief Conditiional false value for static assertions.
- */
-template<typename Ntk>
-struct dependent_false : std::false_type
-{
-};
-
-template<class T>
-struct is_boolean_chain : std::false_type
-{
-};
-
-template<>
-struct is_boolean_chain<mad_hatter::evaluation::chains::xag_chain<true>> : std::true_type
-{
-};
-
-template<>
-struct is_boolean_chain<mad_hatter::evaluation::chains::xag_chain<false>> : std::true_type
-{
-};
-
-template<>
-struct is_boolean_chain<mad_hatter::evaluation::chains::mig_chain> : std::true_type
-{
-};
-
-template<class T>
-inline constexpr bool is_boolean_chain_v = is_boolean_chain<T>::value;
-
-} /* namespace traits */
-
-} // namespace mad_hatter
+#include "permutation.hpp"
+#include "simd.hpp"
+#include "symmetry.hpp"

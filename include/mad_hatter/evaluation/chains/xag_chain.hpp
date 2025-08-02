@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file xag_boolean_chain.hpp
+  \file xag_chain.hpp
   \brief List of indices to represent small XOR AND Inverter Graphs (MIG).
 
   \author Andrea Costamagna
@@ -44,6 +44,9 @@ namespace mad_hatter
 {
 
 namespace evaluation
+{
+
+namespace chains
 {
 
 /*! \brief Index list for xor-and graphs.
@@ -70,7 +73,7 @@ namespace evaluation
  * elements to support networks with larger number of PIs.
  */
 template<bool separate_header = false>
-struct xag_boolean_chain
+struct xag_chain
 {
 public:
   using element_type = uint32_t;
@@ -78,7 +81,7 @@ public:
   static constexpr uint32_t offset = 1;
 
 public:
-  explicit xag_boolean_chain( uint32_t num_pis = 0 )
+  explicit xag_chain( uint32_t num_pis = 0 )
       : values( { num_pis } )
   {
     if constexpr ( separate_header )
@@ -88,7 +91,7 @@ public:
     }
   }
 
-  explicit xag_boolean_chain( std::vector<element_type> const& values )
+  explicit xag_chain( std::vector<element_type> const& values )
       : values( std::begin( values ), std::end( values ) )
   {}
 
@@ -310,9 +313,9 @@ private:
   std::vector<element_type> values;
 };
 
-using large_xag_boolean_chain = xag_boolean_chain<true>;
+using large_xag_chain = xag_chain<true>;
 
-/*! \brief Generates a xag_boolean_chain from a network
+/*! \brief Generates a xag_chain from a network
  *
  * The function requires `ntk` to consist of XOR and AND gates.
  *
@@ -332,7 +335,7 @@ using large_xag_boolean_chain = xag_boolean_chain<true>;
  * \param ntk A logic network
  */
 template<typename Ntk, bool separate_header = false>
-void encode( xag_boolean_chain<separate_header>& indices, Ntk const& ntk )
+void encode( xag_chain<separate_header>& indices, Ntk const& ntk )
 {
   static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
   static_assert( mockturtle::has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method" );
@@ -404,7 +407,7 @@ void encode( xag_boolean_chain<separate_header>& indices, Ntk const& ntk )
   }
 }
 
-/*! \brief Inserts a xag_boolean_chain into an existing network
+/*! \brief Inserts a xag_chain into an existing network
  *
  * **Required network functions:**
  * - `create_and`
@@ -418,7 +421,7 @@ void encode( xag_boolean_chain<separate_header>& indices, Ntk const& ntk )
  * \param fn Callback function
  */
 template<bool useSignal = true, typename Ntk, typename BeginIter, typename EndIter, typename Fn, bool separate_header = false>
-void insert( Ntk& ntk, BeginIter begin, EndIter end, xag_boolean_chain<separate_header> const& indices, Fn&& fn )
+void insert( Ntk& ntk, BeginIter begin, EndIter end, xag_chain<separate_header> const& indices, Fn&& fn )
 {
   static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
   static_assert( mockturtle::has_create_and_v<Ntk>, "Ntk does not implement the create_and method" );
@@ -470,12 +473,12 @@ void insert( Ntk& ntk, BeginIter begin, EndIter end, xag_boolean_chain<separate_
   } );
 }
 
-/*! \brief Converts an xag_boolean_chain to a string
+/*! \brief Converts an xag_chain to a string
  *
  * \param indices An index list
  * \return A string representation of the index list
  */
-inline std::string to_boolean_chain_string( xag_boolean_chain<false> const& indices )
+inline std::string to_chain_string( xag_chain<false> const& indices )
 {
   auto s = fmt::format( "{{{} | {} << 8 | {} << 16", indices.num_pis(), indices.num_pos(), indices.num_gates() );
 
@@ -492,7 +495,7 @@ inline std::string to_boolean_chain_string( xag_boolean_chain<false> const& indi
   return s;
 }
 
-inline std::string to_boolean_chain_string( xag_boolean_chain<true> const& indices )
+inline std::string to_chain_string( xag_chain<true> const& indices )
 {
   auto s = fmt::format( "{{{}, {}, {}", indices.num_pis(), indices.num_pos(), indices.num_gates() );
 
@@ -509,9 +512,9 @@ inline std::string to_boolean_chain_string( xag_boolean_chain<true> const& indic
   return s;
 }
 
-/*! \brief Enumerate structured boolean_chains
+/*! \brief Enumerate structured chains
  *
- * Enumerate concrete `xag_boolean_chain`s from an abstract index list
+ * Enumerate concrete `xag_chain`s from an abstract index list
  * specification.  The specifiation is provided in an extended index
  * list format, where a `-1` indicates an unspecified input.
  *
@@ -533,17 +536,17 @@ inline std::string to_boolean_chain_string( xag_boolean_chain<true> const& indic
 
    .. code-block:: c++
 
-      aig_boolean_chain_enumerator e( { -1, -1, -1, 6, 8 }, 2u, 2u, 1u );
-      e.run( [&]( xag_boolean_chain const& il ) {
+      aig_chain_enumerator e( { -1, -1, -1, 6, 8 }, 2u, 2u, 1u );
+      e.run( [&]( xag_chain const& il ) {
         aig_network aig;
         decode( aig, il );
       } );
    \endverbatim
  */
-class aig_boolean_chain_enumerator
+class aig_chain_enumerator
 {
 public:
-  explicit aig_boolean_chain_enumerator( std::vector<int32_t> const& values, uint32_t num_pis, uint32_t num_gates, uint32_t num_pos )
+  explicit aig_chain_enumerator( std::vector<int32_t> const& values, uint32_t num_pis, uint32_t num_gates, uint32_t num_pos )
       : values_( values ), num_pis( num_pis ), num_gates( num_gates ), num_pos( num_pos )
   {}
 
@@ -637,13 +640,13 @@ protected:
     }
 
     /* finished processing values */
-    std::vector<uint32_t> boolean_chain;
-    boolean_chain.emplace_back( num_pis | ( num_pos << 8 ) | ( num_gates << 16 ) );
+    std::vector<uint32_t> chain;
+    chain.emplace_back( num_pis | ( num_pos << 8 ) | ( num_gates << 16 ) );
     for ( int32_t const& v : values )
     {
-      boolean_chain.emplace_back( v );
+      chain.emplace_back( v );
     }
-    fn( xag_boolean_chain( boolean_chain ) );
+    fn( xag_chain( chain ) );
   }
 
 protected:
@@ -652,6 +655,8 @@ protected:
   uint32_t num_gates;
   uint32_t num_pos;
 };
+
+} // namespace chains
 
 } // namespace evaluation
 

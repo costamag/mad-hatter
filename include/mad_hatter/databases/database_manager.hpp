@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "../evaluation/boolean_chains.hpp"
+#include "../evaluation/chains.hpp"
 #include "../networks/networks_utils.hpp"
 #include "../traits.hpp"
 #include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
@@ -73,9 +73,9 @@ struct resynthesis;
  * - `aig_network`
  * - `mig_network`
  * - `xag_network`
- * - `mig_boolean_chain`
- * - `xag_boolean_chain<true>`
- * - `xag_boolean_chain<false>`
+ * - `mig_chain`
+ * - `xag_chain<true>`
+ * - `xag_chain<false>`
  */
 template<typename Ntk, typename Enable = void>
 struct element;
@@ -88,19 +88,19 @@ struct element;
  * - `aig_network`
  * - `mig_network`
  * - `xag_network`
- * - `mig_boolean_chain`
- * - `xag_boolean_chain<true>`
- * - `xag_boolean_chain<false>`
+ * - `mig_chain`
+ * - `xag_chain<true>`
+ * - `xag_chain<false>`
  */
 template<typename Ntk>
 typename element<Ntk>::type invert( Ntk& ntk, typename element<Ntk>::type const& f )
 {
   if constexpr ( mockturtle::is_network_type_v<Ntk> )
     return ntk.create_not( f );
-  else if constexpr ( mad_hatter::evaluation::is_boolean_chain<Ntk>::value )
+  else if constexpr ( traits::is_boolean_chain<Ntk>::value )
     return ntk.add_not( f );
   else
-    static_assert( mad_hatter::traits::dependent_false<Ntk>::value,
+    static_assert( traits::dependent_false<Ntk>::value,
                    "Unsupported Ntk type in dispatch::invert." );
 }
 
@@ -112,9 +112,9 @@ typename element<Ntk>::type invert( Ntk& ntk, typename element<Ntk>::type const&
  * - `aig_network`
  * - `mig_network`
  * - `xag_network`
- * - `mig_boolean_chain`
- * - `xag_boolean_chain<true>`
- * - `xag_boolean_chain<false>`
+ * - `mig_chain`
+ * - `xag_chain<true>`
+ * - `xag_chain<false>`
  */
 template<typename Ntk>
 typename element<Ntk>::type output_inversion( Ntk& ntk,
@@ -143,8 +143,8 @@ typename element<NtkDest>::type create_node( NtkDest& ntk_dest,
   {
     return ntk_dest.create_and( children[0], children[1] );
   } /* XAG list */
-  else if constexpr ( std::is_same<NtkDest, evaluation::xag_boolean_chain<true>>::value ||
-                      std::is_same<NtkDest, evaluation::xag_boolean_chain<false>>::value )
+  else if constexpr ( std::is_same<NtkDest, evaluation::chains::xag_chain<true>>::value ||
+                      std::is_same<NtkDest, evaluation::chains::xag_chain<false>>::value )
   {
     if ( ntk_db.is_and( n ) )
       return ntk_dest.add_and( children[0], children[1] );
@@ -155,7 +155,7 @@ typename element<NtkDest>::type create_node( NtkDest& ntk_dest,
   {
     return ntk_dest.create_maj( children[0], children[1], children[2] );
   } /* MIG list */
-  else if constexpr ( std::is_same<NtkDest, evaluation::mig_boolean_chain>::value )
+  else if constexpr ( std::is_same<NtkDest, evaluation::chains::mig_chain>::value )
   {
     return ntk_dest.add_maj( children[0], children[1], children[2] );
   }
@@ -189,7 +189,7 @@ struct element<Ntk, std::enable_if_t<mockturtle::is_network_type_v<Ntk>>>
 };
 
 template<typename Ntk>
-struct element<Ntk, std::enable_if_t<evaluation::is_boolean_chain<Ntk>::value>>
+struct element<Ntk, std::enable_if_t<traits::is_boolean_chain_v<Ntk>>>
 {
   using type = typename Ntk::element_type;
 };
@@ -215,12 +215,12 @@ struct database_manager_params
   static constexpr bool verbose{ false };
 
   static constexpr mockturtle::exact_library_params lib_ps{ area_gate,
-                                                area_inverter,
-                                                delay_gate,
-                                                delay_inverter,
-                                                np_classification,
-                                                compute_dc_classes,
-                                                verbose };
+                                                            area_inverter,
+                                                            delay_gate,
+                                                            delay_inverter,
+                                                            np_classification,
+                                                            compute_dc_classes,
+                                                            verbose };
 };
 
 /*! \brief Database manager for sub-network reuse.

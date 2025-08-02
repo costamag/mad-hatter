@@ -3,8 +3,7 @@
 
 #include <kitty/kitty.hpp>
 
-#include <mad_hatter/evaluation/chain_simulator.hpp>
-#include <mad_hatter/evaluation/boolean_chains.hpp>
+#include <mad_hatter/evaluation/evaluation.hpp>
 #include <mad_hatter/synthesis/xaig_decompose.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
 #include <mockturtle/networks/aig.hpp>
@@ -12,6 +11,7 @@
 
 using namespace mad_hatter::synthesis;
 using namespace mad_hatter::evaluation;
+using namespace mad_hatter::evaluation::chains;
 using namespace mockturtle;
 
 /* remove Boolean matching with don't cares from testing */
@@ -27,7 +27,7 @@ TEST_CASE( "XAIG synththesizer - constants", "[xaig_decompose]" )
   xaig_decompose<UseDCs> engine( st );
   TT onset, careset;
   std::vector<uint32_t> raw;
-  large_xag_boolean_chain chain;
+  large_xag_chain chain;
   kitty::create_from_hex_string( onset, "0000000A" );
   kitty::create_from_hex_string( careset, "FFFFFFF0" );
   kitty::ternary_truth_table<TT> const0( onset, careset );
@@ -54,7 +54,7 @@ TEST_CASE( "XAIG synththesizer - projections", "[xaig_decompose]" )
   using TT = kitty::static_truth_table<NumVars>;
   TT onset, careset;
   std::vector<uint32_t> raw;
-  large_xag_boolean_chain chain;
+  large_xag_chain chain;
   std::array<kitty::ternary_truth_table<TT>, NumVars> proj_fns;
   for ( auto i = 0u; i < NumVars; ++i )
   {
@@ -85,9 +85,9 @@ void test_xag_n_input_functions()
   xaig_decompose engine( st );
   using TT = kitty::static_truth_table<NumVars>;
   kitty::static_truth_table<NumVars> onset;
-  large_xag_boolean_chain chain;
+  large_xag_chain chain;
 
-  chain_simulator<xag_boolean_chain<true>, TT> sim;
+  chain_simulator<xag_chain<true>, TT> sim;
   std::vector<TT> divisor_functions;
   TT tmp;
   for ( auto i = 0u; i < NumVars; ++i )
@@ -104,11 +104,11 @@ void test_xag_n_input_functions()
   {
     kitty::ternary_truth_table<TT> tt( onset );
     engine( tt );
-    auto boolean_chain = engine.get_chain();
+    auto chain = engine.get_chain();
 
-    sim( boolean_chain, xs_r );
+    sim( chain, xs_r );
     TT res;
-    sim.get_simulation_inline( res, boolean_chain, xs_r, boolean_chain.po_at( 0 ) );
+    sim.get_simulation_inline( res, chain, xs_r, chain.po_at( 0 ) );
     CHECK( onset == res );
 
     kitty::next_inplace( onset );
@@ -127,9 +127,9 @@ void test_xag_n_input_functions_random()
   xaig_decompose engine( st );
   using TT = kitty::static_truth_table<NumVars>;
   kitty::static_truth_table<NumVars> onset;
-  large_xag_boolean_chain chain;
+  large_xag_chain chain;
 
-  chain_simulator<xag_boolean_chain<true>, TT> sim;
+  chain_simulator<xag_chain<true>, TT> sim;
   std::vector<TT> divisor_functions;
   TT tmp;
   for ( auto i = 0u; i < NumVars; ++i )
@@ -147,11 +147,11 @@ void test_xag_n_input_functions_random()
   {
     kitty::ternary_truth_table<TT> tt( onset );
     engine( tt );
-    auto boolean_chain = engine.get_chain();
+    auto chain = engine.get_chain();
 
-    sim( boolean_chain, xs_r );
+    sim( chain, xs_r );
     TT res;
-    sim.get_simulation_inline( res, boolean_chain, xs_r, boolean_chain.po_at( 0 ) );
+    sim.get_simulation_inline( res, chain, xs_r, chain.po_at( 0 ) );
     CHECK( onset == res );
     kitty::create_random( onset, 2 * i++ );
   } while ( i < 1000 );

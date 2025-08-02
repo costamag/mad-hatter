@@ -4,7 +4,7 @@
 #include <kitty/print.hpp>
 #include <kitty/static_truth_table.hpp>
 #include <mad_hatter/evaluation/chain_simulator.hpp>
-#include <mad_hatter/evaluation/boolean_chains.hpp>
+#include <mad_hatter/evaluation/chains.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/networks/mig.hpp>
@@ -12,6 +12,8 @@
 
 using namespace mockturtle;
 using namespace mad_hatter::evaluation;
+using namespace mad_hatter::evaluation::chains;
+using namespace mad_hatter::libraries;
 
 TEST_CASE( "simulation of xag_boolean_chain with static truth tables", "[chain_simulator]" )
 {
@@ -40,10 +42,10 @@ TEST_CASE( "simulation of xag_boolean_chain with static truth tables", "[chain_s
   {
     xs_r.emplace_back( &xs[i] );
   }
-  xag_boolean_chain<true> chain_separate;
+  xag_chain<true> chain_separate;
   encode( chain_separate, xag );
 
-  chain_simulator<xag_boolean_chain<true>, kitty::static_truth_table<4u>> sim_separate;
+  chain_simulator<xag_chain<true>, kitty::static_truth_table<4u>> sim_separate;
   sim_separate( chain_separate, xs_r );
   kitty::static_truth_table<4u> tt4_separate, tt5_separate, tt6_separate;
   sim_separate.get_simulation_inline( tt4_separate, chain_separate, xs_r, 10u );
@@ -53,9 +55,9 @@ TEST_CASE( "simulation of xag_boolean_chain with static truth tables", "[chain_s
   CHECK( kitty::equal( xs[5], tt5_separate ) );
   CHECK( kitty::equal( xs[6], tt6_separate ) );
 
-  xag_boolean_chain<false> chain_unified;
+  xag_chain<false> chain_unified;
   encode( chain_unified, xag );
-  chain_simulator<xag_boolean_chain<false>, kitty::static_truth_table<4u>> sim_unified;
+  chain_simulator<xag_chain<false>, kitty::static_truth_table<4u>> sim_unified;
   sim_unified( chain_unified, xs_r );
   kitty::static_truth_table<4u> tt4_unified, tt5_unified, tt6_unified;
   sim_unified.get_simulation_inline( tt4_unified, chain_unified, xs_r, 10u );
@@ -66,7 +68,7 @@ TEST_CASE( "simulation of xag_boolean_chain with static truth tables", "[chain_s
   CHECK( kitty::equal( xs[6], tt6_unified ) );
 }
 
-TEST_CASE( "simulation of xag_boolean_chain with dynamic truth tables", "[chain_simulator]" )
+TEST_CASE( "simulation of xag_chain with dynamic truth tables", "[chain_simulator]" )
 {
   xag_network xag;
   auto const a = xag.create_pi();
@@ -93,9 +95,9 @@ TEST_CASE( "simulation of xag_boolean_chain with dynamic truth tables", "[chain_
   {
     xs_r.emplace_back( &xs[i] );
   }
-  xag_boolean_chain<true> chain_separate;
+  xag_chain<true> chain_separate;
   encode( chain_separate, xag );
-  chain_simulator<xag_boolean_chain<true>, kitty::dynamic_truth_table> sim_separate;
+  chain_simulator<xag_chain<true>, kitty::dynamic_truth_table> sim_separate;
   sim_separate( chain_separate, xs_r );
   kitty::dynamic_truth_table tt4_separate( 4u ), tt5_separate( 4u ), tt6_separate( 4u );
   sim_separate.get_simulation_inline( tt4_separate, chain_separate, xs_r, 10u );
@@ -105,9 +107,9 @@ TEST_CASE( "simulation of xag_boolean_chain with dynamic truth tables", "[chain_
   CHECK( kitty::equal( xs[5], tt5_separate ) );
   CHECK( kitty::equal( xs[6], tt6_separate ) );
 
-  xag_boolean_chain<false> chain_unified;
+  xag_chain<false> chain_unified;
   encode( chain_unified, xag );
-  chain_simulator<xag_boolean_chain<false>, kitty::dynamic_truth_table> sim_unified;
+  chain_simulator<xag_chain<false>, kitty::dynamic_truth_table> sim_unified;
   sim_unified( chain_unified, xs_r );
   kitty::dynamic_truth_table tt4_unified( 4u ), tt5_unified( 4u ), tt6_unified( 4u );
   sim_unified.get_simulation_inline( tt4_unified, chain_unified, xs_r, 10u );
@@ -118,7 +120,7 @@ TEST_CASE( "simulation of xag_boolean_chain with dynamic truth tables", "[chain_
   CHECK( kitty::equal( xs[6], tt6_unified ) );
 }
 
-TEST_CASE( "simulation of mig_boolean_chain with static truth tables", "[chain_simulator]" )
+TEST_CASE( "simulation of mig_chain with static truth tables", "[chain_simulator]" )
 {
   mig_network mig;
   auto const a = mig.create_pi();
@@ -145,10 +147,10 @@ TEST_CASE( "simulation of mig_boolean_chain with static truth tables", "[chain_s
   {
     xs_r.emplace_back( &xs[i] );
   }
-  mig_boolean_chain chain;
+  mig_chain chain;
   encode( chain, mig );
 
-  chain_simulator<mig_boolean_chain, kitty::static_truth_table<4u>> sim;
+  chain_simulator<mig_chain, kitty::static_truth_table<4u>> sim;
   sim( chain, xs_r );
   kitty::static_truth_table<4u> tt4, tt5, tt6;
   sim.get_simulation_inline( tt4, chain, xs_r, 10u );
@@ -159,7 +161,7 @@ TEST_CASE( "simulation of mig_boolean_chain with static truth tables", "[chain_s
   CHECK( kitty::equal( xs[6], tt6 ) );
 }
 
-TEST_CASE( "simulation of mig_boolean_chain with dynamic truth tables", "[chain_simulator]" )
+TEST_CASE( "simulation of mig_chain with dynamic truth tables", "[chain_simulator]" )
 {
   mig_network mig;
   auto const a = mig.create_pi();
@@ -186,9 +188,9 @@ TEST_CASE( "simulation of mig_boolean_chain with dynamic truth tables", "[chain_
   {
     xs_r.emplace_back( &xs[i] );
   }
-  mig_boolean_chain chain;
+  mig_chain chain;
   encode( chain, mig );
-  chain_simulator<mig_boolean_chain, kitty::dynamic_truth_table> sim;
+  chain_simulator<mig_chain, kitty::dynamic_truth_table> sim;
   sim( chain, xs_r );
   kitty::dynamic_truth_table tt4( 4u ), tt5( 4u ), tt6( 4u );
   sim.get_simulation_inline( tt4, chain, xs_r, 10u );
@@ -198,7 +200,7 @@ TEST_CASE( "simulation of mig_boolean_chain with dynamic truth tables", "[chain_
   CHECK( kitty::equal( xs[5], tt5 ) );
   CHECK( kitty::equal( xs[6], tt6 ) );
 }
-#if 0
+
 std::string const test_library = "GATE   zero    0 O=CONST0;\n"                                                     // 0
                                  "GATE   one     0 O=CONST1;\n"                                                     // 1
                                  "GATE   inv1    1 O=!a;                      PIN * INV 1 999 0.9 0.3 0.9 0.3\n"    // 2
@@ -215,7 +217,7 @@ TEST_CASE( "simulation of bound_chain with static truth tables", "[chain_simulat
   auto result = lorina::read_genlib( in_genlib, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  bound_chain<bound::design_type_t::CELL_BASED> chain;
+  bound_chain<mad_hatter::networks::design_type_t::CELL_BASED> chain;
   chain.add_inputs( 4u );
   auto const a = chain.pi_at( 0 );
   auto const b = chain.pi_at( 1 );
@@ -243,12 +245,11 @@ TEST_CASE( "simulation of bound_chain with static truth tables", "[chain_simulat
     xs_r.emplace_back( &xs[i] );
   }
 
-  bound::augmented_library<bound::design_type_t::CELL_BASED> lib( gates );
-  chain_simulator<bound_chain<bound::design_type_t::CELL_BASED>, kitty::static_truth_table<4u>> sim( lib );
+  augmented_library<mad_hatter::networks::design_type_t::CELL_BASED> lib( gates );
+  chain_simulator<bound_chain<mad_hatter::networks::design_type_t::CELL_BASED>, kitty::static_truth_table<4u>> sim( lib );
   sim( chain, xs_r );
   for ( auto i = 0u; i < xs.size(); ++i )
   {
     CHECK( kitty::equal( xs[i], sim.get_simulation( chain, xs_r, i ) ) );
   }
 }
-#endif

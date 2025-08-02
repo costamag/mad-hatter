@@ -47,7 +47,7 @@
 #pragma once
 
 #include "../databases/database_manager.hpp"
-#include "../evaluation/boolean_chains.hpp"
+#include "../evaluation/chains/xag_chain.hpp"
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
 #include <mockturtle/networks/aig.hpp>
 #include <mockturtle/networks/xag.hpp>
@@ -120,8 +120,8 @@ template<bool UseDCs = false, bool UseXors = false>
 class xaig_decompose
 {
   using stats = xaig_decompose_stats;
-  using boolean_chain_t = evaluation::large_xag_boolean_chain;
-  using element_type_t = boolean_chain_t::element_type;
+  using chain_t = mad_hatter::evaluation::chains::large_xag_chain;
+  using element_type_t = chain_t::element_type;
   using Ntk = typename std::conditional<UseXors, mockturtle::xag_network, mockturtle::aig_network>::type;
   using signal = typename Ntk::signal;
   using node = typename Ntk::node;
@@ -160,9 +160,9 @@ public:
   void operator()( kitty::ternary_truth_table<TT> const& func )
   {
     /* reset the internal index list to the new synthesis problem */
-    boolean_chain.clear();
+    chain.clear();
     auto const num_vars = func.num_vars();
-    boolean_chain.add_inputs( num_vars );
+    chain.add_inputs( num_vars );
 
     /* initialize the support with the literals */
     std::vector<element_type_t> support( num_vars );
@@ -171,7 +171,7 @@ public:
 
     /* call the synthesis engine recursively */
     element_type_t const lit = recursive_synthesis( support, func );
-    boolean_chain.add_output( lit );
+    chain.add_output( lit );
   }
 
   /*! \brief Perform XAIG synthesis from completely specified functions.
@@ -192,9 +192,9 @@ public:
 
   /*! \brief Getter to obtain the last index list synthesized by the engine.
    */
-  boolean_chain_t const& get_chain() const
+  chain_t const& get_chain() const
   {
-    return boolean_chain;
+    return chain;
   }
 
 private:
@@ -221,7 +221,7 @@ private:
     if ( supp_size == 0 )
     {
       TT const tt = func._bits & func._care;
-      return boolean_chain.get_constant( !kitty::is_const0( tt ) );
+      return chain.get_constant( !kitty::is_const0( tt ) );
     }
 
     /* collect the new support */
@@ -340,25 +340,25 @@ private:
     {
       tt1 = kitty::cofactor1( func, index );
       lit_fun = recursive_synthesis( support, tt1 );
-      return boolean_chain.add_and( lit_var, lit_fun );
+      return chain.add_and( lit_var, lit_fun );
     }
     case decomp_t::LT: // F = !x & F0
     {
       tt0 = kitty::cofactor0( func, index );
       lit_fun = recursive_synthesis( support, tt0 );
-      return boolean_chain.add_and( boolean_chain.add_not( lit_var ), lit_fun );
+      return chain.add_and( chain.add_not( lit_var ), lit_fun );
     }
     case decomp_t::LE: // F = !x | F1
     {
       tt1 = kitty::cofactor1( func, index );
       lit_fun = recursive_synthesis( support, tt1 );
-      return boolean_chain.add_or( boolean_chain.add_not( lit_var ), lit_fun );
+      return chain.add_or( chain.add_not( lit_var ), lit_fun );
     }
     case decomp_t::GE: // F =  x | F0
     {
       tt0 = kitty::cofactor0( func, index );
       lit_fun = recursive_synthesis( support, tt0 );
-      return boolean_chain.add_or( lit_var, lit_fun );
+      return chain.add_or( lit_var, lit_fun );
     }
     case decomp_t::XOR: // F =  x ^ F0
     {
@@ -368,7 +368,7 @@ private:
       ttt._care = tt0._care | tt1._care;
       ttt._bits = ttt._care & ( tt0._bits & ~tt1._bits );
       lit_fun = recursive_synthesis( support, ttt );
-      return boolean_chain.add_xor( lit_var, lit_fun );
+      return chain.add_xor( lit_var, lit_fun );
     }
     case decomp_t::ITE: // F = ite( x, F1, F0 )
     {
@@ -376,11 +376,12 @@ private:
       tt1 = kitty::cofactor1( func, index );
       auto lit_fn0 = recursive_synthesis( support, tt0 );
       auto lit_fn1 = recursive_synthesis( support, tt1 );
-      auto lit_cf0 = boolean_chain.add_and( boolean_chain.add_not( lit_var ), lit_fn0 );
-      auto lit_cf1 = boolean_chain.add_and( lit_var, lit_fn1 );
-      return boolean_chain.add_or( lit_cf0, lit_cf1 );
+      auto lit_cf0 = chain.add_and( chain.add_not( lit_var ), lit_fn0 );
+      auto lit_cf1 = chain.add_and( lit_var, lit_fn1 );
+      return chain.add_or( lit_cf0, lit_cf1 );
     }
     }
+    return std::numeric_limits<element_type_t>::max();
   }
 
   /*! \brief Synthesis step based on database look-up.
@@ -423,7 +424,7 @@ private:
 
     /* insert the sub-network in the index list */
     auto lit_out = database.insert( *info,
-                                    boolean_chain,
+                                    chain,
                                     best_sign,
                                     support.begin(),
                                     support.end() );
@@ -432,7 +433,7 @@ private:
 
 private:
   /*! \brief Global index list synthesized by a run of the engine. */
-  boolean_chain_t boolean_chain;
+  chain_t chain;
   /*! \brief Manager encapsulating the operations on the database */
   databases::database_manager<Ntk, UseDCs> database;
 

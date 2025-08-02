@@ -66,9 +66,6 @@ namespace mad_hatter
 namespace boolean
 {
 
-namespace simd
-{
-
 /*! \brief Enumeration for compile-time dispatch and minimize code redundancies. */
 enum class Operation : uint32_t
 {
@@ -566,7 +563,7 @@ struct use_avx2_cached_impl<Operation::AND, TT>
 {
   bool eval( TT const& tt, uint32_t num_vars )
   {
-    return use_avx2_cached<Operation::AND>( tt, []( const TT& t1, const TT& t2 ) { return kitty::binary_and( t1, t2 ); }, []( const TT& t1, const TT& t2 ) { return simd::binary_and<TT, false>( t1, t2 ); }, num_vars );
+    return use_avx2_cached<Operation::AND>( tt, []( const TT& t1, const TT& t2 ) { return kitty::binary_and( t1, t2 ); }, []( const TT& t1, const TT& t2 ) { return boolean::binary_and<TT, false>( t1, t2 ); }, num_vars );
   }
 };
 
@@ -575,7 +572,7 @@ struct use_avx2_cached_impl<Operation::OR, TT>
 {
   bool eval( const TT& tt, uint32_t num_vars )
   {
-    return use_avx2_cached<Operation::OR>( tt, []( const TT& t1, const TT& t2 ) { return kitty::binary_or( t1, t2 ); }, []( const TT& t1, const TT& t2 ) { return simd::binary_or<TT, false>( t1, t2 ); }, num_vars );
+    return use_avx2_cached<Operation::OR>( tt, []( const TT& t1, const TT& t2 ) { return kitty::binary_or( t1, t2 ); }, []( const TT& t1, const TT& t2 ) { return boolean::binary_or<TT, false>( t1, t2 ); }, num_vars );
   }
 };
 
@@ -584,7 +581,7 @@ struct use_avx2_cached_impl<Operation::XOR, TT>
 {
   bool eval( const TT& tt, uint32_t num_vars )
   {
-    return use_avx2_cached<Operation::XOR>( tt, []( const TT& t1, const TT& t2 ) { return kitty::binary_xor( t1, t2 ); }, []( const TT& t1, const TT& t2 ) { return simd::binary_xor<TT, false>( t1, t2 ); }, num_vars );
+    return use_avx2_cached<Operation::XOR>( tt, []( const TT& t1, const TT& t2 ) { return kitty::binary_xor( t1, t2 ); }, []( const TT& t1, const TT& t2 ) { return boolean::binary_xor<TT, false>( t1, t2 ); }, num_vars );
   }
 };
 
@@ -593,7 +590,7 @@ struct use_avx2_cached_impl<Operation::LT, TT>
 {
   bool eval( const TT& tt, uint32_t num_vars )
   {
-    return use_avx2_cached<Operation::LT>( tt, []( const TT& t1, const TT& t2 ) { return kitty::binary_and( ~t1, t2 ); }, []( const TT& t1, const TT& t2 ) { return simd::binary_lt<TT, false>( t1, t2 ); }, num_vars );
+    return use_avx2_cached<Operation::LT>( tt, []( const TT& t1, const TT& t2 ) { return kitty::binary_and( ~t1, t2 ); }, []( const TT& t1, const TT& t2 ) { return boolean::binary_lt<TT, false>( t1, t2 ); }, num_vars );
   }
 };
 
@@ -602,7 +599,7 @@ struct use_avx2_cached_impl<Operation::NOT, TT>
 {
   bool eval( const TT& tt, uint32_t num_vars )
   {
-    return use_avx2_cached<Operation::NOT>( tt, []( const TT& t ) { return kitty::unary_not( t ); }, []( const TT& t ) { return simd::unary_not<TT, false>( t ); }, num_vars );
+    return use_avx2_cached<Operation::NOT>( tt, []( const TT& t ) { return kitty::unary_not( t ); }, []( const TT& t ) { return boolean::unary_not<TT, false>( t ); }, num_vars );
   }
 };
 
@@ -611,7 +608,7 @@ struct use_avx2_cached_impl<Operation::CONST0, TT>
 {
   bool eval( const TT& tt, uint32_t num_vars )
   {
-    return use_avx2_cached<Operation::CONST0>( tt, []( TT& t ) { t = t ^ t; }, []( TT& t ) { simd::set_zero<TT, false>( t ); }, num_vars );
+    return use_avx2_cached<Operation::CONST0>( tt, []( TT& t ) { t = t ^ t; }, []( TT& t ) { boolean::set_zero<TT, false>( t ); }, num_vars );
   }
 };
 
@@ -620,7 +617,7 @@ struct use_avx2_cached_impl<Operation::CONST1, TT>
 {
   bool eval( const TT& tt, uint32_t num_vars )
   {
-    return use_avx2_cached<Operation::CONST1>( tt, []( TT& t ) { t = t ^ ~t; }, []( TT& t ) { simd::set_ones<TT, false>( t ); }, num_vars );
+    return use_avx2_cached<Operation::CONST1>( tt, []( TT& t ) { t = t ^ ~t; }, []( TT& t ) { boolean::set_ones<TT, false>( t ); }, num_vars );
   }
 };
 
@@ -704,8 +701,6 @@ inline void set_zero( kitty::static_truth_table<NumVars, true>& tt )
 {
   tt ^= tt;
 }
-
-} // namespace simd
 
 } // namespace boolean
 

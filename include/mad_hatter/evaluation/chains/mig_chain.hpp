@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file mig_boolean_chain.hpp
+  \file mig_chain.hpp
   \brief List of indices to represent small Majority Inverter Graphs (MIG)
 
   \author Andrea Costamagna
@@ -45,6 +45,9 @@ namespace mad_hatter
 namespace evaluation
 {
 
+namespace chains
+{
+
 /*! \brief Index list for majority-inverter graphs.
  *
  * Small network consisting of majority gates and inverters
@@ -54,7 +57,7 @@ namespace evaluation
  * `<<x1, x2, x3>, x2, x4>` with 4 inputs, 1 output, and 2 gates:
  * `{4 | 1 << 8 | 2 << 16, 2, 4, 6, 4, 8, 10, 12}`
  */
-struct mig_boolean_chain
+struct mig_chain
 {
 public:
   using element_type = uint32_t;
@@ -62,12 +65,12 @@ public:
   static constexpr uint32_t offset = 1;
 
 public:
-  explicit mig_boolean_chain( uint32_t num_pis = 0 )
+  explicit mig_chain( uint32_t num_pis = 0 )
       : values( { num_pis } )
   {
   }
 
-  explicit mig_boolean_chain( std::vector<element_type> const& values )
+  explicit mig_chain( std::vector<element_type> const& values )
       : values( std::begin( values ), std::end( values ) )
   {}
 
@@ -222,7 +225,7 @@ private:
   std::vector<element_type> values;
 };
 
-/*! \brief Generates a mig_boolean_chain from a network
+/*! \brief Generates a mig_chain from a network
  *
  * The function requires `ntk` to consist of majority gates.
  *
@@ -241,7 +244,7 @@ private:
  * \param ntk A logic network
  */
 template<typename Ntk>
-void encode( mig_boolean_chain& indices, Ntk const& ntk )
+void encode( mig_chain& indices, Ntk const& ntk )
 {
   static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
   static_assert( mockturtle::has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method" );
@@ -297,7 +300,7 @@ void encode( mig_boolean_chain& indices, Ntk const& ntk )
   assert( indices.size() == 1u + 3u * ntk.num_gates() + ntk.num_pos() );
 }
 
-/*! \brief Inserts a mig_boolean_chain into an existing network
+/*! \brief Inserts a mig_chain into an existing network
  *
  * **Required network functions:**
  * - `get_constant`
@@ -310,7 +313,7 @@ void encode( mig_boolean_chain& indices, Ntk const& ntk )
  * \param fn Callback function
  */
 template<bool useSignal = true, typename Ntk, typename BeginIter, typename EndIter, typename Fn>
-void insert( Ntk& ntk, BeginIter begin, EndIter end, mig_boolean_chain const& indices, Fn&& fn )
+void insert( Ntk& ntk, BeginIter begin, EndIter end, mig_chain const& indices, Fn&& fn )
 {
   static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
   static_assert( mockturtle::has_create_maj_v<Ntk>, "Ntk does not implement the create_maj method" );
@@ -359,12 +362,12 @@ void insert( Ntk& ntk, BeginIter begin, EndIter end, mig_boolean_chain const& in
   } );
 }
 
-/*! \brief Converts an mig_boolean_chain to a string
+/*! \brief Converts an mig_chain to a string
  *
  * \param indices An index list
  * \return A string representation of the index list
  */
-inline std::string to_boolean_chain_string( mig_boolean_chain const& indices )
+inline std::string to_chain_string( mig_chain const& indices )
 {
   auto s = fmt::format( "{{{} | {} << 8 | {} << 16", indices.num_pis(), indices.num_pos(), indices.num_gates() );
 
@@ -380,6 +383,8 @@ inline std::string to_boolean_chain_string( mig_boolean_chain const& indices )
 
   return s;
 }
+
+} // namespace chains
 
 } // namespace evaluation
 
