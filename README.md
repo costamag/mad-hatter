@@ -30,14 +30,6 @@
 
 ---
 
-## 📑 Table of Contents
-- [🚀 Features](#-features)
-- [📦 Installation](#-installation)
-- [📖 Related Papers](#-related-papers)
-- [✍️ Citing Mad Hatter](#️-citing-mad-hatter)
-
----
-
 ## 🚀 Features
 
 - SPFD-based logic resynthesis  
@@ -59,10 +51,6 @@ make
 ```
 
 ---
-<<<<<<< HEAD
-
-=======
->>>>>>> e2a3b08 (docs: literature)
 ## 📖 Related Papers
 
 Mad Hatter is based on research in logic resynthesis and SPFD techniques.  
