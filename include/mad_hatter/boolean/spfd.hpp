@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "../../../utils/constexpr_functions.hpp"
+#include "../math/math.hpp"
 #include "simd.hpp"
 
 namespace mad_hatter
@@ -192,7 +192,7 @@ public:
   spfd_manager()
   {
     Tt_t tmp;
-    if constexpr ( log2_ceil( MaxNumMasks ) > 6u )
+    if constexpr ( math::log2_ceil( MaxNumMasks ) > 6u )
     {
       boolean::test_avx2_advantage( tmp, tmp.num_vars() );
     }
