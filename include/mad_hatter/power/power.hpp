@@ -1,5 +1,5 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018-2022  EPFL
+/* mad-hatter: C++ logic network library
+ * Copyright (C) 2025 EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,16 +24,11 @@
  */
 
 /*!
-  \file mockturtle.hpp
-  \brief Main header file for mockturtle
+  \file evaluators.hpp
+  \brief Main header file for PPA evaluators
 */
 
 #pragma once
 
-#include "mad_hatter/boolean/boolean.hpp"
-#include "mad_hatter/databases/databases.hpp"
-#include "mad_hatter/evaluation/evaluation.hpp"
-#include "mad_hatter/evaluators/evaluators.hpp"
-#include "mad_hatter/libraries/libraries.hpp"
-#include "mad_hatter/network/network.hpp"
-#include "mad_hatter/synthesis/synthesis.hpp"
+#include "power_evaluator.hpp"
+#include "switching.hpp"
