@@ -33,6 +33,7 @@
 #pragma once
 
 #include "../../boolean/boolean.hpp"
+#include "../../network/utils.hpp"
 #include <cassert>
 #include <mockturtle/networks/block.hpp>
 #include <vector>

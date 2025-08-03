@@ -99,7 +99,7 @@ void sort_symmetric( symmetries_t const& symm,
                      Vecs&... vecs )
 {
   // All vectors must have the same size
-  const size_t n = ( vecs.size(), ... );
+  const size_t n = std::get<0>( std::tuple{ vecs... } ).size();
   assert( ( ( vecs.size() == n ) && ... ) && "[e] all vectors must have the same size" );
 
   // Use the first vector as the driver
