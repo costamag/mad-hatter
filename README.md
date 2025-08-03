@@ -40,3 +40,39 @@ mkdir build && cd build
 cmake ..
 make
 
+---
+
+## 📖 Related Papers
+
+Mad Hatter is based on research in logic resynthesis and SPFD techniques.  
+Some key references:
+
+- A. Costamagna, A. Mishchenko, S. Chatterjee, and G. De Micheli,  
+  *Symmetry-Based Synthesis for Interpretable Boolean Evaluation*,  
+  2025 38th International Conference on VLSI Design and 2024 23rd International Conference on Embedded Systems (VLSID), Bangalore, India, 2025, pp. 374-379.  
+  [10.1109/VLSID64188.2025.00077](https://doi.org/10.1109/VLSID64188.2025.00077)
+
+- A. Costamagna, A. Mishchenko, S. Chatterjee, and G. De Micheli,   
+  *An Enhanced Resubstitution Algorithm for Area-Oriented Logic Optimization*,  
+  2024 IEEE International Symposium on Circuits and Systems (ISCAS), Singapore, Singapore, 2024, pp. 1-5.  
+  [DOI: 10.1109/ISCAS58744.2024.10558264](https://doi.org/10.1109/ISCAS58744.2024.10558264)
+
+- A. Costamagna, A. Tempia Calvino, A. Mishchenko and G. De Micheli,   
+  *Area-Oriented Resubstitution For Networks of Look-Up Tables*,  
+  2025 IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems (TCAD), vol. 44, no. 7, pp. 2571-2584, July 2025.  
+  [DOI: 10.1109/TCAD.2025.3525617](https://doi.org/10.1109/TCAD.2025.3525617) [🏆 Best Paper Award at IWLS 2024] 
+
+- A. Costamagna, A. Tempia Calvino, A. Mishchenko and G. De Micheli,   
+  *Area-Oriented Optimization After Standard-Cell Mapping*,  
+  2025 Proceedings of the 30th Asia and South Pacific Design Automation Conference (ASP-DAC), pp. 1112-1119.  
+  [DOI: 10.1145/3658617.3697722](https://doi.org/10.1145/3658617.3697722)
+
+- A. Costamagna, C. Meng and G. De Micheli,   
+  *SPFD-Based Delay Resynthesis*,  
+  2025 21st International Conference on Synthesis, Modeling, Analysis and Simulation Methods, and Applications to Circuits Design (SMACD), Istanbul, Turkiye, 2025, pp. 1-4.  
+  [DOI: 10.1109/SMACD65553.2025.11091999](https://doi.org/10.1109/SMACD65553.2025.11091999)  [🏆 Best Paper Award] 
+
+- A. Costamagna, X. Xu, G. De Micheli and D. Ruic,   
+  *Lazy Man’s Resynthesis For Glitching-Aware Power Minimization*,  
+  2025 IEEE 28th International Symposium on Design and Diagnostics of Electronic Circuits and Systems (DDECS), Lyon, France, 2025, pp. 92-98.  
+  [DOI: 10.1109/DDECS63720.2025.11006815](https://doi.org/10.1109/DDECS63720.2025.11006815) 
