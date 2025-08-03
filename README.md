@@ -33,7 +33,6 @@
 ## 🚀 Features
 
 - SPFD-based logic resynthesis  
-- SPFD-based logic resynthesis  
 - Powered by [mockturtle](https://github.com/lsils/mockturtle)  
 - Interactive CLI with [replxx](https://github.com/AmokHuginnsson/replxx)  
 - Cross-platform build with CMake  

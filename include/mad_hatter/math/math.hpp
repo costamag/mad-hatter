@@ -1,5 +1,5 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018-2022  EPFL
+/* mad_hatter: C++ logic network library
+ * Copyright (C) 2025 EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,18 +24,32 @@
  */
 
 /*!
-  \file mockturtle.hpp
-  \brief Main header file for mockturtle
+  \file constexpr_functions.hpp
+  \brief Various functions for compile time evaluation
+
+  \author Andrea Costamagna
 */
 
 #pragma once
 
-#include "mad_hatter/boolean/boolean.hpp"
-#include "mad_hatter/databases/databases.hpp"
-#include "mad_hatter/dependency/dependency.hpp"
-#include "mad_hatter/evaluation/evaluation.hpp"
-#include "mad_hatter/evaluators/evaluators.hpp"
-#include "mad_hatter/libraries/libraries.hpp"
-#include "mad_hatter/math/math.hpp"
-#include "mad_hatter/network/network.hpp"
-#include "mad_hatter/synthesis/synthesis.hpp"
+namespace mad_hatter
+{
+
+namespace math
+{
+
+constexpr uint32_t log2_ceil( uint32_t x )
+{
+  uint32_t r = 0;
+  uint32_t v = x - 1;
+  while ( v > 0 )
+  {
+    ++r;
+    v >>= 1;
+  }
+  return r;
+}
+
+} // namespace math
+
+} /* namespace mad_hatter */
