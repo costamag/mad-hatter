@@ -1,4 +1,4 @@
-/* mockturtle: C++ logic network library
+/* mad_hatter: C++ logic network library
  * Copyright (C) 2018-2022  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
@@ -24,11 +24,10 @@
  */
 
 /*!
-  \file mockturtle.hpp
-  \brief Main header file for mockturtle
+  \file mad_hatter.hpp
+  \brief Main header file for mad_hatter
 */
 
 #pragma once
 
-#include "lut_decomposer.hpp"
-#include "xaig_decompose.hpp"
+#include "dependency_cut.hpp"

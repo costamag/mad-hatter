@@ -3,7 +3,9 @@
 
 #include <kitty/kitty.hpp>
 
+#include <mad_hatter/dependency/dependency.hpp>
 #include <mad_hatter/evaluation/evaluation.hpp>
+#include <mad_hatter/synthesis/synthesis.hpp>
 #include <mad_hatter/synthesis/xaig_decompose.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
 #include <mockturtle/networks/aig.hpp>
@@ -160,4 +162,28 @@ void test_xag_n_input_functions_random()
 TEST_CASE( "XAIG synththesizer - random 10 input functions", "[synthesis]" )
 {
   test_xag_n_input_functions_random<10>();
+}
+
+TEST_CASE( "Termination condition for LUT decomposition", "[synthesis]" )
+{
+  static constexpr uint32_t MaxNumVars = 2u;
+  static constexpr uint32_t MaxCutSize = 3u;
+  using CSTT = kitty::static_truth_table<MaxCutSize>;
+  using ISTT = kitty::ternary_truth_table<CSTT>;
+  mad_hatter::synthesis::lut_decomposer<MaxCutSize, MaxNumVars> decomposer;
+
+  CSTT care1, mask1;
+  kitty::create_from_binary_string( care1, "10001100" );
+  kitty::create_from_binary_string( mask1, "11111011" );
+  ISTT func1( care1, mask1 );
+  std::vector<double> times{ 0.0, 0.0, 0.0 };
+  CHECK( decomposer.run( func1, times ) );
+  decomposer.foreach_spec( [&]( auto const& sim_ptrs, auto const& spec ) {
+    kitty::static_truth_table<2u> expected;
+    kitty::create_from_binary_string( expected, "1000" );
+    auto itt = mad_hatter::dependency::extract_function<kitty::static_truth_table<MaxCutSize>, MaxNumVars>( sim_ptrs, spec.sim._bits, spec.sim._care );
+    CHECK( kitty::equal( expected, itt._bits ) );
+    CHECK( kitty::is_const0( ~itt._care ) );
+    return std::make_optional( *sim_ptrs[0] );
+  } );
 }

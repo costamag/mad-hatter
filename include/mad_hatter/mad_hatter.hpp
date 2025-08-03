@@ -32,6 +32,7 @@
 
 #include "mad_hatter/boolean/boolean.hpp"
 #include "mad_hatter/databases/databases.hpp"
+#include "mad_hatter/dependency/dependency.hpp"
 #include "mad_hatter/evaluation/evaluation.hpp"
 #include "mad_hatter/evaluators/evaluators.hpp"
 #include "mad_hatter/libraries/libraries.hpp"
