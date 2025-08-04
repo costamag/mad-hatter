@@ -133,7 +133,7 @@ public:
     {
       int i = 0;
       ntk_.foreach_output( n, [&]( auto const& f ) {
-        if ( ( m >> i ) & 0x1 > 0 )
+        if ( ( ( m >> i ) & 0x1 ) > 0 )
           sims_[sig_to_sim_[f]] = ~sims_[sig_to_sim_[f]];
         i++;
       } );
