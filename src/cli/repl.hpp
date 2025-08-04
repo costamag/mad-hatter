@@ -1,6 +1,6 @@
 #pragma once
-#include "cli_commands.hpp"
-#include "cli_context.hpp"
+#include "commands.hpp"
+#include "context.hpp"
 #include <iostream>
 
 void run_repl( CLIContext& ctx,

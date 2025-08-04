@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../include/mad_hatter/network/network.hpp"
+#include "../../include/mad_hatter/network/network.hpp"
 #include <mockturtle/io/genlib_reader.hpp>
 #include <optional>
 #include <vector>

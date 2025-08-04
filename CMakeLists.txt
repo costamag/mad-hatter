@@ -34,16 +34,30 @@ add_subdirectory(lib/mockturtle)
 add_subdirectory(lib/replxx)
 add_subdirectory(lib/cli11)
 
-# Shared CLI logic as a library
-add_library(mad_cli
-  src/cli_commands.cpp
-  src/cli_repl.cpp
+# Shared CLI logic as a library (exclude main.cpp)
+file(GLOB_RECURSE MAD_CLI_SOURCES CONFIGURE_DEPENDS
+    src/cli/*.cpp
 )
-target_include_directories(mad_cli PUBLIC ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(mad_cli PUBLIC mockturtle replxx CLI11::CLI11)
+list(FILTER MAD_CLI_SOURCES EXCLUDE REGEX "src/cli/main.cpp$")
 
-# CLI executable uses mad_cli
-add_executable(hatter src/main.cpp)
+add_library(mad_cli ${MAD_CLI_SOURCES})
+
+# Link CLI logic against mockturtle to inherit fmt and other includes
+target_link_libraries(mad_cli
+    PUBLIC
+        mockturtle
+        replxx
+        CLI11::CLI11
+)
+
+# Add include paths for CLI headers
+target_include_directories(mad_cli
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}/src   # so "cli/context.hpp" works
+)
+
+# CLI executable
+add_executable(hatter src/cli/main.cpp)
 target_link_libraries(hatter PRIVATE mad_cli)
 
 # Public header-only interface library
@@ -53,5 +67,5 @@ target_include_directories(mad_hatter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/incl
 # Tests
 if (HATTER_ENABLE_TESTS)
   enable_testing()
-  add_subdirectory(test)   # delegate test building to test/CMakeLists.txt
+  add_subdirectory(test)
 endif()

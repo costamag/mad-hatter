@@ -4,9 +4,9 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "cli_context.hpp"
-#include "cli_commands.hpp"
-#include "cli_repl.hpp"
+#include "cli/context.hpp"
+#include "cli/commands.hpp"
+#include "cli/repl.hpp"
 #include <sstream>
 #include <fstream>
 

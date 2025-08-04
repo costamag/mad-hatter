@@ -1,6 +1,6 @@
-#include "cli_commands.hpp"
-#include "cli_context.hpp"
-#include "cli_repl.hpp"
+#include "cli/context.hpp"
+#include "cli/commands.hpp"
+#include "cli/repl.hpp"
 #include <CLI/CLI.hpp>
 #include <fstream>
 #include <iostream>
@@ -18,12 +18,12 @@ int main( int argc, char* argv[] )
   bool forceNonInteractive = false;
   std::string scriptFile;
 
-  app.add_option( "-l,--lib", libFile, "Technology library (.lib)" );
+  app.add_option( "-l,--lib", libFile, "Technology library (.genlib)" );
   app.add_option( "-i,--input", verilogIn, "Input Verilog design" );
   app.add_option( "-o,--output", verilogOut, "Output Verilog design" );
   app.add_option( "-f,--file", scriptFile, "Script file with commands" );
   app.add_flag( "--no-repl", forceNonInteractive, "Run in non-interactive mode only" );
-
+  
   CLI11_PARSE( app, argc, argv );
 
   // batch mode via flags
