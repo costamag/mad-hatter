@@ -1,5 +1,6 @@
 #include "stats.hpp"
 #include "../../../../include/mad_hatter/network/network.hpp"
+#include "../../../../include/mad_hatter/trackers/trackers.hpp"
 #include "../../context.hpp"
 #include <fstream>
 #include <iomanip>
@@ -13,7 +14,6 @@ void print_stats( const Stats& stats, const std::string& format )
     std::cout << std::left
               << std::setw( 10 ) << "Inputs" << ": " << stats.inputs << "\n"
               << std::setw( 10 ) << "Outputs" << ": " << stats.outputs << "\n"
-              << std::setw( 10 ) << "Latency" << ": " << stats.latency << "\n"
               << std::setw( 10 ) << "Nodes" << ": " << stats.nodes << "\n"
               << std::setw( 10 ) << "Edges" << ": " << stats.edges << "\n"
               << std::setw( 10 ) << "Area" << ": " << std::fixed << std::setprecision( 2 ) << stats.area << "\n"
@@ -24,7 +24,6 @@ void print_stats( const Stats& stats, const std::string& format )
   {
     std::cout << "Inputs=" << stats.inputs
               << " Outputs=" << stats.outputs
-              << " Latency=" << stats.latency
               << " Nodes=" << stats.nodes
               << " Edges=" << stats.edges
               << " Area=" << std::fixed << std::setprecision( 2 ) << stats.area
@@ -37,7 +36,6 @@ void print_stats( const Stats& stats, const std::string& format )
     std::cout << "{"
               << "\"inputs\":" << stats.inputs << ","
               << "\"outputs\":" << stats.outputs << ","
-              << "\"latency\":" << stats.latency << ","
               << "\"nodes\":" << stats.nodes << ","
               << "\"edges\":" << stats.edges << ","
               << "\"area\":" << std::fixed << std::setprecision( 2 ) << stats.area << ","
@@ -66,16 +64,17 @@ static void cmd_print_stats( CLIContext& ctx, const std::vector<std::string>& ar
     format = args[1]; // user can do: print_stats json
   }
 
+  mad_hatter::trackers::arrival_times_tracker arrival( *ctx.ntk );
+
   // collect stats from the network
   Stats stats;
-  stats.inputs = ctx.ntk->num_pis();  // primary inputs
-  stats.outputs = ctx.ntk->num_pos(); // primary outputs
-  stats.latency = 0;                  // placeholder unless you track latency
-  stats.nodes = ctx.ntk->num_gates(); // total nodes
-  stats.edges = 0;                    // adjust if you have an API for edges
-  stats.levels = 0;                   // logic depth
-  stats.area = ctx.ntk->area();       // TODO: compute from ctx.gates if available
-  stats.delay = 0.0;                  // TODO: compute from timing analysis
+  stats.inputs = ctx.ntk->num_pis();   // primary inputs
+  stats.outputs = ctx.ntk->num_pos();  // primary outputs
+  stats.nodes = ctx.ntk->num_gates();  // total nodes
+  stats.edges = 0;                     // adjust if you have an API for edges
+  stats.levels = 0;                    // logic depth
+  stats.area = ctx.ntk->area();        // TODO: compute from ctx.gates if available
+  stats.delay = arrival.worst_delay(); // TODO: compute from timing analysis
 
   print_stats( stats, format );
 }

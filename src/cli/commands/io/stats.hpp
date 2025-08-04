@@ -8,7 +8,6 @@ struct Stats
 {
   int inputs = 0;
   int outputs = 0;
-  int latency = 0;
   int nodes = 0;
   int edges = 0;
   double area = 0.0;
