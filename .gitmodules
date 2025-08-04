@@ -4,3 +4,6 @@
 [submodule "lib/replxx"]
 	path = lib/replxx
 	url = https://github.com/AmokHuginnsson/replxx.git
+[submodule "lib/cli11"]
+	path = lib/cli11
+	url = https://github.com/CLIUtils/CLI11.git

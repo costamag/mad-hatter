@@ -22,11 +22,11 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=$(which g++-12) -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   build-clang14:
     name: Clang 14
@@ -41,11 +41,11 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   build-clang15:
     name: Clang 15
@@ -64,8 +64,8 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++ -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests

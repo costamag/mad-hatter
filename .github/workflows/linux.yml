@@ -26,11 +26,11 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=g++-9 -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   build-gcc10:
     runs-on: ubuntu-latest
@@ -48,11 +48,11 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=g++-10 -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   build-gcc10-cpp20:
     runs-on: ubuntu-latest
@@ -70,11 +70,11 @@ jobs:
           mkdir build
           cd build
           cmake -DHATTER_CXX_STANDARD=20 -DCMAKE_CXX_COMPILER=g++-10 -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   build-gcc12:
     runs-on: ubuntu-latest
@@ -92,11 +92,11 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=g++-12 -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   build-clang11:
     runs-on: ubuntu-22.04
@@ -114,11 +114,11 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=clang++-11 -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   build-clang13:
     runs-on: ubuntu-22.04
@@ -136,11 +136,11 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=clang++-13 -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   build-clang13-asan:
     runs-on: ubuntu-22.04
@@ -158,11 +158,11 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=clang++-13 -DENABLE_ASAN=ON -DHATTER_ENABLE_TESTS=ON ..
-          make run_tests
+          make run_unit_tests
       - name: Run tests with ASAN
         run: |
           cd build
-          ./test/run_tests
+          ./test/run_unit_tests
 
   compile-gcc9:
     runs-on: ubuntu-latest

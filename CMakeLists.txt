@@ -1,28 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 project(mad_hatter)
 
-# Project-specific options
+# Options
 option(HATTER_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(HATTER_ENABLE_TESTS "Build unit tests" ON)
 
-# Hide dependency options from ccmake by default
-mark_as_advanced(
-  MOCKTURTLE_BUILD_EXAMPLES
-  MOCKTURTLE_BUILD_EXPERIMENTS
-  MOCKTURTLE_ENABLE_COVERAGE
-  MOCKTURTLE_ENABLE_ASAN
-  FETCHCONTENT_BASE_DIR
-  FETCHCONTENT_FULLY_DISCONNECTE
-  FETCHCONTENT_QUIET
-  FETCHCONTENT_SOURCE_DIR_CATCH2
-  FETCHCONTENT_UPDATES_DISCONNEC
-  CATCH_DEVELOPMENT_BUILD
-  CATCH_INSTALL_DOCS
-  CATCH_INSTALL_EXTRAS
-  FETCHCONTENT_FULLY_DISCONNECTE
-  FETCHCONTENT_UPDATES_DISCONNEC
-)
-
+# Sanitizer
 if (HATTER_ENABLE_ASAN)
   set(SANITIZE_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZE_FLAGS}")
@@ -31,7 +14,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Enable AVX2 if available (mockturtle-style)
+# SIMD checks
 if(UNIX)
   include(CheckCXXCompilerFlag)
   check_cxx_compiler_flag("-mavx2" HAS_MAVX2)
@@ -49,17 +32,26 @@ endif()
 # Dependencies
 add_subdirectory(lib/mockturtle)
 add_subdirectory(lib/replxx)
+add_subdirectory(lib/cli11)
 
-# CLI executable
+# Shared CLI logic as a library
+add_library(mad_cli
+  src/cli_commands.cpp
+  src/cli_repl.cpp
+)
+target_include_directories(mad_cli PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(mad_cli PUBLIC mockturtle replxx CLI11::CLI11)
+
+# CLI executable uses mad_cli
 add_executable(hatter src/main.cpp)
-target_link_libraries(hatter PRIVATE mockturtle replxx)
+target_link_libraries(hatter PRIVATE mad_cli)
 
-# Library
+# Public header-only interface library
 add_library(mad_hatter INTERFACE)
 target_include_directories(mad_hatter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Enable tests if requested
+# Tests
 if (HATTER_ENABLE_TESTS)
   enable_testing()
-  add_subdirectory(test)
+  add_subdirectory(test)   # delegate test building to test/CMakeLists.txt
 endif()

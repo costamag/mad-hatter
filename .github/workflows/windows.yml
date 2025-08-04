@@ -13,32 +13,32 @@ jobs:
     strategy:
       matrix:
         os: [ windows-2022 ]
-        toolset: [ v143, ClangCL ] # You can switch v142→v143 for VS2022
+        toolset: [ v142, ClangCL ]
         include:
           - os: windows-2022
             env: "Visual Studio 17 2022"
 
-    name: ${{ matrix.os }} with ${{ matrix.env }} and ${{ matrix.toolset }} toolset
-    runs-on: ${{ matrix.os }}
+    name: ${{matrix.os}} with ${{matrix.env}} and ${{matrix.toolset}} toolset
+    runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v1
         with:
           submodules: true
 
       - name: Create build directory
-        run: cmake -E make_directory ${{ github.workspace }}\build
+        run: cmake -E make_directory ${{github.workspace}}\build
 
       - name: Run CMake
-        run: cmake ${{ github.workspace }} -G "${{ matrix.env }}" -A x64 -T ${{ matrix.toolset }} -DCMAKE_BUILD_TYPE=Release
-        working-directory: ${{ github.workspace }}\build
+        run: cmake ${{github.workspace}} -G "${{matrix.env}}" -A x64 -T ${{matrix.toolset}} -DHATTER_ENABLE_TESTS=ON
+        working-directory: ${{github.workspace}}\build
 
-      - name: Build
+      - name: Build mad-hatter
         run: cmake --build . --config Debug -j2
         working-directory: ${{github.workspace}}\build
         shell: cmd
 
-      - name: Run tests
-        run: ctest --output-on-failure -C Debug
+      - name: Run unit tests
+        run: .\test\Debug\run_unit_tests
         working-directory: ${{github.workspace}}\build
         shell: cmd
