@@ -372,7 +372,8 @@ private:
 
     auto cnt = cut.size();
     uint32_t best_num_edges = spfds_.get_num_edges();
-    while ( !spfds_.is_covered() && !spfds_.is_saturated() && ( cnt < max_cuts_size ) )
+    uint32_t iteration_guard = 1000; // safety cutoff
+    while ( !spfds_.is_covered() && !spfds_.is_saturated() && ( cnt < max_cuts_size ) && iteration_guard-- )
     {
       std::optional<uint32_t> best_div;
       window.foreach_divisor( [&]( auto const& d, auto i ) {
@@ -384,6 +385,12 @@ private:
           best_num_edges = num_edges;
         }
       } );
+
+      if ( iteration_guard == 0 )
+      {
+        std::cerr << "[warn] iteration_guard triggered in exactify_candidates_greedy\n";
+        return false;
+      }
       if ( best_div )
         cut.add_leaf( *best_div );
       else

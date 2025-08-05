@@ -141,7 +141,7 @@ class xaig_decompose
 
 public:
   explicit xaig_decompose( stats& st ) noexcept
-      : st( st ), database()
+      : database(), st( st )
   {
   }
 

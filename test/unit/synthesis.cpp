@@ -178,12 +178,18 @@ TEST_CASE( "Termination condition for LUT decomposition", "[synthesis]" )
   ISTT func1( care1, mask1 );
   std::vector<double> times{ 0.0, 0.0, 0.0 };
   CHECK( decomposer.run( func1, times ) );
-  decomposer.foreach_spec( [&]( auto const& sim_ptrs, auto const& spec ) {
-    kitty::static_truth_table<2u> expected;
-    kitty::create_from_binary_string( expected, "1000" );
-    auto itt = mad_hatter::dependency::extract_function<kitty::static_truth_table<MaxCutSize>, MaxNumVars>( sim_ptrs, spec.sim._bits, spec.sim._care );
+  kitty::static_truth_table<2u> expected;
+  kitty::create_from_binary_string( expected, "1000" );
+  bool const success =decomposer.foreach_spec( [&]( auto & specs, uint8_t lit ) {
+    std::vector<CSTT const*> sim_ptrs;
+    auto& spec = specs[lit];
+    for ( auto i : spec.inputs )
+      sim_ptrs.push_back( &specs[i].sim._bits );
+
+    auto itt = mad_hatter::dependency::extract_function<kitty::static_truth_table<MaxCutSize>, MaxNumVars>( sim_ptrs, specs[lit].sim._bits, specs[lit].sim._care );
     CHECK( kitty::equal( expected, itt._bits ) );
     CHECK( kitty::is_const0( ~itt._care ) );
-    return std::make_optional( *sim_ptrs[0] );
+    return true;
   } );
+  CHECK(success);
 }

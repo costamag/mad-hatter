@@ -41,6 +41,7 @@
 #include "../../windowing/window_manager.hpp"
 #include "../../windowing/window_simulator.hpp"
 #include "../evaluators/area_evaluator.hpp"
+// #include "../evaluators/delay_evaluator.hpp"
 #include "../evaluators/evaluators_utils.hpp"
 
 #include <fmt/format.h>
@@ -166,6 +167,7 @@ class resynthesize_impl
   using node_t = typename Ntk::node;
   using signal = typename Ntk::signal;
   using signal_t = typename Ntk::signal;
+  using node_index_t = typename Ntk::node;
   using cut_t = dependency::dependency_cut_t<Ntk, Params::max_cuts_size>;
   using chain_t = evaluation::chains::bound_chain<Ntk::design_t>;
   using func_t = kitty::static_truth_table<Params::max_cuts_size>;
@@ -262,7 +264,7 @@ public:
         struct_dependencies.run( win_manager_, win_simulator_ );
 
         struct_dependencies.foreach_cut( [&]( auto& cut, auto i ) {
-          evaluate( cut, best_chain, best_leaves, best_reward );
+          best_reward = std::max( evaluate( cut, best_chain, best_leaves ), best_reward );
         } );
 
         if ( best_reward > 0 )
@@ -272,13 +274,11 @@ public:
           return true;
         }
       }
-
       if ( ps_.try_window )
       {
         window_dependencies.run( win_manager_, win_simulator_ );
-
         window_dependencies.foreach_cut( [&]( auto& cut, auto i ) {
-          evaluate( cut, best_chain, best_leaves, best_reward );
+          best_reward = std::max( evaluate( cut, best_chain, best_leaves ), best_reward );
         } );
 
         if ( best_reward > 0 )
@@ -294,11 +294,11 @@ public:
   }
 
 private:
-  void evaluate( cut_t const& cut, chain_t& best_chain, std::vector<signal_t>& best_leaves, double& best_reward )
+  double evaluate( cut_t const& cut, chain_t& best_chain, std::vector<signal_t>& best_leaves )
   {
+    double best_reward = -1;
     if ( cut.func.size() > 1 )
-      return;
-
+      return 0;
     auto cost_curr = evaluator_.evaluate( cut.root, cut.leaves );
 
     auto const cut_func = cut.func[0];
@@ -306,57 +306,26 @@ private:
     auto times = get_times( signals );
     signals.resize( Params::max_cuts_size, std::numeric_limits<uint64_t>::max() );
     times.resize( Params::max_cuts_size, std::numeric_limits<double>::max() );
-    if ( !decomposer_.run( cut_func, times ) )
-      return;
-
-    std::vector<signal> best_loc_leaves;
-    std::vector<typename decomposer_t::cut_func_t const*> best_loc_sims;
     signal_t best_signal;
+    if ( !decomposer_.run( cut_func, times ) )
+      return 0;
 
-    bool const success = decomposer_.foreach_spec(
-        [&]( auto const& sim_ptrs, auto const& spec ) -> std::optional<typename decomposer_t::cut_func_t> {
-          auto itt = dependency::extract_function<func_t, Database::max_num_vars>( sim_ptrs, spec.sim._bits, spec.sim._care );
-          double best_loc_cost = std::numeric_limits<double>::max();
-          std::optional<node> best_database_node;
-          enumerator_.foreach_dont_care_assignment( itt, sim_ptrs.size(), [&]( auto const& ctt ) {
-            std::vector<signal> loc_leaves( spec.inputs.size() );
-            std::vector<double> loc_times( spec.inputs.size() );
-            std::vector<typename decomposer_t::cut_func_t const*> loc_sims = sim_ptrs;
-            std::transform( spec.inputs.begin(), spec.inputs.end(), loc_leaves.begin(), [&]( auto const& lit ) { return signals[lit]; } );
-            std::transform( spec.inputs.begin(), spec.inputs.end(), loc_times.begin(), [&]( auto const& lit ) { return times[lit]; } );
-            auto row = database_.boolean_matching( ctt, loc_times, loc_leaves, loc_sims );
-            if ( row )
-            {
-              database_.foreach_entry( *row, [&]( auto const& entry ) {
-                auto nnew = database_.write( entry, ntk_, loc_leaves );
-                auto cost_new = evaluator_.evaluate( nnew, loc_leaves );
-                if ( cost_new < best_loc_cost )
-                {
-                  best_loc_cost = cost_new;
-                  best_database_node = std::make_optional( entry.index );
-                  best_loc_leaves = loc_leaves;
-                  best_loc_sims = loc_sims;
-                }
-                ntk_.take_out_node( nnew );
-              } );
-            }
-          } );
-          if ( best_database_node )
-          {
-            auto nnew = database_.write( *best_database_node, ntk_, best_loc_leaves );
-            best_signal = ntk_.make_signal( nnew );
-            signals.push_back( best_signal );
-            times.push_back( evaluator_.get_arrival( best_signal ) );
-            chain_t loc_chain;
-            loc_chain.add_inputs( Database::max_num_vars );
-            extract( loc_chain, ntk_, best_loc_leaves, signals.back() );
-            chain_simulator_( loc_chain, best_loc_sims );
-            return std::make_optional( chain_simulator_.get_simulation( loc_chain, best_loc_sims, loc_chain.po_at( 0 ) ) );
-          }
-          return std::nullopt;
-        } );
+    bool const success = decomposer_.foreach_spec( [&]( auto& specs, uint8_t lit ) {
+      auto const res = local_synthesis( cut, specs, lit, signals, times );
+      if ( res )
+      {
+        auto const& [signal, time, sim] = *res;
+        signals.push_back( signal );
+        times.push_back( time );
+        specs[lit].sim._bits = sim;
+        best_signal = signal;
+        return true;
+      }
+      return false;
+    } );
+
     if ( !success )
-      return;
+      return 0;
 
     chain_t new_chain;
     new_chain.add_inputs( cut.leaves.size() );
@@ -369,6 +338,75 @@ private:
       best_leaves = cut.leaves;
       best_chain = new_chain;
     }
+    return best_reward;
+  }
+
+  std::optional<std::tuple<signal_t, double, func_t>> local_synthesis( cut_t const& cut, typename decomposer_t::specs_t const& specs, uint8_t lit, std::vector<signal_t>& signals, std::vector<double>& times )
+  {
+    std::vector<func_t const*> sim_ptrs;
+    auto& spec = specs[lit];
+    for ( auto i : spec.inputs )
+      sim_ptrs.push_back( &specs[i].sim._bits );
+
+    auto itt = dependency::extract_function<func_t, Database::max_num_vars>( sim_ptrs, specs[lit].sim._bits, specs[lit].sim._care );
+    double best_loc_cost = std::numeric_limits<double>::max();
+    std::optional<node> best_database_node;
+    std::vector<signal> best_loc_leaves;
+    std::vector<typename decomposer_t::cut_func_t const*> best_loc_sims;
+    signal_t best_signal;
+
+    enumerator_.foreach_dont_care_assignment( itt, sim_ptrs.size(), [&]( auto const& ctt ) {
+      std::vector<signal> loc_leaves( spec.inputs.size() );
+      std::vector<double> loc_times( spec.inputs.size() );
+      std::vector<typename decomposer_t::cut_func_t const*> loc_sims = sim_ptrs;
+      std::transform( spec.inputs.begin(), spec.inputs.end(), loc_leaves.begin(), [&]( auto const& lit ) { return signals[lit]; } );
+      std::transform( spec.inputs.begin(), spec.inputs.end(), loc_times.begin(), [&]( auto const& lit ) { return times[lit]; } );
+      // Perform boolean matching
+      auto row = database_.boolean_matching( ctt, loc_times, loc_leaves, loc_sims );
+
+      if ( row )
+      {
+        auto [index, cost_cand] = evaluate( *row, loc_leaves );
+        if ( cost_cand < best_loc_cost )
+        {
+          best_loc_cost = cost_cand;
+          best_database_node = std::make_optional( index );
+          best_loc_leaves = loc_leaves;
+          best_loc_sims = loc_sims;
+        }
+      }
+    } );
+    if ( best_database_node )
+    {
+      auto nnew = database_.write( *best_database_node, ntk_, best_loc_leaves );
+      best_signal = ntk_.make_signal( nnew );
+      signals.push_back( best_signal );
+      times.push_back( evaluator_.get_arrival( best_signal ) );
+      chain_t loc_chain;
+      loc_chain.add_inputs( Database::max_num_vars );
+      extract( loc_chain, ntk_, best_loc_leaves, signals.back() );
+      chain_simulator_( loc_chain, best_loc_sims );
+      auto const sim = chain_simulator_.get_simulation( loc_chain, best_loc_sims, loc_chain.po_at( 0 ) );
+      return std::make_optional( std::make_tuple( signals.back(), times.back(), sim ) );
+    }
+    return std::nullopt;
+  }
+
+  std::tuple<node_index_t, double> evaluate( uint64_t const& row, std::vector<signal_t> const& loc_leaves )
+  {
+    node_index_t best_database_node = std::numeric_limits<node_index_t>::max();
+    double best_cost = std::numeric_limits<double>::max();
+    database_.foreach_entry( row, [&]( auto const& entry ) {
+      auto nnew = database_.write( entry, ntk_, loc_leaves );
+      auto cost_new = evaluator_.evaluate( nnew, loc_leaves );
+      if ( cost_new < best_cost )
+      {
+        best_cost = cost_new;
+        best_database_node = entry.index;
+      }
+      ntk_.take_out_node( nnew );
+    } );
+    return std::make_tuple( best_database_node, best_cost );
   }
 
   void substitute_node( node_t const& n, signal_t const& fnew )
@@ -456,6 +494,17 @@ void area_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesi
 }
 
 #if 0
+template<class Ntk, class Database, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
+void delay_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesis_stats* pst = nullptr )
+{
+  using Evaluator = evaluators::delay_evaluator<Ntk>;
+  resynthesis_stats st;
+  detail::resynthesize_impl<Ntk, Database, Evaluator, Params> p( ntk, database, ps, st );
+  p.run();
+  if ( pst != nullptr )
+    *pst = st;
+}
+
 template<class Ntk, class Database, uint32_t MaxNumVars, uint32_t num_steps, uint32_t CubeSize, uint32_t MaxNumLeaves>
 void glitch_resynthesize( Ntk& ntk, Database & database, resynthesis_params ps = {} )
 {

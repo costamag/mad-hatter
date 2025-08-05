@@ -65,6 +65,7 @@ template<uint32_t MaxCutSize = 6u, uint32_t MaxNumVars = 6u>
 class lut_decomposer
 {
 public:
+  using specs_t = std::vector<spec_t<MaxCutSize>>;
   using cut_func_t = kitty::static_truth_table<MaxCutSize>;
   using dat_func_t = kitty::static_truth_table<MaxNumVars>;
   using incomplete_cut_func_t = kitty::ternary_truth_table<cut_func_t>;
@@ -98,17 +99,10 @@ public:
   {
     for ( auto i = MaxCutSize; i < specs_.size(); ++i )
     {
-      std::vector<cut_func_t const*> sim_ptrs;
-      auto& spec = specs_[i];
-      for ( auto lit : spec.inputs )
+      if ( !fn( specs_, i ) )
       {
-        sim_ptrs.push_back( &specs_[lit].sim._bits );
-      }
-      auto sim = fn( sim_ptrs, specs_[i] );
-      if ( sim )
-        spec.sim = *sim;
-      else
         return false;
+      }
     }
     return true;
   }
@@ -116,14 +110,14 @@ public:
 private:
   std::optional<uint8_t> decompose( std::vector<uint8_t>& support, std::vector<double>& times, incomplete_cut_func_t func )
   {
-    // termination condition: the function can be implemented with a gate from the database
-    minimize_support( support, times, func );
-    if ( support.size() <= MaxNumVars )
-    {
-      auto lit = static_cast<uint8_t>( specs_.size() );
-      specs_.emplace_back( support, func );
-      return lit;
-    }
+// termination condition: the function can be implemented with a gate from the database
+minimize_support( support, times, func );
+if ( support.size() <= MaxNumVars )
+{
+  auto lit = static_cast<uint8_t>( specs_.size() );
+  specs_.emplace_back( support, func );
+  return lit;
+}
     return std::nullopt;
   }
 
@@ -132,17 +126,17 @@ private:
     auto supp = kitty::min_base_inplace<cut_func_t, true>( func );
     std::vector<uint8_t> new_support( supp.size() );
     std::vector<double> new_times( supp.size() );
-    for ( auto i : supp )
+    for ( auto i=0u; i < supp.size(); ++i )
     {
-      new_support[i] = support[i];
-      new_times[i] = times[i];
+      new_support[i] = support[supp[i]];
+      new_times[i] = times[supp[i]];
     }
     support = new_support;
     times = new_times;
   }
 
   /*! \brief Projection functions in the signature space */
-  std::vector<spec_t<MaxCutSize>> specs_;
+  specs_t specs_;
 };
 
 } /* namespace synthesis */

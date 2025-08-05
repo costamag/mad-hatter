@@ -327,7 +327,7 @@ public:
     times.resize( MaxNumVars, std::numeric_limits<double>::max() );
 
     // Resize all other vectors
-    ( ( others.resize( MaxNumVars ) ), ... );
+    ( ( (void)others.resize( MaxNumVars ) ), ... );
 
     // check if the representative is already in the database
     auto match = get_match( func );
@@ -337,12 +337,12 @@ public:
       database_row_t const& row = database_[row_index];
       auto const perm = ( *match ).perm;
       auto const symm = row.symm;
-
-      // Apply permutation to all vectors simultaneously
-      boolean::forward_permute_inplace( perm, others..., times );
-
-      // Apply time-based symmetric sorting to all vectors simultaneously
-      boolean::sort_symmetric( symm, [&]( auto const& a, auto const& b ) { return a < b; }, times, others... );
+    
+    // Apply permutation to all vectors simultaneously
+    boolean::forward_permute_inplace( perm, times, others... );
+    
+    // Apply time-based symmetric sorting to all vectors simultaneously
+    boolean::sort_symmetric( symm, [&]( auto const& a, auto const& b ) { return a < b; }, times, others... );
 
       return row_index;
     }

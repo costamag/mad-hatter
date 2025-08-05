@@ -24,8 +24,8 @@
  */
 
 /*!
-  \file area_evaluator.hpp
-  \brief Analyzer of the area
+  \file delay_evaluator.hpp
+  \brief Analyzer of the delay
 
   \author Andrea Costamagna
 */
@@ -34,6 +34,7 @@
 
 #include "../../databases/mapped_database.hpp"
 #include "../../trackers/arrival_times_tracker.hpp"
+#include "../../trackers/required_times_tracker.hpp"
 #include "evaluators_utils.hpp"
 
 namespace mad_hatter
@@ -46,7 +47,7 @@ namespace evaluators
 {
 
 template<class Ntk>
-class area_evaluator
+class delay_evaluator
 {
 public:
   using node_index_t = typename Ntk::node;
@@ -61,11 +62,11 @@ public:
   struct node_with_cost_t
   {
     node_index_t root;
-    cost_t mffc_area;
+    cost_t mffc_delay;
   };
 
 public:
-  area_evaluator( Ntk& ntk, evaluator_params const& ps )
+  delay_evaluator( Ntk& ntk, evaluator_params const& ps )
       : ntk_( ntk ),
         ps_( ps ),
         nodes_( ntk_.size() ),
@@ -83,35 +84,41 @@ public:
   {
     signal_t const f = insert( ntk_, leaves, list );
     node_index_t const n = ntk_.get_node( f );
-    cost_t const cost_deref = recursive_deref( n );
-    cost_t const cost_ref = recursive_ref( n );
-    assert( std::abs( cost_ref - cost_deref ) < ps_.eps && "[e] Cost ref and deref should be the same" );
+    cost_t time = 0.0;
+    foreach_output( n, [&]( auto const& f ) {
+      time = std::max( time, arrival_.get_time( f ) );
+    } );
     if ( ntk_.fanout_size( n ) == 0 )
       ntk_.take_out_node( n );
-    return cost_deref;
+    return time;
   }
 
   cost_t evaluate_rewiring( node_index_t const& n, std::vector<signal_t> const& new_children, std::vector<signal_t> const& win_leaves )
   {
-    for ( auto const& f : new_children )
-      ntk_.incr_fanout_size( ntk_.get_node( f ) );
+    auto const lib = ntk_.get_library();
+    cost_t curr_cost = 0.0;
+    foreach_output( n, [&]( auto const& f ) {
+      curr_cost = std::max( curr_cost, arrival_.get_time( f ) );
+    } );
+    cost_t cand_cost = 0.0;
+    foreach_output( n, [&]( auto const& f ) {
+      auto const id = get_binding_index( f );
+      ntk_.foreach_fanin( n, [&]( auto const& fi, auto ii ) {
+        (void)fi;
+        cand_cost = std::max( cand_cost, arrival_.get_time( new_children[ii] ) + lib.get_max_pin_delay( id, ii ) );
+      } );
+    } );
 
-    auto const cost = evaluate( n, win_leaves ) - ntk_.get_area( n );
-
-    for ( auto const& f : new_children )
-      ntk_.decr_fanout_size( ntk_.get_node( f ) );
-
-    return cost;
+    return curr_cost - cand_cost;
   }
 
   cost_t evaluate( node_index_t const& n, std::vector<signal_t> const& children )
   {
-    std::vector<node_index_t> leaves( children.size() );
-    std::transform( children.begin(), children.end(), leaves.begin(), [&]( auto const f ) { return ntk_.get_node( f ); } );
-    cost_t cost_deref = measure_mffc_deref( n, leaves );
-    cost_t cost_ref = measure_mffc_ref( n, leaves );
-    assert( std::abs( cost_ref - cost_deref ) < ps_.eps && "[e] Cost ref and deref should be the same" );
-    return cost_deref;
+    cost_t time = 0.0;
+    foreach_output( n, [&]( auto const& f ) {
+      time = std::max( time, arrival_.get_time( f ) );
+    } );
+    return time;
   }
 
   template<typename Fn>
@@ -141,105 +148,14 @@ public:
 private:
   void compute_costs()
   {
-    std::function<void( signal_t const& )> compute_costs_rec = [&]( signal_t const& f ) -> void {
-      node_index_t n = ntk_.get_node( f );
-      if ( ( ntk_.visited( n ) == ntk_.trav_id() ) || ntk_.is_pi( n ) )
-        return;
-
-      double const node_cost = recursive_deref( n );
-      recursive_ref( n );
-
-      nodes_[n] = { n, node_cost };
-
-      ntk_.set_visited( n, ntk_.trav_id() );
-      ntk_.foreach_fanin( n, [&]( auto const& fi ) {
-        compute_costs_rec( fi );
+    trackers::required_times_tracker<Ntk> required( ntk_, arrival_.compute_worst_delay() );
+    ntk_.foreach_gate( [&]( auto const& n ) {
+      double const node_cost = 0;
+      ntk_.foreach_output( n, [&]( auto const& f ) {
+        node_cost = std::max( node_cost, required.get_time( f ) - arrival_.get_time( f ) );
       } );
-    };
-
-    ntk_.incr_trav_id();
-    ntk_.foreach_po( [&]( auto const& f ) {
-      compute_costs_rec( f );
+      nodes_[n] = { n, node_cost };
     } );
-  }
-
-  cost_t recursive_deref( node_index_t const& n )
-  {
-    /* terminate? */
-    if ( ntk_.is_constant( n ) || ntk_.is_pi( n ) )
-      return 0.0;
-
-    /* recursively collect nodes */
-    cost_t area = ntk_.get_area( n );
-    ntk_.foreach_fanin( n, [&]( auto const& fi ) {
-      node_index_t const ni = ntk_.get_node( fi );
-      if ( ntk_.decr_fanout_size( ni ) == 0 )
-      {
-        area += recursive_deref( ni );
-      }
-    } );
-    return area;
-  }
-
-  cost_t recursive_ref( node_index_t const& n )
-  {
-    /* terminate? */
-    if ( ntk_.is_constant( n ) || ntk_.is_pi( n ) )
-      return 0.0;
-
-    /* recursively collect nodes */
-    cost_t area = ntk_.get_area( n );
-
-    ntk_.foreach_fanin( n, [&]( auto const& fi ) {
-      node_index_t const ni = ntk_.get_node( fi );
-      if ( ntk_.incr_fanout_size( ni ) == 0 )
-      {
-        area += recursive_ref( ni );
-      }
-    } );
-    return area;
-  }
-
-  cost_t measure_mffc_deref( node_index_t const& n, std::vector<node_index_t> const& leaves )
-  {
-    /* reference cut leaves */
-    for ( auto l : leaves )
-    {
-      if ( l < std::numeric_limits<uint32_t>::max() )
-        ntk_.incr_fanout_size( l );
-    }
-
-    cost_t mffc_cost = recursive_deref( n );
-
-    /* dereference leaves */
-    for ( auto l : leaves )
-    {
-      if ( l < std::numeric_limits<uint32_t>::max() )
-        ntk_.decr_fanout_size( l );
-    }
-
-    return mffc_cost;
-  }
-
-  cost_t measure_mffc_ref( node_index_t const& n, std::vector<node_index_t> const& leaves )
-  {
-    /* reference cut leaves */
-    for ( auto l : leaves )
-    {
-      if ( l < std::numeric_limits<uint32_t>::max() )
-        ntk_.incr_fanout_size( l );
-    }
-
-    cost_t mffc_cost = recursive_ref( n );
-
-    /* dereference leaves */
-    for ( auto l : leaves )
-    {
-      if ( l < std::numeric_limits<uint32_t>::max() )
-        ntk_.decr_fanout_size( l );
-    }
-
-    return mffc_cost;
   }
 
   void sort_nodes()
@@ -248,7 +164,7 @@ private:
     std::fill( nodes_.begin(), nodes_.end(), node_with_cost_t{} );
     compute_costs();
     std::stable_sort( nodes_.begin(), nodes_.end(), [&]( auto const& a, auto const& b ) {
-      return a.mffc_area > b.mffc_area;
+      return a.mffc_delay > b.mffc_delay;
     } );
   }
 

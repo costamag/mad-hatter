@@ -22,15 +22,23 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
         with:
           submodules: true
+
+      - name: Clean build
+        run: cmake -E remove_directory build
 
       - name: Create build directory
         run: cmake -E make_directory ${{github.workspace}}\build
 
       - name: Run CMake
-        run: cmake ${{github.workspace}} -G "${{matrix.env}}" -A x64 -T ${{matrix.toolset}} -DHATTER_ENABLE_TESTS=ON
+        run: >
+          cmake ${{github.workspace}}
+          -G "${{matrix.env}}"
+          -A x64
+          -T ${{matrix.toolset}}
+          -DHATTER_ENABLE_TESTS=ON
         working-directory: ${{github.workspace}}\build
 
       - name: Build mad-hatter
@@ -39,6 +47,6 @@ jobs:
         shell: cmd
 
       - name: Run unit tests
-        run: .\test\Debug\run_unit_tests
+        run: .\test\Debug\run_unit_tests --durations yes --reporter console
         working-directory: ${{github.workspace}}\build
         shell: cmd

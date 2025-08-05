@@ -173,6 +173,7 @@ public:
   void foreach_dont_care_assignment( functionality_t const& func, uint32_t num_vars, Fn&& fn )
   {
     uint32_t const num_minterms = 1u << num_vars;
+
     enumerate_dont_cares( func, num_vars );
 
     truth_table_t const care = func._care;

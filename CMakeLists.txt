@@ -32,6 +32,7 @@ endif()
 
 if(MSVC)
   add_compile_options(/arch:AVX2)
+  add_compile_options(/EHsc /bigobj)
 endif()
 
 # Dependencies
