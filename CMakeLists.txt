@@ -4,6 +4,11 @@ project(mad_hatter)
 # Options
 option(HATTER_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(HATTER_ENABLE_TESTS "Build unit tests" ON)
+option(HATTER_VERBOSE_COMPILE "Print compilation-time parameters" ON)
+set(HATTER_NUM_VARS_SIGN 6 CACHE STRING "Default cube size for signatures")
+set(HATTER_MAX_CUTS_SIZE 6 CACHE STRING "Default maximum number of leaves in cuts")
+set(HATTER_MAX_CUBE_SPFD 12 CACHE STRING "Default maximum cube size exactly represented")
+set(HATTER_MAX_NUM_LEAVES 12 CACHE STRING "Default maximum number of leaves in the window")
 
 # Sanitizer
 if (HATTER_ENABLE_ASAN)
@@ -56,6 +61,21 @@ target_include_directories(mad_cli
         ${CMAKE_SOURCE_DIR}/src   # so "cli/context.hpp" works
 )
 
+target_compile_definitions(mad_cli PUBLIC
+  HATTER_NUM_VARS_SIGN=${HATTER_NUM_VARS_SIGN}
+  HATTER_MAX_CUTS_SIZE=${HATTER_MAX_CUTS_SIZE}
+  HATTER_MAX_CUBE_SPFD=${HATTER_MAX_CUBE_SPFD}
+  HATTER_MAX_NUM_LEAVES=${HATTER_MAX_NUM_LEAVES}
+)
+
+if(HATTER_VERBOSE_COMPILE)
+  message(STATUS "Configuring mad-hatter with:")
+  message(STATUS "  HATTER_NUM_VARS_SIGN = ${HATTER_NUM_VARS_SIGN}")
+  message(STATUS "  HATTER_MAX_CUTS_SIZE = ${HATTER_MAX_CUTS_SIZE}")
+  message(STATUS "  HATTER_MAX_CUBE_SPFD = ${HATTER_MAX_CUBE_SPFD}")
+  message(STATUS "  HATTER_MAX_NUM_LEAVES = ${HATTER_MAX_NUM_LEAVES}")
+endif()
+
 # CLI executable
 add_executable(hatter src/cli/main.cpp)
 target_link_libraries(hatter PRIVATE mad_cli)
@@ -63,6 +83,13 @@ target_link_libraries(hatter PRIVATE mad_cli)
 # Public header-only interface library
 add_library(mad_hatter INTERFACE)
 target_include_directories(mad_hatter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+target_compile_definitions(mad_hatter INTERFACE
+  HATTER_NUM_VARS_SIGN=${HATTER_NUM_VARS_SIGN}
+  HATTER_MAX_CUTS_SIZE=${HATTER_MAX_CUTS_SIZE}
+  HATTER_MAX_CUBE_SPFD=${HATTER_MAX_CUBE_SPFD}
+  HATTER_MAX_NUM_LEAVES=${HATTER_MAX_NUM_LEAVES}
+)
 
 # Tests
 if (HATTER_ENABLE_TESTS)

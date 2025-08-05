@@ -81,7 +81,7 @@ public:
   {
   }
 
-  [[nodiscard]] bool run( node_index_t const& n )
+  bool run( node_index_t const& n )
   {
     st_.valid = false;
     init( n );

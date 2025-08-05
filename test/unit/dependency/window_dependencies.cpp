@@ -20,7 +20,7 @@ std::string const test_library = "GATE   and2    1.0 O=a*b;                 PIN 
 
 struct custom_window_params
 {
-  static constexpr uint32_t num_vars_sign = 6u;
+  static constexpr uint32_t max_num_leaves = 6u;
   static constexpr uint32_t max_cuts_size = 6u;
   static constexpr uint32_t max_cube_spfd = 12u;
 };
@@ -69,7 +69,7 @@ TEST_CASE( "Enumerate dependency cuts", "[window_dependencies]" )
   CHECK( window.run( dntk.get_node( fs[8] ) ) );
   auto const leaves = window.get_leaves();
   auto const divs = window.get_divisors();
-  mad_hatter::windowing::window_simulator<DNtk, custom_window_params::num_vars_sign> sim( dntk );
+  mad_hatter::windowing::window_simulator<DNtk, custom_window_params::max_num_leaves> sim( dntk );
   sim.run( window );
 
   mad_hatter::dependency::window_dependencies<DNtk, custom_window_params> dep( dntk );

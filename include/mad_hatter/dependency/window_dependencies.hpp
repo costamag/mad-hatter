@@ -44,7 +44,7 @@ namespace dependency
 
 struct default_window_params
 {
-  static constexpr uint32_t num_vars_sign = 6u;
+  static constexpr uint32_t max_num_leaves = 6u;
   static constexpr uint32_t max_cuts_size = 6u;
   static constexpr uint32_t max_cube_spfd = 12u;
 };
@@ -54,25 +54,25 @@ class window_dependencies
 {
 
 public:
-  static constexpr uint32_t num_vars_sign = StaticParams::num_vars_sign;
+  static constexpr uint32_t max_num_leaves = StaticParams::max_num_leaves;
   static constexpr uint32_t max_cuts_size = StaticParams::max_cuts_size;
   static constexpr uint32_t max_cube_spfd = StaticParams::max_cube_spfd;
   using signal_t = typename Ntk::signal;
   using node_index_t = typename Ntk::node;
-  static constexpr uint32_t num_bits = 1u << num_vars_sign;
+  static constexpr uint32_t num_bits = 1u << max_num_leaves;
   static constexpr uint32_t exact_num_pairs = math::log2_ceil( num_bits * ( num_bits - 1 ) / 2 );
   static constexpr uint32_t num_pairs = std::min( max_cube_spfd, exact_num_pairs );
   using information_t = kitty::static_truth_table<num_pairs>;
-  using signature_t = kitty::static_truth_table<num_vars_sign>;
+  using signature_t = kitty::static_truth_table<max_num_leaves>;
 
 public:
   window_dependencies( Ntk& ntk )
       : ntk_( ntk )
   {
-    if constexpr ( num_vars_sign > 6u )
+    if constexpr ( max_num_leaves > 6u )
     {
       signature_t tmp;
-      boolean::test_avx2_advantage( tmp, num_vars_sign );
+      boolean::test_avx2_advantage( tmp, max_num_leaves );
     }
   }
 
