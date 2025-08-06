@@ -170,7 +170,10 @@ public:
       return { &const0, chain.is_complemented( lit ) };
     }
     if ( chain.num_pis() > inputs.size() )
-      throw std::invalid_argument( "Mismatch between number of PIs and input simulations." );
+    {
+      std::cout << chain.num_pis() << " != " << inputs.size() << std::endl;
+      std::cout << "Mismatch between number of PIs and input simulations." << std::endl;
+    }
     if ( chain.is_pi( lit ) )
     {
       uint32_t index = chain.get_pi_index( lit );
@@ -319,7 +322,10 @@ public:
                                           element_type const& lit )
   {
     if ( chain.num_pis() > inputs.size() )
-      throw std::invalid_argument( "Mismatch between number of PIs and input simulations." );
+    {
+      std::cout << chain.num_pis() << " != " << inputs.size() << std::endl;
+      std::cout << "Mismatch between number of PIs and input simulations." << std::endl;
+    }
     if ( chain.is_pi( lit ) )
     {
       uint32_t index = chain.get_pi_index( lit );

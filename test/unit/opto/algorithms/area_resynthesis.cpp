@@ -64,7 +64,6 @@ TEST_CASE( "Area resynthesis via rewiring - single-output gate without don't car
   ntk.create_po( f5 );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
   DNtk dntk( ntk );
   custom_area_rewire_params ps;
   mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );

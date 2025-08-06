@@ -463,11 +463,11 @@ TEST_CASE( "Saving a mapped database", "[mapped_database]" )
       "module top( x0 , x1 , x2 , x3 , x4 , x5 , y0 , y1 );\n"
       "  input x0 , x1 , x2 , x3 , x4 , x5 ;\n"
       "  output y0 , y1 ;\n"
-      "  wire n10 , n12 ;\n"
+      "  wire n14 , n15 ;\n"
       "  XOR2   g0( .A (x4), .B (x5), .Y (y0) );\n"
-      "  AND4   g1( .A (x3), .B (x4), .C (x5), .D (x2), .Y (n12) );\n"
-      "  INV    g2( .A (n12), .Y (n10) );\n"
-      "  AND2   g3( .A (x0), .B (n10), .Y (y1) );\n"
+      "  AND4   g1( .A (x3), .B (x4), .C (x5), .D (x2), .Y (n14) );\n"
+      "  INV    g2( .A (n14), .Y (n15) );\n"
+      "  AND2   g3( .A (x0), .B (n15), .Y (y1) );\n"
       "endmodule\n";
   CHECK( out.str() == expected );
 }

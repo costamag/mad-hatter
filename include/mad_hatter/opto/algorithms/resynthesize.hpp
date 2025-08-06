@@ -41,7 +41,7 @@
 #include "../../windowing/window_manager.hpp"
 #include "../../windowing/window_simulator.hpp"
 #include "../evaluators/area_evaluator.hpp"
-// #include "../evaluators/delay_evaluator.hpp"
+#include "../evaluators/delay_evaluator.hpp"
 #include "../evaluators/evaluators_utils.hpp"
 
 #include <fmt/format.h>
@@ -493,7 +493,6 @@ void area_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesi
     *pst = st;
 }
 
-#if 0
 template<class Ntk, class Database, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
 void delay_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesis_stats* pst = nullptr )
 {
@@ -505,6 +504,7 @@ void delay_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthes
     *pst = st;
 }
 
+#if 0
 template<class Ntk, class Database, uint32_t MaxNumVars, uint32_t num_steps, uint32_t CubeSize, uint32_t MaxNumLeaves>
 void glitch_resynthesize( Ntk& ntk, Database & database, resynthesis_params ps = {} )
 {

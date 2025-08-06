@@ -85,7 +85,7 @@ public:
     signal_t const f = insert( ntk_, leaves, list );
     node_index_t const n = ntk_.get_node( f );
     cost_t time = 0.0;
-    foreach_output( n, [&]( auto const& f ) {
+    ntk_.foreach_output( n, [&]( auto const& f ) {
       time = std::max( time, arrival_.get_time( f ) );
     } );
     if ( ntk_.fanout_size( n ) == 0 )
@@ -95,17 +95,15 @@ public:
 
   cost_t evaluate_rewiring( node_index_t const& n, std::vector<signal_t> const& new_children, std::vector<signal_t> const& win_leaves )
   {
-    auto const lib = ntk_.get_library();
     cost_t curr_cost = 0.0;
-    foreach_output( n, [&]( auto const& f ) {
+    ntk_.foreach_output( n, [&]( auto const& f ) {
       curr_cost = std::max( curr_cost, arrival_.get_time( f ) );
     } );
     cost_t cand_cost = 0.0;
-    foreach_output( n, [&]( auto const& f ) {
-      auto const id = get_binding_index( f );
+    ntk_.foreach_output( n, [&]( auto const& f ) {
       ntk_.foreach_fanin( n, [&]( auto const& fi, auto ii ) {
         (void)fi;
-        cand_cost = std::max( cand_cost, arrival_.get_time( new_children[ii] ) + lib.get_max_pin_delay( id, ii ) );
+        cand_cost = std::max( cand_cost, arrival_.get_time( new_children[ii] ) + ntk_.get_max_pin_delay( f, ii ) );
       } );
     } );
 
@@ -115,7 +113,7 @@ public:
   cost_t evaluate( node_index_t const& n, std::vector<signal_t> const& children )
   {
     cost_t time = 0.0;
-    foreach_output( n, [&]( auto const& f ) {
+    ntk_.foreach_output( n, [&]( auto const& f ) {
       time = std::max( time, arrival_.get_time( f ) );
     } );
     return time;
@@ -148,9 +146,9 @@ public:
 private:
   void compute_costs()
   {
-    trackers::required_times_tracker<Ntk> required( ntk_, arrival_.compute_worst_delay() );
+    trackers::required_times_tracker<Ntk> required( ntk_, arrival_.worst_delay() );
     ntk_.foreach_gate( [&]( auto const& n ) {
-      double const node_cost = 0;
+      double node_cost = 0;
       ntk_.foreach_output( n, [&]( auto const& f ) {
         node_cost = std::max( node_cost, required.get_time( f ) - arrival_.get_time( f ) );
       } );

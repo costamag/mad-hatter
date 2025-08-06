@@ -1133,16 +1133,16 @@ public:
 
   node_index_t get_new_index()
   {
-    if ( dead_nodes.empty() )
+    // if ( dead_nodes.empty() )
     {
       nodes.emplace_back( pin_type_t::NONE );
       return static_cast<node_index_t>( nodes.size() - 1 );
     }
-    auto n = dead_nodes.front();
-    dead_nodes.pop();
-    nodes[n].clear();
-    nodes[n] = node_t( pin_type_t::NONE );
-    return n;
+    // auto n = dead_nodes.front();
+    // dead_nodes.pop();
+    // nodes[n].clear();
+    // nodes[n] = node_t( pin_type_t::NONE );
+    // return n;
   }
 
   uint32_t get_fanin_number( unsigned int id, std::string const& pin_name ) const
