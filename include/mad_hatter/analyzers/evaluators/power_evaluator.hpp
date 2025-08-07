@@ -32,14 +32,17 @@
 
 #pragma once
 
-#include "../network/signal_map.hpp"
+#include "../../network/signal_map.hpp"
 #include "../trackers/trackers.hpp"
-#include "switching.hpp"
+#include "../analyzers_utils/switching.hpp"
 
 namespace mad_hatter
 {
 
-namespace power
+namespace analyzers
+{
+
+namespace evaluators
 {
 
 struct power_evaluator_stats
@@ -63,7 +66,7 @@ public:
   {
   }
 
-  void run( workload<TT, TimeSteps> const& work )
+  void run( utils::workload<TT, TimeSteps> const& work )
   {
     activity_.resize();
     /* store the workload in the input's simulations */
@@ -223,9 +226,11 @@ private:
 private:
   Ntk& ntk_;
   power_evaluator_stats& st_;
-  network::incomplete_signal_map<signal_switching<TT, TimeSteps>, Ntk> activity_;
+  network::incomplete_signal_map<utils::signal_switching<TT, TimeSteps>, Ntk> activity_;
 };
 
 } // namespace power
+
+} // namespace analyzers
 
 } // namespace mad_hatter

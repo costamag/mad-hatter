@@ -6,7 +6,7 @@
 
 #include <lorina/genlib.hpp>
 #include <mad_hatter/network/network.hpp>
-#include <mad_hatter/opto/evaluators/area_evaluator.hpp>
+#include <mad_hatter/opto/profilers/area_profiler.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
@@ -29,7 +29,7 @@ std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 
                                  "GATE   fa      6 C=a*b+a*c+b*c;   PIN * INV 1 999 2.1 0.4 2.1 0.4\n"
                                  "GATE   fa      6 S=a^b^c;         PIN * INV 1 999 3.0 0.4 3.0 0.4";
 
-TEST_CASE( "Area evaluator for resynthesis of mapped networks", "[area_resyn_evaluator]" )
+TEST_CASE( "Area profiler for resynthesis of mapped networks", "[area_resyn_profiler]" )
 {
   using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
   using signal = bound_network::signal;
@@ -56,21 +56,21 @@ TEST_CASE( "Area evaluator for resynthesis of mapped networks", "[area_resyn_eva
   ntk.create_po( f6 );
   ntk.create_po( f7 );
 
-  mad_hatter::opto::evaluators::evaluator_params ps;
+  mad_hatter::opto::profilers::profiler_params ps;
   ps.max_num_roots = 7;
-  mad_hatter::opto::evaluators::area_evaluator evaluator( ntk, ps );
+  mad_hatter::opto::profilers::area_profiler profiler( ntk, ps );
 
   std::vector<node> sorted_nodes;
-  evaluator.foreach_gate( [&]( auto n ) {
+  profiler.foreach_gate( [&]( auto n ) {
     sorted_nodes.push_back( n );
   } );
 
   CHECK( ntk.area() == 14 );
   CHECK( sorted_nodes[0] == 11 );
   CHECK( sorted_nodes[1] == 9 );
-  CHECK( evaluator.evaluate( f6.index, std::vector<signal>( { a, b, c, d } ) ) == 8 );
-  CHECK( evaluator.evaluate( f6.index, std::vector<signal>( { f1, f2, f3 } ) ) == 6 );
-  CHECK( evaluator.evaluate( f6.index, std::vector<signal>( { f4, f5 } ) ) == 2 );
+  CHECK( profiler.evaluate( f6.index, std::vector<signal>( { a, b, c, d } ) ) == 8 );
+  CHECK( profiler.evaluate( f6.index, std::vector<signal>( { f1, f2, f3 } ) ) == 6 );
+  CHECK( profiler.evaluate( f6.index, std::vector<signal>( { f4, f5 } ) ) == 2 );
 
   mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list;
   list.add_inputs( 3 );
@@ -81,7 +81,7 @@ TEST_CASE( "Area evaluator for resynthesis of mapped networks", "[area_resyn_eva
   auto const l2 = list.add_gate( { lb, lc }, 2 );
   auto const l3 = list.add_gate( { l1, l2 }, 4 );
   list.add_output( l3 );
-  auto cost = evaluator.evaluate( list, std::vector<signal>( { a, b, c } ) );
+  auto cost = profiler.evaluate( list, std::vector<signal>( { a, b, c } ) );
   CHECK( cost == 4 );
   CHECK( ntk.area() == 14 );
 }

@@ -1,5 +1,5 @@
-/* mad-hatter: C++ logic network library
- * Copyright (C) 2025 EPFL
+/* mad_hatter: C++ logic network library
+ * Copyright (C) 2018-2022  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,11 +24,10 @@
  */
 
 /*!
-  \file evaluators.hpp
-  \brief Main header file for PPA evaluators
+  \file mad_hatter.hpp
+  \brief Main header file for mad_hatter
 */
 
 #pragma once
 
 #include "power_evaluator.hpp"
-#include "switching.hpp"

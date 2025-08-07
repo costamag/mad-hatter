@@ -35,7 +35,10 @@
 namespace mad_hatter
 {
 
-namespace power
+namespace analyzers
+{
+  
+namespace utils
 {
 
 template<typename TT, uint32_t TimeSteps>
@@ -170,6 +173,8 @@ private:
   std::vector<double> sensing_;
 };
 
-} // namespace power
+} // namespace utils
+
+} // namespace analyzers
 
 } // namespace mad_hatter

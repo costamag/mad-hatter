@@ -32,11 +32,14 @@
 
 #pragma once
 
-#include "../network/tfo_manager.hpp"
+#include "../../network/tfo_manager.hpp"
 #include <limits>
 #include <mockturtle/utils/node_map.hpp>
 
 namespace mad_hatter
+{
+
+namespace analyzers
 {
 
 namespace trackers
@@ -487,5 +490,7 @@ private:
   std::shared_ptr<typename mockturtle::network_events<Ntk>::modified_event_type> modified_event_;
 };
 } // namespace trackers
+
+} // namespace analyzers
 
 } // namespace mad_hatter

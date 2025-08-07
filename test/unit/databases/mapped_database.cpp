@@ -9,7 +9,7 @@
 #include <mad_hatter/databases/mapped_database.hpp>
 #include <mad_hatter/evaluation/chains/bound_chain.hpp>
 #include <mad_hatter/network/network.hpp>
-#include <mad_hatter/trackers/arrival_times_tracker.hpp>
+#include <mad_hatter/analyzers/trackers/arrival_times_tracker.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
@@ -572,7 +572,7 @@ TEST_CASE( "Database look-up with 3-input completely specified function", "[mapp
   }
 
   std::vector<double> times{ 0, 10, 20, 40 };
-  mad_hatter::trackers::arrival_times_tracker arrival( ntk, times );
+  mad_hatter::analyzers::trackers::arrival_times_tracker arrival( ntk, times );
 
   mad_hatter::evaluation::chain_simulator<mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED>, TT> sim( lib );
 

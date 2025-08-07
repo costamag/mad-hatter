@@ -9,7 +9,7 @@
 
 #include <lorina/genlib.hpp>
 #include <mad_hatter/network/network.hpp>
-#include <mad_hatter/trackers/trackers.hpp>
+#include <mad_hatter/analyzers/trackers/trackers.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
@@ -17,7 +17,7 @@
 using namespace mockturtle;
 using namespace mad_hatter;
 using namespace network;
-using namespace trackers;
+using namespace analyzers::trackers;
 
 std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 999 0.9 0.3 0.9 0.3\n"
                                  "GATE   inv2    2 O=!a;            PIN * INV 2 999 1.0 0.1 1.0 0.1\n"

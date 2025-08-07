@@ -6,10 +6,10 @@ namespace mad_hatter
 namespace opto
 {
 
-namespace evaluators
+namespace profilers
 {
 
-class evaluator_params
+class profiler_params
 {
 public:
   uint32_t max_num_roots = std::numeric_limits<uint32_t>::max();
@@ -18,7 +18,7 @@ public:
   double eps = 0.001;
 };
 
-} /* namespace evaluators */
+} /* namespace profilers */
 
 } /* namespace opto */
 

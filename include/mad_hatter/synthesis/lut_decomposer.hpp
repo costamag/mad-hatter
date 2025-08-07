@@ -110,14 +110,24 @@ public:
 private:
   std::optional<uint8_t> decompose( std::vector<uint8_t>& support, std::vector<double>& times, incomplete_cut_func_t func )
   {
-// termination condition: the function can be implemented with a gate from the database
-minimize_support( support, times, func );
-if ( support.size() <= MaxNumVars )
-{
-  auto lit = static_cast<uint8_t>( specs_.size() );
-  specs_.emplace_back( support, func );
-  return lit;
-}
+    // termination condition: the function can be implemented with a gate from the database
+    minimize_support( support, times, func );
+    if ( support.size() <= MaxNumVars )
+    {
+      auto lit = static_cast<uint8_t>( specs_.size() );
+      specs_.emplace_back( support, func );
+      return lit;
+    }
+    // try 2-decomposition
+    auto dec2 = try_2_decomposition( support, times, func );
+    if ( dec2 )
+    {
+      auto [supp, sim] = *dec2;
+      auto lit = static_cast<uint8_t>( specs_.size() );
+      specs_.emplace_back( supp, sim );
+      return lit;
+    }
+
     return std::nullopt;
   }
 
@@ -135,8 +145,49 @@ if ( support.size() <= MaxNumVars )
     times = new_times;
   }
 
+  std::optional<std::tuple<std::vector<uint8_t>, incomplete_cut_func_t>> try_2_decomposition( std::vector<uint8_t>& support, std::vector<double>& times, incomplete_cut_func_t func )
+  {
+    // find the variables with the latest arriving times
+    std::vector<uint8_t> top_support;
+    std::vector<double> top_times;
+    // compute the cofactors
+    // compute the correlations
+    // define the synthesis graph
+    // find the maximum spanning subgraph
+    // construct the functionality
+    // check if the functionality has a reduced support
+    // return the reduced support and functionality
+    return std::nullopt;
+  }
+
+  void select_top_k(const std::vector<double>& times,
+                    const std::vector<uint8_t>& support,
+                    size_t k,
+                    std::vector<double>& top_times,
+                    std::vector<uint8_t>& top_support)
+  {
+    std::vector<size_t> indices(times.size());
+    std::iota(indices.begin(), indices.end(), 0); // fill with 0..n-1
+
+    // Partial sort indices based on times descending
+    std::partial_sort(indices.begin(), indices.begin() + k, indices.end(),
+      [&](size_t i, size_t j) {
+        return times[i] > times[j]; // descending
+      });
+
+    top_times.clear();
+    top_support.clear();
+
+    for (size_t i = 0; i < k && i < indices.size(); ++i)
+    {
+      top_times.push_back(times[indices[i]]);
+      top_support.push_back(support[indices[i]]);
+    }
+  }
+
   /*! \brief Projection functions in the signature space */
   specs_t specs_;
+  std::array<incomplete_cut_func_t, 1u << MaxNumVars> cut_funcs_;
 };
 
 } /* namespace synthesis */

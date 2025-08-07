@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file delay_evaluator.hpp
+  \file delay_profiler.hpp
   \brief Analyzer of the delay
 
   \author Andrea Costamagna
@@ -33,9 +33,9 @@
 #pragma once
 
 #include "../../databases/mapped_database.hpp"
-#include "../../trackers/arrival_times_tracker.hpp"
-#include "../../trackers/required_times_tracker.hpp"
-#include "evaluators_utils.hpp"
+#include "../../analyzers/trackers/arrival_times_tracker.hpp"
+#include "../../analyzers/trackers/required_times_tracker.hpp"
+#include "profilers_utils.hpp"
 
 namespace mad_hatter
 {
@@ -43,11 +43,11 @@ namespace mad_hatter
 namespace opto
 {
 
-namespace evaluators
+namespace profilers
 {
 
 template<class Ntk>
-class delay_evaluator
+class delay_profiler
 {
 public:
   using node_index_t = typename Ntk::node;
@@ -66,7 +66,7 @@ public:
   };
 
 public:
-  delay_evaluator( Ntk& ntk, evaluator_params const& ps )
+  delay_profiler( Ntk& ntk, profiler_params const& ps )
       : ntk_( ntk ),
         ps_( ps ),
         nodes_( ntk_.size() ),
@@ -146,7 +146,7 @@ public:
 private:
   void compute_costs()
   {
-    trackers::required_times_tracker<Ntk> required( ntk_, arrival_.worst_delay() );
+    analyzers::trackers::required_times_tracker<Ntk> required( ntk_, arrival_.worst_delay() );
     ntk_.foreach_gate( [&]( auto const& n ) {
       double node_cost = 0;
       ntk_.foreach_output( n, [&]( auto const& f ) {
@@ -168,12 +168,12 @@ private:
 
 private:
   Ntk& ntk_;
-  evaluator_params const& ps_;
+  profiler_params const& ps_;
   std::vector<node_with_cost_t> nodes_;
-  trackers::arrival_times_tracker<Ntk> arrival_;
+  analyzers::trackers::arrival_times_tracker<Ntk> arrival_;
 };
 
-} /* namespace evaluators */
+} /* namespace profilers */
 
 } /* namespace opto */
 

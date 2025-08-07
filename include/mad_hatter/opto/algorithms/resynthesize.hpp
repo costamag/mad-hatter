@@ -40,9 +40,9 @@
 #include "../../synthesis/lut_decomposer.hpp"
 #include "../../windowing/window_manager.hpp"
 #include "../../windowing/window_simulator.hpp"
-#include "../evaluators/area_evaluator.hpp"
-#include "../evaluators/delay_evaluator.hpp"
-#include "../evaluators/evaluators_utils.hpp"
+#include "../profilers/area_profiler.hpp"
+#include "../profilers/delay_profiler.hpp"
+#include "../profilers/profilers_utils.hpp"
 
 #include <fmt/format.h>
 #include <kitty/dynamic_truth_table.hpp>
@@ -113,7 +113,7 @@ template<uint32_t NumLeaves = HATTER_MAX_NUM_LEAVES>
 struct default_resynthesis_params
 {
   static constexpr uint32_t max_num_leaves = NumLeaves;
-  evaluators::evaluator_params evaluator_ps;
+  profilers::profiler_params profiler_ps;
 
   /*! \brief If true, candidates are only accepted if they do not increase logic depth. */
 
@@ -160,7 +160,7 @@ struct default_resynthesis_params
 namespace detail
 {
 
-template<class Ntk, typename Database, typename Evaluator, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
+template<class Ntk, typename Database, typename Profiler, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
 class resynthesize_impl
 {
   using node = typename Ntk::node;
@@ -202,7 +202,7 @@ public:
   resynthesize_impl( Ntk& ntk, Database& database, Params ps, resynthesis_stats& st )
       : ntk_( ntk ),
         database_( database ),
-        evaluator_( ntk, ps.evaluator_ps ),
+        profiler_( ntk, ps.profiler_ps ),
         win_manager_( ntk, ps.window_manager_ps, st.window_st ),
         win_simulator_( ntk ),
         chain_simulator_( database.get_library() ),
@@ -220,7 +220,7 @@ public:
     chain_t best_chain;
     best_chain.add_inputs( Params::max_cuts_size );
 
-    evaluator_.foreach_gate( [&]( auto n ) {
+    profiler_.foreach_gate( [&]( auto n ) {
       /* Skip nodes which cannot result in optimization */
       if ( skip_node( n ) )
         return true;
@@ -240,7 +240,7 @@ public:
 
         rewire_dependencies.foreach_cut( [&]( auto& cut, auto i ) {
           auto const& cut_leaves = cut.leaves;
-          auto const reward = evaluator_.evaluate_rewiring( n, cut_leaves, win_leaves );
+          auto const reward = profiler_.evaluate_rewiring( n, cut_leaves, win_leaves );
           if ( reward > best_reward )
           {
             best_reward = reward;
@@ -299,7 +299,7 @@ private:
     double best_reward = -1;
     if ( cut.func.size() > 1 )
       return 0;
-    auto cost_curr = evaluator_.evaluate( cut.root, cut.leaves );
+    auto cost_curr = profiler_.evaluate( cut.root, cut.leaves );
 
     auto const cut_func = cut.func[0];
     auto signals = cut.leaves;
@@ -330,7 +330,7 @@ private:
     chain_t new_chain;
     new_chain.add_inputs( cut.leaves.size() );
     extract( new_chain, ntk_, cut.leaves, best_signal );
-    auto cost_cand = evaluator_.evaluate( new_chain, cut.leaves );
+    auto cost_cand = profiler_.evaluate( new_chain, cut.leaves );
     auto const reward = cost_curr - cost_cand;
     if ( reward > best_reward )
     {
@@ -381,7 +381,7 @@ private:
       auto nnew = database_.write( *best_database_node, ntk_, best_loc_leaves );
       best_signal = ntk_.make_signal( nnew );
       signals.push_back( best_signal );
-      times.push_back( evaluator_.get_arrival( best_signal ) );
+      times.push_back( profiler_.get_arrival( best_signal ) );
       chain_t loc_chain;
       loc_chain.add_inputs( Database::max_num_vars );
       extract( loc_chain, ntk_, best_loc_leaves, signals.back() );
@@ -398,7 +398,7 @@ private:
     double best_cost = std::numeric_limits<double>::max();
     database_.foreach_entry( row, [&]( auto const& entry ) {
       auto nnew = database_.write( entry, ntk_, loc_leaves );
-      auto cost_new = evaluator_.evaluate( nnew, loc_leaves );
+      auto cost_new = profiler_.evaluate( nnew, loc_leaves );
       if ( cost_new < best_cost )
       {
         best_cost = cost_new;
@@ -440,37 +440,37 @@ private:
     win_manager_.run( n );
     win_simulator_.run( win_manager_ );
 
-    if constexpr ( Evaluator::pass_window )
+    if constexpr ( Profiler::pass_window )
     {
       if ( !win_manager_.is_valid() )
       {
         return;
       }
-      if constexpr ( Evaluator::node_depend )
-        evaluator_( n, win_manager_ );
+      if constexpr ( Profiler::node_depend )
+        profiler_( n, win_manager_ );
       else
-        evaluator_( win_manager_ );
+        profiler_( win_manager_ );
     }
     else
     {
-      if constexpr ( Evaluator::node_depend )
-        evaluator_( n, win_manager_ );
+      if constexpr ( Profiler::node_depend )
+        profiler_( n, win_manager_ );
     }
   }
 
   std::vector<double> get_times( std::vector<signal> const& leaves )
   {
-    assert( Evaluator::has_arrival && "[e] The evaluator does not have the arrival tracker" );
+    assert( Profiler::has_arrival && "[e] The profiler does not have the arrival tracker" );
     std::vector<double> times( leaves.size() );
     std::transform( leaves.begin(), leaves.end(), times.begin(),
-                    [&]( auto const& f ) { return evaluator_.get_arrival( f ); } );
+                    [&]( auto const& f ) { return profiler_.get_arrival( f ); } );
     return times;
   }
 
 private:
   Ntk& ntk_;
   Database& database_;
-  Evaluator evaluator_;
+  Profiler profiler_;
   dependency::function_enumerator<Database::max_num_vars> enumerator_;
   windowing::window_manager<Ntk, typename Params::window_manager_params> win_manager_;
   windowing::window_simulator<Ntk, Params::window_manager_params::max_num_leaves> win_simulator_;
@@ -485,9 +485,9 @@ private:
 template<class Ntk, class Database, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
 void area_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesis_stats* pst = nullptr )
 {
-  using Evaluator = evaluators::area_evaluator<Ntk>;
+  using Profiler = profilers::area_profiler<Ntk>;
   resynthesis_stats st;
-  detail::resynthesize_impl<Ntk, Database, Evaluator, Params> p( ntk, database, ps, st );
+  detail::resynthesize_impl<Ntk, Database, Profiler, Params> p( ntk, database, ps, st );
   p.run();
   if ( pst != nullptr )
     *pst = st;
@@ -496,9 +496,9 @@ void area_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesi
 template<class Ntk, class Database, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
 void delay_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesis_stats* pst = nullptr )
 {
-  using Evaluator = evaluators::delay_evaluator<Ntk>;
+  using Profiler = profilers::delay_profiler<Ntk>;
   resynthesis_stats st;
-  detail::resynthesize_impl<Ntk, Database, Evaluator, Params> p( ntk, database, ps, st );
+  detail::resynthesize_impl<Ntk, Database, Profiler, Params> p( ntk, database, ps, st );
   p.run();
   if ( pst != nullptr )
     *pst = st;
@@ -510,9 +510,9 @@ void glitch_resynthesize( Ntk& ntk, Database & database, resynthesis_params ps =
 {
   using dNtk = depth_view<Ntk>;
   dNtk dntk{ ntk };
-  using Evaluator = homo_xgx_evaluator<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
+  using Profiler = homo_xgx_profiler<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
   resynthesis_stats st;
-  detail::resynthesize_impl<dNtk, Database, Evaluator, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps, st );
+  detail::resynthesize_impl<dNtk, Database, Profiler, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps, st );
   p.run();
   st.report();
 }
@@ -522,8 +522,8 @@ void ppa_resynthesize( Ntk& ntk, Database & database, resynthesis_params ps = {}
 {
   using dNtk = depth_view<Ntk>;
   dNtk dntk{ ntk };
-  using Evaluator = homo_ppa_evaluator<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
-  detail::resynthesize_impl<dNtk, Database, Evaluator, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps );
+  using Profiler = homo_ppa_profiler<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
+  detail::resynthesize_impl<dNtk, Database, Profiler, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps );
   p.run();
 }
 
@@ -532,8 +532,8 @@ void ppa_resynthesize( Ntk& ntk, Database & database, std::vector<typename Ntk::
 {
   using dNtk = depth_view<Ntk>;
   dNtk dntk{ ntk };
-  using Evaluator = homo_ppa_evaluator<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
-  detail::resynthesize_impl<dNtk, Database, Evaluator, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps );
+  using Profiler = homo_ppa_profiler<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
+  detail::resynthesize_impl<dNtk, Database, Profiler, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps );
   p.run( nodes );
 }
 #endif

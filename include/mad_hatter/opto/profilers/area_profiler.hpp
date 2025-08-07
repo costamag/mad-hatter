@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file area_evaluator.hpp
+  \file area_profiler.hpp
   \brief Analyzer of the area
 
   \author Andrea Costamagna
@@ -33,8 +33,8 @@
 #pragma once
 
 #include "../../databases/mapped_database.hpp"
-#include "../../trackers/arrival_times_tracker.hpp"
-#include "evaluators_utils.hpp"
+#include "../../analyzers/trackers/arrival_times_tracker.hpp"
+#include "profilers_utils.hpp"
 
 namespace mad_hatter
 {
@@ -42,11 +42,11 @@ namespace mad_hatter
 namespace opto
 {
 
-namespace evaluators
+namespace profilers
 {
 
 template<class Ntk>
-class area_evaluator
+class area_profiler
 {
 public:
   using node_index_t = typename Ntk::node;
@@ -65,7 +65,7 @@ public:
   };
 
 public:
-  area_evaluator( Ntk& ntk, evaluator_params const& ps )
+  area_profiler( Ntk& ntk, profiler_params const& ps )
       : ntk_( ntk ),
         ps_( ps ),
         nodes_( ntk_.size() ),
@@ -254,12 +254,12 @@ private:
 
 private:
   Ntk& ntk_;
-  evaluator_params const& ps_;
+  profiler_params const& ps_;
   std::vector<node_with_cost_t> nodes_;
-  trackers::arrival_times_tracker<Ntk> arrival_;
+  analyzers::trackers::arrival_times_tracker<Ntk> arrival_;
 };
 
-} /* namespace evaluators */
+} /* namespace profilers */
 
 } /* namespace opto */
 
