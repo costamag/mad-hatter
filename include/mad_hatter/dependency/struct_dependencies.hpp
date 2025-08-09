@@ -65,11 +65,12 @@ public:
   }
 
   template<typename WinMng, typename WinSim>
-  void run( WinMng const& window, WinSim& simulator )
+  void run( WinMng& window, WinSim& simulator )
   {
     assert( ( std::is_same<signature_t, typename WinSim::signature_t>::value && "signatures have different type" ) );
     cuts_.clear();
 
+    window.mark_contained();
     // identify candidates through branch and bound
     structural_enumeration( window, simulator );
   }
@@ -120,7 +121,7 @@ public:
   }
 
   template<typename WinMng>
-  void structural_enumeration( std::vector<std::vector<signal_t>>& leaves_vec, std::vector<signal_t> const& leaves, WinMng const& window )
+  void structural_enumeration( std::vector<std::vector<signal_t>>& leaves_vec, std::vector<signal_t> const& leaves, WinMng& window )
   {
     for ( auto i = 0; i < leaves.size(); ++i )
     {
@@ -180,6 +181,7 @@ public:
     std::vector<signal_t> leaves;
     auto const n = window.get_pivot();
     bool abort = false;
+
     ntk_.foreach_fanin( n, [&]( auto const& fi, auto ii ) {
       if ( window.is_contained( ntk_.get_node( fi ) ) )
         leaves.push_back( fi );

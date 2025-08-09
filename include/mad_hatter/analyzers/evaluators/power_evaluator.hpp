@@ -33,8 +33,8 @@
 #pragma once
 
 #include "../../network/signal_map.hpp"
-#include "../trackers/trackers.hpp"
 #include "../analyzers_utils/switching.hpp"
+#include "../trackers/trackers.hpp"
 
 namespace mad_hatter
 {
@@ -68,10 +68,14 @@ public:
 
   void run( utils::workload<TT, TimeSteps> const& work )
   {
+    st_.glitching = 0;
+    st_.switching = 0;
+    st_.dyn_power = 0;
     activity_.resize();
     /* store the workload in the input's simulations */
     ntk_.foreach_pi( [&]( auto const& n ) {
-      activity_[ntk_.make_signal( n )] = work.get( ntk_.pi_index( n ) );
+      auto const sim = work.get( ntk_.pi_index( n ) );
+      activity_[ntk_.make_signal( n )] = sim;
     } );
     double const norm = static_cast<double>( work.num_bits() );
 
@@ -81,6 +85,8 @@ public:
     trackers::topo_sort_tracker topo_sort( ntk_ );
 
     std::vector<TT const*> sim_ptrs;
+    utils::signal_switching<TT, TimeSteps> tmp_switching;
+
     /* simulate the network in topological order */
     topo_sort.foreach_gate( [&]( auto const& n ) {
       ntk_.foreach_output( n, [&]( auto const& f ) {
@@ -90,18 +96,18 @@ public:
         ntk_.foreach_fanin( n, [&]( auto const& fi, auto ii ) {
           sim_ptrs.push_back( &activity_[fi][0u] );
         } );
-        ntk_.compute( activity_[f][0u], f, sim_ptrs );
+        ntk_.compute( tmp_switching[0u], f, sim_ptrs );
 
-        int step = 1;
+        uint32_t step = 1;
         for ( ; step < TimeSteps; ++step )
-          activity_[f][step] = activity_[f][0u];
+          tmp_switching[step] = tmp_switching[0u];
 
         /* simulate the end of the clock cycle */
         sim_ptrs.clear();
         ntk_.foreach_fanin( n, [&]( auto const& fi, auto ii ) {
           sim_ptrs.push_back( &activity_[fi][TimeSteps - 1] );
         } );
-        ntk_.compute( activity_[f][TimeSteps - 1], f, sim_ptrs );
+        ntk_.compute( tmp_switching[TimeSteps - 1], f, sim_ptrs );
 
         step = 1;
         if ( arrival.get_time( f ) > sensing.get_time( f ) )
@@ -111,11 +117,13 @@ public:
             double const time = get_time( step, sensing.get_time( f ) - binding.avg_pin_delay, arrival.get_time( f ) + binding.avg_pin_delay );
             sim_ptrs.clear();
             ntk_.foreach_fanin( n, [&]( auto const& fi, auto ii ) {
-              double const time_i = time - binding.max_pin_time[ii];
+              double maxpin = (ii < binding.max_pin_time.size()) ? binding.max_pin_time[ii] : 0.0;
+
+              double const time_i = time - maxpin;
               auto step_i = get_step( time_i, sensing.get_time( fi ) - binding.avg_pin_delay, arrival.get_time( fi ) + binding.avg_pin_delay );
               sim_ptrs.push_back( &activity_[fi][step_i] );
             } );
-            ntk_.compute( activity_[f][step], f, sim_ptrs );
+            ntk_.compute( tmp_switching[step], f, sim_ptrs );
 
             step++;
           }
@@ -124,12 +132,13 @@ public:
         {
           /* just replicate the simulation */
           while ( step++ < TimeSteps / 2 )
-            activity_[f][step] = activity_[f][0u];
+            tmp_switching[step] = tmp_switching[0u];
         }
         while ( step++ < ( TimeSteps - 1 ) )
         {
-          activity_[f][step] = activity_[f][TimeSteps - 1];
+          tmp_switching[step] = tmp_switching[TimeSteps - 1];
         }
+        activity_[f] = tmp_switching;
         double glitching = 0;
         double switching = 0;
         double zerodelay = 0;
@@ -214,14 +223,20 @@ private:
   }
 
   /*! \brief get the simulation timestep of a node within the activity window */
-  uint32_t get_step( double const& time, double const& sensing, double const& arrival ) const
-  {
-    auto const step_float = ( TimeSteps - 1 ) * ( time - sensing ) / ( arrival - sensing );
-    auto const step_round = std::round( step_float );
-    auto step = static_cast<uint32_t>( step_round );
-    step = std::max( 0u, std::min( TimeSteps - 1, step ) );
-    return step;
+uint32_t get_step(double time, double sensing, double arrival) const {
+  // Handle degenerate or reversed windows
+  if (!(arrival > sensing)) {           // covers equal, reversed, NaN
+    return (time <= sensing) ? 0u : (TimeSteps - 1);
   }
+  double const denom = arrival - sensing;
+  double const t     = (time - sensing) / denom;
+  // Clamp before scaling to avoid Inf and huge values
+  double const x     = std::clamp(t, 0.0, 1.0);
+  double const sf    = (TimeSteps - 1) * x;
+  // sf is finite in [0, TimeSteps-1] now
+  auto const step    = static_cast<uint32_t>(std::lround(sf));
+  return std::min<uint32_t>(TimeSteps - 1, step);
+}
 
 private:
   Ntk& ntk_;
@@ -229,7 +244,7 @@ private:
   network::incomplete_signal_map<utils::signal_switching<TT, TimeSteps>, Ntk> activity_;
 };
 
-} // namespace power
+} // namespace evaluators
 
 } // namespace analyzers
 

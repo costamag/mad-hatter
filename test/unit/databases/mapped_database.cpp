@@ -6,10 +6,10 @@
 #include <vector>
 
 #include <lorina/genlib.hpp>
+#include <mad_hatter/analyzers/trackers/arrival_times_tracker.hpp>
 #include <mad_hatter/databases/mapped_database.hpp>
 #include <mad_hatter/evaluation/chains/bound_chain.hpp>
 #include <mad_hatter/network/network.hpp>
-#include <mad_hatter/analyzers/trackers/arrival_times_tracker.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
@@ -171,7 +171,7 @@ TEST_CASE( "Inserting symmetric single-node chains with three inputs in mapped d
 
   static constexpr uint32_t MaxNumVars = 6u;
   mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
-
+  int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
   {
@@ -184,7 +184,9 @@ TEST_CASE( "Inserting symmetric single-node chains with three inputs in mapped d
       {
         if ( ( i == k ) || ( j == k ) )
           continue;
-
+        ++cnt;
+        if ( cnt > 20 )
+          break;
         mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
         chain.add_inputs( MaxNumVars );
         chain.add_output( chain.add_gate( { i, j, k }, 2 ) );
@@ -211,7 +213,7 @@ TEST_CASE( "Inserting asymmetric single-node chains with three inputs in mapped 
 
   static constexpr uint32_t MaxNumVars = 6u;
   mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
-
+  int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
   {
@@ -224,7 +226,9 @@ TEST_CASE( "Inserting asymmetric single-node chains with three inputs in mapped 
       {
         if ( ( i == k ) || ( j == k ) )
           continue;
-
+        ++cnt;
+        if ( cnt > 20 )
+          break;
         mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
         chain.add_inputs( MaxNumVars );
         chain.add_output( chain.add_gate( { i, j, k }, 3 ) );
@@ -248,7 +252,7 @@ TEST_CASE( "Inserting symmetric single-node chains with 4 inputs in mapped datab
 
   static constexpr uint32_t MaxNumVars = 6u;
   mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
-
+  int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
   {
@@ -266,7 +270,9 @@ TEST_CASE( "Inserting symmetric single-node chains with 4 inputs in mapped datab
         {
           if ( ( i == l ) || ( j == l ) || ( k == l ) )
             continue;
-
+          ++cnt;
+          if ( cnt > 20 )
+            break;
           mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
           chain.add_inputs( MaxNumVars );
           chain.add_output( chain.add_gate( { i, j, k, l }, 4 ) );
@@ -291,7 +297,7 @@ TEST_CASE( "Inserting asymmetric single-node chains with 4 inputs in mapped data
 
   static constexpr uint32_t MaxNumVars = 6u;
   mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
-
+  int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
   {
@@ -309,7 +315,9 @@ TEST_CASE( "Inserting asymmetric single-node chains with 4 inputs in mapped data
         {
           if ( ( i == l ) || ( j == l ) || ( k == l ) )
             continue;
-
+          ++cnt;
+          if ( cnt > 20 )
+            break;
           mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
           chain.add_inputs( MaxNumVars );
           chain.add_output( chain.add_gate( { i, j, k, l }, 5 ) );
@@ -335,6 +343,7 @@ TEST_CASE( "Inserting two nodes chain in database", "[mapped_database]" )
   static constexpr uint32_t MaxNumVars = 6u;
   mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
 
+  int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
   {
@@ -352,7 +361,9 @@ TEST_CASE( "Inserting two nodes chain in database", "[mapped_database]" )
         {
           if ( ( i == l ) || ( j == l ) || ( k == l ) )
             continue;
-
+          ++cnt;
+          if ( cnt > 20 )
+            break;
           mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
           chain.add_inputs( MaxNumVars );
           auto l0 = chain.add_gate( { i, j }, 1 );

@@ -82,7 +82,8 @@ TEST_CASE( "Rewiring analysis for reconvergent network", "[rewire_dependencies]"
   auto tte = sim.get( fs[6] );
   auto ttf = sim.get( fs[7] );
   auto care = sim.get_careset();
-  CHECK( kitty::equal( care, ~( ( tta & ttb ) | ( ttc & ttd ) | ( tte & ttf ) ) ) );
+  auto const exp = ~( ( tta & ttb ) | ( ttc & ttd ) | ( tte & ttf ) );
+  CHECK( kitty::equal( exp, care ) );
 
   mad_hatter::dependency::rewire_dependencies dep( ntk );
   dep.run( window, sim );

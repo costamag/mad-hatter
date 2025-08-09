@@ -34,6 +34,8 @@
 
 #pragma once
 
+#include "evaluation/chains.hpp"
+
 namespace mad_hatter
 {
 

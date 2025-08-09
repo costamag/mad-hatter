@@ -882,7 +882,8 @@ public:
   template<typename Fn>
   void foreach_gate( Fn&& fn ) const
   {
-    auto r = mockturtle::range<uint64_t>( 2u, nodes.size() ); /* start from 2 to avoid constants */
+    auto const nodes_size = nodes.size();
+    auto r = mockturtle::range<uint64_t>( 2u, nodes_size ); /* start from 2 to avoid constants */
     mockturtle::detail::foreach_element_if(
         r.begin(), r.end(),
         [this]( auto n ) { return !is_ci( n ) && !is_dead( n ); },

@@ -37,7 +37,7 @@ namespace mad_hatter
 
 namespace analyzers
 {
-  
+
 namespace utils
 {
 
@@ -58,6 +58,7 @@ public:
     {
       sims_[step++] = tt_end;
     }
+    switching_ = kitty::count_ones( tt_init ^ tt_end ) / ( static_cast<double>( tt_init.num_bits() ) );
   }
 
   uint32_t num_bits() const
@@ -123,9 +124,26 @@ template<typename TT, uint32_t TimeSteps>
 class workload
 {
 public:
+  workload( uint32_t num_inputs )
+      : num_inputs_( num_inputs ),
+        arrival_( num_inputs, 0 ),
+        sensing_( num_inputs, 0 )
+  {
+    sims_.reserve( num_inputs );
+    for ( uint32_t i = 0; i < num_inputs; ++i )
+    {
+      TT tmp1;
+      TT tmp2;
+      kitty::create_random( tmp1, ( i + 7 ) * 37 );
+      kitty::create_random( tmp2, ( i + 13 ) * 11 );
+      sims_.emplace_back( tmp1, tmp2 );
+    }
+  }
+
   workload( std::vector<TT> const& tts_init, std::vector<TT> const& tts_end )
       : num_inputs_( tts_init.size() )
   {
+    sims_.reserve( num_inputs_ );
     for ( int i = 0; i < num_inputs_; ++i )
     {
       sims_.emplace_back( tts_init[i], tts_end[i] );
@@ -143,9 +161,14 @@ public:
     return sensing_;
   }
 
-  signal_switching<TT, TimeSteps> const& get( uint32_t index ) const
+  signal_switching<TT, TimeSteps> const get( uint32_t index ) const
   {
     return sims_[index];
+  }
+
+  void get( signal_switching<TT, TimeSteps>& to, uint32_t index ) const
+  {
+    to = sims_[index];
   }
 
   uint32_t num_bits() const

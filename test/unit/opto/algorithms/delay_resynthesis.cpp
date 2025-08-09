@@ -209,7 +209,7 @@ TEST_CASE( "Delay resynthesis via rewiring - multiple-output gate with don't car
   ps.window_manager_ps.odc_levels = 3;
   mad_hatter::opto::algorithms::delay_resynthesize<DNtk, Db, custom_delay_rewire_params>( dntk, db, ps );
 
-  CHECK( tracker.worst_delay() == 4 );
+  CHECK( tracker.worst_delay() == 3.0 );
 }
 
 struct custom_delay_struct_params1 : mad_hatter::opto::algorithms::default_resynthesis_params<8u>

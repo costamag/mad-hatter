@@ -80,14 +80,15 @@ TEST_CASE( "Window construction with reconvergent structure", "[window_manager]"
   mad_hatter::windowing::window_manager<DNtk, window_manager_params1> window( dntk, ps1, st );
 
   CHECK( window.run( dntk.get_node( fs[13] ) ) );
+  CHECK( window.is_valid() );
   auto const mffc = window.get_mffc();
-  CHECK( mffc == std::vector<typename Ntk::node_index_t>{ 16, 17, 18 } );
+  CHECK( mffc == std::vector<typename Ntk::node_index_t>{ 7, 8, 9, 13, 14, 15, 16, 17, 18 } );
   auto const tfos = window.get_tfos();
-  CHECK( tfos == std::vector<typename Ntk::node_index_t>{} );
+  CHECK( tfos == std::vector<typename Ntk::node_index_t>{ 19, 20, 21, 22, 23, 24, 25 } );
   auto const outputs = window.get_outputs();
-  CHECK( outputs == std::vector<typename Ntk::signal_t>{ fs[13] } );
-  auto const leaves = window.get_leaves();
-  CHECK( leaves == std::vector<typename Ntk::signal_t>( { fs[8], fs[9], fs[10] } ) );
+  CHECK( outputs == std::vector<typename Ntk::signal_t>{ fs[18], fs[19], fs[20] } );
+  auto const leaves = window.get_inputs();
+  CHECK( leaves == std::vector<typename Ntk::signal_t>( { a, b, c } ) );
 
   window_manager_params2 ps2;
   ps2.odc_levels = 3u;
@@ -95,12 +96,228 @@ TEST_CASE( "Window construction with reconvergent structure", "[window_manager]"
   mad_hatter::windowing::window_manager<DNtk, window_manager_params2> window2( dntk, ps2, st );
 
   CHECK( window2.run( dntk.get_node( fs[13] ) ) );
+  CHECK( window2.is_valid() );
   auto const mffc2 = window2.get_mffc();
-  CHECK( mffc2 == std::vector<typename Ntk::node_index_t>{ 7, 9, 8, 13, 14, 15, 16, 17, 18 } );
+  CHECK( mffc2 == std::vector<typename Ntk::node_index_t>{ 7, 8, 9, 13, 14, 15, 16, 17, 18 } );
   auto const tfos2 = window2.get_tfos();
-  CHECK( tfos2 == std::vector<typename Ntk::node_index_t>{ 19, 20, 21, 22 } );
+  CHECK( tfos2 == std::vector<typename Ntk::node_index_t>{ 19, 20, 21, 22, 23, 24, 25 } );
   auto const outputs2 = window2.get_outputs();
   CHECK( outputs2 == std::vector<typename Ntk::signal_t>( { fs[18], fs[19], fs[20] } ) );
-  auto const leaves2 = window2.get_leaves();
+  auto const leaves2 = window2.get_inputs();
   CHECK( leaves2 == std::vector<typename Ntk::signal_t>( { a, b, c } ) );
+}
+
+std::string const test_library2 = "GATE   and2    1.0 O=a*b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 0
+                                  "GATE   or2     1.0 O=a+b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 1
+                                  "GATE   xor2    0.5 O=a^b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 2
+                                  "GATE   or3     1.0 O=a+b+c;               PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 3
+                                  "GATE   and3    1.0 O=((a*b)*c);           PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 4
+                                  "GATE   maj3    1.0 O=(a*b)+(b*c)+(a*c);   PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 5
+                                  "GATE   fa      1.0 C=a*b+a*c+b*c;         PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 6
+                                  "GATE   fa      1.0 S=a^b^c;               PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 7
+                                  "GATE   nand2   1.0 O=!(a*b);              PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 8
+                                  "GATE   inv1    1.0 O=!a;                  PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 9
+                                  "GATE   xor3    1.0 O=a^b^c;               PIN * INV 1   999 1.0 0.0 1.0 0.0";  // 10
+
+TEST_CASE( "Reconvergence after multiple-output gate", "[window_manager]" )
+{
+  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using signal = typename Ntk::signal;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in( test_library2 );
+  auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
+  CHECK( result == lorina::return_code::success );
+
+  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+
+  Ntk ntk( gates );
+  auto const a = ntk.create_pi();
+  auto const b = ntk.create_pi();
+  auto const c = ntk.create_pi();
+  auto const d = ntk.create_pi();
+  auto const f1 = ntk.create_node( { a }, 9u );
+  auto const f2 = ntk.create_node( { f1, b }, 2u );
+  auto const f3 = ntk.create_node( { f2 }, 9u );
+  auto const f4 = ntk.create_node( { f3, c, d }, { 6u, 7u } );
+  auto const f5 = ntk.create_node( { a, b }, 0u );
+  auto const f6 = ntk.create_node( { { f4.index, 0 }, f5 }, 1u );
+  auto const f7 = ntk.create_node( { { f4.index, 1 }, f5 }, 1u );
+  auto const f8 = ntk.create_node( { a, b }, 1u );
+  auto const f9 = ntk.create_node( { c, d }, 2u );
+  auto const f10 = ntk.create_node( { f8, f9 }, 0u );
+
+  ntk.create_po( f6 );
+  ntk.create_po( f7 );
+  ntk.create_po( f10 );
+
+  using DNtk = mockturtle::depth_view<Ntk>;
+  DNtk dntk( ntk );
+  window_manager_params2 ps;
+  mad_hatter::windowing::window_manager_stats st;
+  ps.odc_levels = 3u;
+
+  mad_hatter::windowing::window_manager<DNtk, window_manager_params2> window( dntk, ps, st );
+
+  CHECK( window.run( dntk.get_node( f4 ) ) );
+  auto const mffc = window.get_mffc();
+  auto const tfos = window.get_tfos();
+  auto const outputs = window.get_outputs();
+  auto const leaves = window.get_inputs();
+  CHECK( outputs.size() == 2u );
+}
+
+TEST_CASE( "Pathological case 2", "[window_manager]" )
+{
+  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using signal = typename Ntk::signal;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in( test_library2 );
+  auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
+  CHECK( result == lorina::return_code::success );
+
+  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+
+  Ntk ntk( gates );
+  auto const a = ntk.create_pi();
+  auto const b = ntk.create_pi();
+  auto const c = ntk.create_pi();
+  auto const d = ntk.create_pi();
+  auto const f1 = ntk.create_node( { a, b }, 2 );
+  auto const f2 = ntk.create_node( { c, d }, 2 );
+  auto const f3 = ntk.create_node( { f1 }, 9 );
+  auto const f4 = ntk.create_node( { f2, f3 }, 2 );
+  auto const f5 = ntk.create_node( { f1 }, 9 );
+  auto const f6 = ntk.create_node( { f2, f5 }, 0 );
+  auto const f7 = ntk.create_node( { f4 }, 9 );
+  auto const f8 = ntk.create_node( { f6, f7 }, 1 );
+
+  ntk.create_po( f1 );
+  ntk.create_po( f2 );
+  ntk.create_po( f8 );
+
+  using DNtk = mockturtle::depth_view<Ntk>;
+  DNtk dntk( ntk );
+  window_manager_params2 ps;
+  mad_hatter::windowing::window_manager_stats st;
+  ps.odc_levels = 3u;
+
+  mad_hatter::windowing::window_manager<DNtk, window_manager_params2> window( dntk, ps, st );
+
+  CHECK( window.run( dntk.get_node( f1 ) ) );
+  auto const mffc = window.get_mffc();
+  auto const tfos = window.get_tfos();
+  auto const outputs = window.get_outputs();
+  auto const leaves = window.get_inputs();
+  auto const divs = window.get_divisors();
+  CHECK( outputs.size() == 2u );
+  CHECK( divs.size() == 5u );
+}
+
+std::string const test_library3 = "GATE   and2    1.0 O=a*b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
+                                  "GATE   or2     1.0 O=a+b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
+                                  "GATE   xor2    1.0 O=a^b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
+                                  "GATE   or3     1.0 O=a+b+c;               PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
+                                  "GATE   maj3    1.0 O=(a*b)+(b*c)+(a*c);   PIN * INV 1   999 1.0 0.0 1.0 0.0";
+
+struct window_manager_params3 : mad_hatter::windowing::default_window_manager_params
+{
+  static constexpr uint32_t max_num_leaves = 16u;
+};
+
+TEST_CASE( "Managing exploding number of divisors", "[window_manager]" )
+{
+  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in( test_library3 );
+  auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
+  CHECK( result == lorina::return_code::success );
+
+  Ntk ntk( gates );
+
+  using signal = typename Ntk::signal;
+  std::vector<signal> fs;
+  /* Database construction from network */
+  fs.push_back( signal{ 0, 0 } );  // 0
+  fs.push_back( signal{ 1, 0 } );  // 1
+  fs.push_back( ntk.create_pi() ); // 2
+  fs.push_back( ntk.create_pi() ); // 3
+  fs.push_back( ntk.create_pi() ); // 4
+  fs.push_back( ntk.create_pi() ); // 5
+  fs.push_back( ntk.create_pi() ); // 6
+  fs.push_back( ntk.create_pi() ); // 7
+
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[2], fs[3] }, 0 ) );          // 8
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[2], fs[3] }, 1 ) );          // 9
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[2], fs[3] }, 2 ) );          // 10
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[4], fs[5] }, 0 ) );          // 11
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[4], fs[5] }, 1 ) );          // 12
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[4], fs[5] }, 2 ) );          // 13
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[6], fs[7] }, 0 ) );          // 14
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[6], fs[7] }, 1 ) );          // 15
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[6], fs[7] }, 2 ) );          // 16
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[9], fs[12], fs[15] }, 4 ) ); // 17
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[8], fs[17], fs[11] }, 3 ) ); // 18
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[18], fs[14] }, 1 ) );        // 19
+
+  ntk.create_po( fs[19] );
+  ntk.create_po( fs[10] );
+  ntk.create_po( fs[13] );
+  ntk.create_po( fs[16] );
+
+  using DNtk = mockturtle::depth_view<Ntk>;
+  mad_hatter::windowing::window_manager_stats st;
+  DNtk dntk( ntk );
+
+  window_manager_params3 ps;
+  ps.odc_levels = 4u;
+
+  mad_hatter::windowing::window_manager<DNtk, window_manager_params3> window( dntk, ps, st );
+  CHECK( window.run( dntk.get_node( fs[17] ) ) );
+  CHECK( ( window.num_divisors() < fs.size() ) );
+}
+
+TEST_CASE( "Managing incorrect window construction for simple network", "[window_manager]" )
+{
+  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in( test_library3 );
+  auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
+  CHECK( result == lorina::return_code::success );
+
+  Ntk ntk( gates );
+
+  using signal = typename Ntk::signal;
+  std::vector<signal> fs;
+  /* Database construction from network */
+  fs.push_back( signal{ 0, 0 } );  // 0
+  fs.push_back( signal{ 1, 0 } );  // 1
+  fs.push_back( ntk.create_pi() ); // 2
+  fs.push_back( ntk.create_pi() ); // 3
+  fs.push_back( ntk.create_pi() ); // 4
+
+  fs.push_back( ntk.create_node( { fs[2], fs[3] }, 0u ) ); // 5
+  fs.push_back( ntk.create_node( { fs[2], fs[4] }, 0u ) ); // 6
+  fs.push_back( ntk.create_node( { fs[3], fs[4] }, 0u ) ); // 7
+  fs.push_back( ntk.create_node( { fs[5], fs[6] }, 1u ) ); // 8
+  fs.push_back( ntk.create_node( { fs[8], fs[7] }, 1u ) ); // 9
+
+  ntk.create_po( fs[5] );
+  ntk.create_po( fs[6] );
+  ntk.create_po( fs[7] );
+  ntk.create_po( fs[9] );
+
+  using DNtk = mockturtle::depth_view<Ntk>;
+  mad_hatter::windowing::window_manager_stats st;
+  DNtk dntk( ntk );
+
+  window_manager_params3 ps;
+  ps.odc_levels = 0u;
+
+  mad_hatter::windowing::window_manager<DNtk, window_manager_params3> window( dntk, ps, st );
+  CHECK( window.run( dntk.get_node( fs[9] ) ) );
+  CHECK( window.num_inputs() == 3 );
 }

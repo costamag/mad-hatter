@@ -7,6 +7,7 @@
 #include <lorina/genlib.hpp>
 #include <mad_hatter/network/network.hpp>
 #include <mad_hatter/opto/profilers/area_profiler.hpp>
+#include <mad_hatter/windowing/window_manager.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
@@ -58,7 +59,11 @@ TEST_CASE( "Area profiler for resynthesis of mapped networks", "[area_resyn_prof
 
   mad_hatter::opto::profilers::profiler_params ps;
   ps.max_num_roots = 7;
-  mad_hatter::opto::profilers::area_profiler profiler( ntk, ps );
+
+  mad_hatter::windowing::default_window_manager_params wps;
+  mad_hatter::windowing::window_manager_stats wst;
+  mad_hatter::windowing::window_manager<bound_network> win_manager( ntk, wps, wst );
+  mad_hatter::opto::profilers::area_profiler profiler( ntk, win_manager, ps );
 
   std::vector<node> sorted_nodes;
   profiler.foreach_gate( [&]( auto n ) {

@@ -16,7 +16,8 @@ std::string const test_library = "GATE   and2    1.0 O=a*b;                 PIN 
                                  "GATE   or2     1.0 O=a+b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
                                  "GATE   xor2    1.0 O=a^b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
                                  "GATE   or3     1.0 O=a+b+c;               PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
-                                 "GATE   maj3    1.0 O=(a*b)+(b*c)+(a*c);   PIN * INV 1   999 1.0 0.0 1.0 0.0";
+                                 "GATE   maj3    1.0 O=(a*b)+(b*c)+(a*c);   PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
+                                 "GATE   inv1    1.0 O=!(a);                PIN * INV 1   999 1.0 0.0 1.0 0.0";
 
 struct custom_window_params
 {
@@ -67,7 +68,7 @@ TEST_CASE( "Enumerate dependency cuts", "[window_dependencies]" )
   ps.odc_levels = 4;
   mad_hatter::windowing::window_manager<DNtk> window( dntk, ps, st );
   CHECK( window.run( dntk.get_node( fs[8] ) ) );
-  auto const leaves = window.get_leaves();
+  auto const leaves = window.get_inputs();
   auto const divs = window.get_divisors();
   mad_hatter::windowing::window_simulator<DNtk, custom_window_params::max_num_leaves> sim( dntk );
   sim.run( window );
@@ -86,4 +87,53 @@ TEST_CASE( "Enumerate dependency cuts", "[window_dependencies]" )
       cut_set.insert( l );
     CHECK( sets.find( cut_set ) != sets.end() );
   } );
+}
+
+TEST_CASE( "Window dependencies for simple inverter", "[window_dependencies]" )
+{
+  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in( test_library );
+  auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
+  CHECK( result == lorina::return_code::success );
+
+  Ntk ntk( gates );
+
+  using signal = typename Ntk::signal;
+  std::vector<signal> fs;
+  /* Database construction from network */
+  fs.push_back( signal{ 0, 0 } );  // 0
+  fs.push_back( signal{ 1, 0 } );  // 1
+  fs.push_back( ntk.create_pi() ); // 2
+
+  fs.push_back( ntk.create_node( std::vector<signal>{ fs[2] }, 5 ) ); // 3
+
+  ntk.create_po( fs[3] );
+
+  using DNtk = mockturtle::depth_view<Ntk>;
+  mad_hatter::windowing::window_manager_stats st;
+  DNtk dntk( ntk );
+
+  window_manager_params ps;
+  ps.odc_levels = 0;
+  mad_hatter::windowing::window_manager<DNtk> window( dntk, ps, st );
+  CHECK( window.run( dntk.get_node( fs[3] ) ) );
+  auto const leaves = window.get_inputs();
+  auto const divs = window.get_divisors();
+  mad_hatter::windowing::window_simulator<DNtk, custom_window_params::max_num_leaves> sim( dntk );
+  sim.run( window );
+
+  mad_hatter::dependency::window_dependencies<DNtk, custom_window_params> dep( dntk );
+  dep.run( window, sim );
+
+  std::vector<std::vector<signal>> cuts;
+  dep.foreach_cut( [&]( auto const& cut, auto i ) {
+    cuts.emplace_back();
+    for ( auto l : cut.leaves )
+      cuts.back().push_back( l );
+  } );
+  CHECK( cuts.size() == 1 );
+  CHECK( cuts[0].size() == 1 );
+  CHECK( cuts[0][0] == fs[2] );
 }

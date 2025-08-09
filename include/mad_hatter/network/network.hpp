@@ -234,9 +234,18 @@ public:
    * \param output The output pin index to check (default is 0).
    * \return True if the node is a primary output, false otherwise.
    */
-  bool is_po( node_index_t const& n, uint32_t output = 0 ) const
+  bool is_po( node_index_t const& n, uint32_t output ) const
   {
     return _storage->is_po( n, output );
+  }
+
+  bool is_po( node_index_t const& n ) const
+  {
+    bool po = false;
+    foreach_output( n, [&]( auto const& f ) {
+      po |= is_po( f );
+    } );
+    return po;
   }
 
   /*! \brief Check if a signal is a primary output (PO).
@@ -942,6 +951,14 @@ public:
     return res;
   }
 
+  template<typename TT>
+  TT compute( signal_t const& f, std::vector<TT const*> sim_ptrs ) const
+  {
+    TT res;
+    compute( res, f, sim_ptrs );
+    return res;
+  }
+
   /*! \brief Inline simulation of the input patterns using the node's function.
    *
    * \param n index of the node to simulate
@@ -1041,6 +1058,11 @@ public:
   std::vector<signal_t> const& get_children( node_index_t const& n ) const
   {
     return _storage->get_children( n );
+  }
+
+  std::vector<signal_t> const& get_children( signal_t const& f ) const
+  {
+    return get_children( get_node( f ) );
   }
 
   std::vector<node_index_t> const& get_fanins( node_index_t const& n ) const

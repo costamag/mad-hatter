@@ -42,6 +42,7 @@
 #include "../../windowing/window_simulator.hpp"
 #include "../profilers/area_profiler.hpp"
 #include "../profilers/delay_profiler.hpp"
+#include "../profilers/power_profiler.hpp"
 #include "../profilers/profilers_utils.hpp"
 
 #include <fmt/format.h>
@@ -83,7 +84,6 @@ namespace algorithms
  */
 struct resynthesis_stats
 {
-
   windowing::window_manager_stats window_st;
   /*! \brief Total runtime. */
   mockturtle::stopwatch<>::duration time_total{ 0 };
@@ -113,10 +113,10 @@ template<uint32_t NumLeaves = HATTER_MAX_NUM_LEAVES>
 struct default_resynthesis_params
 {
   static constexpr uint32_t max_num_leaves = NumLeaves;
+
   profilers::profiler_params profiler_ps;
 
   /*! \brief If true, candidates are only accepted if they do not increase logic depth. */
-
   struct window_manager_params : windowing::default_window_manager_params
   {
     static constexpr uint32_t max_num_leaves = NumLeaves;
@@ -125,6 +125,7 @@ struct default_resynthesis_params
     uint32_t skip_fanout_limit_for_divisors = 100u;
     uint32_t max_num_divisors{ 128 };
   };
+
   window_manager_params window_manager_ps;
 
   static constexpr bool do_strashing = true;
@@ -173,6 +174,7 @@ class resynthesize_impl
   using func_t = kitty::static_truth_table<Params::max_cuts_size>;
   using data_t = kitty::static_truth_table<Database::max_num_vars>;
   using decomposer_t = synthesis::lut_decomposer<Params::max_cuts_size, Database::max_num_vars>;
+  using window_manager_t = windowing::window_manager<Ntk, typename Params::window_manager_params>;
   // using validator_t = circuit_validator<Ntk, bill::solvers::bsat2, false, true, false>; // last is false
 
   struct rewire_params : dependency::default_rewire_params
@@ -199,18 +201,18 @@ class resynthesize_impl
   // using simula_dependency_t = simula_dependency<Ntk, custom_simula_params>;
 
 public:
-  resynthesize_impl( Ntk& ntk, Database& database, Params ps, resynthesis_stats& st )
-      : ntk_( ntk ),
-        database_( database ),
-        profiler_( ntk, ps.profiler_ps ),
-        win_manager_( ntk, ps.window_manager_ps, st.window_st ),
-        win_simulator_( ntk ),
-        chain_simulator_( database.get_library() ),
-        ps_( ps ),
-        st_( st )
-  {
-  }
 
+  resynthesize_impl( Ntk& ntk, Database& database, Params ps, resynthesis_stats& st)
+    : ntk_( ntk ),
+      win_manager_( ntk, ps.window_manager_ps, st.window_st ),
+      profiler_( ntk, win_manager_, ps.profiler_ps ),
+      database_( database ),
+      win_simulator_( ntk ),
+      chain_simulator_( database.get_library() ),
+      ps_( ps ),
+      st_( st )
+  {}
+public:
   void run()
   {
     rewire_dependencies_t rewire_dependencies( ntk_ );
@@ -220,27 +222,30 @@ public:
     chain_t best_chain;
     best_chain.add_inputs( Params::max_cuts_size );
 
+    auto nmax = ntk_.size();
     profiler_.foreach_gate( [&]( auto n ) {
+      if ( n >= nmax )
+        return false;
       /* Skip nodes which cannot result in optimization */
       if ( skip_node( n ) )
         return true;
 
       /* Build and run analysis on window */
       window_analysis( n );
+      profiler_.init();
 
       if ( !win_manager_.is_valid() )
         return true;
 
       if ( ps_.try_rewire )
       {
-        auto const& win_leaves = win_manager_.get_leaves();
         rewire_dependencies.run( win_manager_, win_simulator_ );
         std::optional<cut_t> best_cut;
         double best_reward = 0;
 
         rewire_dependencies.foreach_cut( [&]( auto& cut, auto i ) {
           auto const& cut_leaves = cut.leaves;
-          auto const reward = profiler_.evaluate_rewiring( n, cut_leaves, win_leaves );
+          auto const reward = profiler_.evaluate_rewiring( n, cut_leaves );
           if ( reward > best_reward )
           {
             best_reward = reward;
@@ -296,10 +301,10 @@ public:
 private:
   double evaluate( cut_t const& cut, chain_t& best_chain, std::vector<signal_t>& best_leaves )
   {
-    double best_reward = -1;
+    double best_reward = 0;
     if ( cut.func.size() > 1 )
       return 0;
-    auto cost_curr = profiler_.evaluate( cut.root, cut.leaves );
+    double const cost_curr = profiler_.evaluate( cut.root, cut.leaves, cut.root );
 
     auto const cut_func = cut.func[0];
     auto signals = cut.leaves;
@@ -330,7 +335,7 @@ private:
     chain_t new_chain;
     new_chain.add_inputs( cut.leaves.size() );
     extract( new_chain, ntk_, cut.leaves, best_signal );
-    auto cost_cand = profiler_.evaluate( new_chain, cut.leaves );
+    double const cost_cand = profiler_.evaluate( new_chain, cut.leaves, cut.root );
     auto const reward = cost_curr - cost_cand;
     if ( reward > best_reward )
     {
@@ -396,9 +401,10 @@ private:
   {
     node_index_t best_database_node = std::numeric_limits<node_index_t>::max();
     double best_cost = std::numeric_limits<double>::max();
+
     database_.foreach_entry( row, [&]( auto const& entry ) {
       auto nnew = database_.write( entry, ntk_, loc_leaves );
-      auto cost_new = profiler_.evaluate( nnew, loc_leaves );
+      auto cost_new = profiler_.evaluate( nnew, loc_leaves, win_manager_.get_pivot() );
       if ( cost_new < best_cost )
       {
         best_cost = cost_new;
@@ -439,23 +445,6 @@ private:
   {
     win_manager_.run( n );
     win_simulator_.run( win_manager_ );
-
-    if constexpr ( Profiler::pass_window )
-    {
-      if ( !win_manager_.is_valid() )
-      {
-        return;
-      }
-      if constexpr ( Profiler::node_depend )
-        profiler_( n, win_manager_ );
-      else
-        profiler_( win_manager_ );
-    }
-    else
-    {
-      if constexpr ( Profiler::node_depend )
-        profiler_( n, win_manager_ );
-    }
   }
 
   std::vector<double> get_times( std::vector<signal> const& leaves )
@@ -469,11 +458,11 @@ private:
 
 private:
   Ntk& ntk_;
-  Database& database_;
-  Profiler profiler_;
   dependency::function_enumerator<Database::max_num_vars> enumerator_;
-  windowing::window_manager<Ntk, typename Params::window_manager_params> win_manager_;
+  window_manager_t win_manager_;
   windowing::window_simulator<Ntk, Params::window_manager_params::max_num_leaves> win_simulator_;
+  Profiler profiler_;
+  Database& database_;
   decomposer_t decomposer_;
   evaluation::chain_simulator<chain_t, func_t> chain_simulator_;
   Params ps_;
@@ -485,7 +474,8 @@ private:
 template<class Ntk, class Database, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
 void area_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesis_stats* pst = nullptr )
 {
-  using Profiler = profilers::area_profiler<Ntk>;
+  using WinMngr = windowing::window_manager<Ntk, typename Params::window_manager_params>;
+  using Profiler = profilers::area_profiler<Ntk, WinMngr>;
   resynthesis_stats st;
   detail::resynthesize_impl<Ntk, Database, Profiler, Params> p( ntk, database, ps, st );
   p.run();
@@ -496,7 +486,8 @@ void area_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesi
 template<class Ntk, class Database, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
 void delay_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesis_stats* pst = nullptr )
 {
-  using Profiler = profilers::delay_profiler<Ntk>;
+  using WinMngr = windowing::window_manager<Ntk, typename Params::window_manager_params>;
+  using Profiler = profilers::delay_profiler<Ntk, WinMngr>;
   resynthesis_stats st;
   detail::resynthesize_impl<Ntk, Database, Profiler, Params> p( ntk, database, ps, st );
   p.run();
@@ -504,42 +495,18 @@ void delay_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthes
     *pst = st;
 }
 
-#if 0
-template<class Ntk, class Database, uint32_t MaxNumVars, uint32_t num_steps, uint32_t CubeSize, uint32_t MaxNumLeaves>
-void glitch_resynthesize( Ntk& ntk, Database & database, resynthesis_params ps = {} )
+template<class Ntk, class Database, typename Params = default_resynthesis_params<HATTER_MAX_NUM_LEAVES>>
+void power_resynthesize( Ntk& ntk, Database& database, Params ps = {}, resynthesis_stats* pst = nullptr )
 {
-  using dNtk = depth_view<Ntk>;
-  dNtk dntk{ ntk };
-  using Profiler = homo_xgx_profiler<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
+  using WinMngr = windowing::window_manager<Ntk, typename Params::window_manager_params>;
+  using Profiler = profilers::power_profiler<Ntk, WinMngr, Params::window_manager_params::max_num_leaves>;
   resynthesis_stats st;
-  detail::resynthesize_impl<dNtk, Database, Profiler, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps, st );
+  detail::resynthesize_impl<Ntk, Database, Profiler, Params> p( ntk, database, ps, st );
   p.run();
-  st.report();
+  if ( pst != nullptr )
+    *pst = st;
 }
 
-template<class Ntk, class Database, uint32_t MaxNumVars, uint32_t num_steps, uint32_t CubeSize, uint32_t MaxNumLeaves>
-void ppa_resynthesize( Ntk& ntk, Database & database, resynthesis_params ps = {} )
-{
-  using dNtk = depth_view<Ntk>;
-  dNtk dntk{ ntk };
-  using Profiler = homo_ppa_profiler<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
-  detail::resynthesize_impl<dNtk, Database, Profiler, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps );
-  p.run();
-}
-
-template<class Ntk, class Database, uint32_t MaxNumVars, uint32_t num_steps, uint32_t CubeSize, uint32_t MaxNumLeaves>
-void ppa_resynthesize( Ntk& ntk, Database & database, std::vector<typename Ntk::node> const& nodes, resynthesis_params ps = {} )
-{
-  using dNtk = depth_view<Ntk>;
-  dNtk dntk{ ntk };
-  using Profiler = homo_ppa_profiler<dNtk, MaxNumVars, num_steps, CubeSize, MaxNumLeaves>;
-  detail::resynthesize_impl<dNtk, Database, Profiler, MaxNumVars, CubeSize, MaxNumLeaves> p( dntk, database, ps );
-  p.run( nodes );
-}
-#endif
-
-} /* namespace algorithms */
-
-} /* namespace opto */
-
-} /* namespace mad_hatter */
+} // namespace algorithms
+} // namespace opto
+} // namespace mad_hatter

@@ -77,11 +77,11 @@ public:
   }
 
   template<typename WinMng, typename WinSim>
-  void run( WinMng const& window, WinSim& simulator )
+  void run( WinMng& window, WinSim& simulator )
   {
     assert( ( std::is_same<signature_t, typename WinSim::signature_t>::value && "signatures have different type" ) );
     cuts_.clear();
-
+    window.mark_contained();
     // initialize the approximate information manager
     load_information( window, simulator );
     // identify candidates through branch and bound
