@@ -64,7 +64,7 @@ TEST_CASE( "Delay resynthesis via rewiring - single-output gate without don't ca
 
   using DNtk = mockturtle::depth_view<Ntk>;
   DNtk dntk( ntk );
-  mad_hatter::trackers::arrival_times_tracker<DNtk> tracker( dntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker<DNtk> tracker( dntk );
 
   CHECK( tracker.worst_delay() == 3 );
 
@@ -108,7 +108,7 @@ TEST_CASE( "Delay resynthesis via rewiring - single-output gate with don't cares
   using DNtk = mockturtle::depth_view<Ntk>;
   mad_hatter::windowing::window_manager_stats st;
   DNtk dntk( ntk );
-  mad_hatter::trackers::arrival_times_tracker<DNtk> tracker( dntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker<DNtk> tracker( dntk );
 
   CHECK( tracker.worst_delay() == 4 );
 
@@ -154,7 +154,7 @@ TEST_CASE( "Delay resynthesis via rewiring - multiple-output gate without don't 
   using DNtk = mockturtle::depth_view<Ntk>;
   mad_hatter::windowing::window_manager_stats st;
   DNtk dntk( ntk );
-  mad_hatter::trackers::arrival_times_tracker<DNtk> tracker( dntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker<DNtk> tracker( dntk );
 
   CHECK( tracker.worst_delay() == 3 );
 
@@ -201,7 +201,7 @@ TEST_CASE( "Delay resynthesis via rewiring - multiple-output gate with don't car
   using DNtk = mockturtle::depth_view<Ntk>;
   mad_hatter::windowing::window_manager_stats st;
   DNtk dntk( ntk );
-  mad_hatter::trackers::arrival_times_tracker<DNtk> tracker( dntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker<DNtk> tracker( dntk );
 
   CHECK( tracker.worst_delay() == 6 );
 
@@ -209,7 +209,7 @@ TEST_CASE( "Delay resynthesis via rewiring - multiple-output gate with don't car
   ps.window_manager_ps.odc_levels = 3;
   mad_hatter::opto::algorithms::delay_resynthesize<DNtk, Db, custom_delay_rewire_params>( dntk, db, ps );
 
-  CHECK( tracker.worst_delay() == 4 );
+  CHECK( tracker.worst_delay() == 3.0 );
 }
 
 struct custom_delay_struct_params1 : mad_hatter::opto::algorithms::default_resynthesis_params<8u>
@@ -269,7 +269,7 @@ TEST_CASE( "Delay resynthesis via cut rewriting - single-output gate without don
   using DNtk = mockturtle::depth_view<Ntk>;
   mad_hatter::windowing::window_manager_stats st;
   DNtk dntk( ntk );
-  mad_hatter::trackers::arrival_times_tracker<DNtk> tracker( dntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker<DNtk> tracker( dntk );
 
   CHECK( tracker.worst_delay() == 3 );
 
@@ -324,7 +324,7 @@ TEST_CASE( "Delay resynthesis via cut rewriting - single-output gate with don't 
   using DNtk = mockturtle::depth_view<Ntk>;
   mad_hatter::windowing::window_manager_stats st;
   DNtk dntk( ntk );
-  mad_hatter::trackers::arrival_times_tracker<DNtk> tracker( dntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker<DNtk> tracker( dntk );
 
   CHECK( tracker.worst_delay() == 4 );
 
@@ -388,7 +388,7 @@ TEST_CASE( "Delay resynthesis via window rewriting - single-output gate without 
   mad_hatter::windowing::window_manager_stats st;
   DNtk dntk( ntk );
 
-  mad_hatter::trackers::arrival_times_tracker<DNtk> tracker( dntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker<DNtk> tracker( dntk );
   CHECK( tracker.worst_delay() == 4 );
 
   custom_delay_window_params1 ps;
@@ -437,7 +437,7 @@ TEST_CASE( "Delay resynthesis via window rewriting - single-output gate with don
   using DNtk = mockturtle::depth_view<Ntk>;
   mad_hatter::windowing::window_manager_stats st;
   DNtk dntk( ntk );
-  mad_hatter::trackers::arrival_times_tracker<DNtk> tracker( dntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker<DNtk> tracker( dntk );
   CHECK( tracker.worst_delay() == 4 );
 
   custom_delay_window_params1 ps;

@@ -78,7 +78,7 @@ public:
 
     window.foreach_divisor( [&]( auto const& f, auto i ) {
       auto const n = ntk_.get_node( f );
-      if ( f.output == 0 && !window.is_leaf( n ) )
+      if ( f.output == 0 && !window.is_input( n ) )
       {
         compute( window, n );
       }
@@ -90,11 +90,6 @@ public:
 
     window.foreach_tfo( [&]( auto const& n, auto i ) {
       compute( window, n );
-    } );
-
-    window.foreach_output( [&]( auto const& f, auto i ) {
-      if ( f.output == 0 )
-        compute( window, ntk_.get_node( f ) );
     } );
 
     care_ = compute_observability_careset( window );
@@ -113,6 +108,7 @@ public:
   template<typename WinMngr>
   signature_t const compute_observability_careset( WinMngr const& window )
   {
+
     signature_t care;
     auto n = window.get_pivot();
     auto const& outputs = window.get_outputs();
@@ -129,6 +125,12 @@ public:
       }
     }
 
+    std::vector<signature_t> old_sims;
+    window.foreach_output( [&]( auto fo, auto io ) {
+      (void)io;
+      old_sims.push_back( sims_[sig_to_sim_[fo]] );
+    } );
+
     for ( uint32_t m = 1u; m < ( 1u << ntk_.num_outputs( n ) ); ++m )
     {
       int i = 0;
@@ -142,22 +144,8 @@ public:
       } );
 
       window.foreach_output( [&]( auto fo, auto io ) {
-        if ( fo.output == 0 )
-        {
-          auto const no = ntk_.get_node( fo );
-          std::vector<signature_t> old;
-          ntk_.foreach_output( no, [&]( auto const& foo ) {
-            old.push_back( sims_[sig_to_sim_[foo]] );
-          } );
-
-          re_compute( window, no );
-
-          int ioo = 0;
-          ntk_.foreach_output( no, [&]( auto const& foo ) {
-            assert( old[ioo].num_vars() == sims_[sig_to_sim_[foo]].num_vars() );
-            care |= ( old[ioo++] ^ sims_[sig_to_sim_[foo]] );
-          } );
-        }
+        re_compute( window, fo );
+        care |= ( old_sims[io] ^ sims_[sig_to_sim_[fo]] );
       } );
 
       ntk_.foreach_output( n, [&]( auto const& f ) {
@@ -165,14 +153,6 @@ public:
       } );
       window.foreach_tfo( [&]( auto no, auto io ) {
         re_compute( window, no );
-      } );
-
-      window.foreach_output( [&]( auto f, auto io ) {
-        if ( f.output == 0 )
-        {
-          auto const n = ntk_.get_node( f );
-          re_compute( window, n );
-        }
       } );
     }
 
@@ -182,7 +162,7 @@ public:
   template<typename WinMngr>
   void compute( WinMngr const& window, node_index_t const& n )
   {
-    if ( window.is_leaf( n ) )
+    if ( window.is_input( n ) )
       return;
 
     std::vector<signature_t const*> sim_ptrs;
@@ -192,11 +172,8 @@ public:
     auto const tts = ntk_.compute( n, sim_ptrs );
     uint32_t io = 0;
     ntk_.foreach_output( n, [&]( auto const& fo ) {
-      if ( !sig_to_sim_.has( fo ) )
-      {
-        sig_to_sim_[fo] = sims_.size();
-        sims_.push_back( tts[io++] );
-      }
+      sig_to_sim_[fo] = sims_.size();
+      sims_.push_back( tts[io++] );
     } );
     return;
   }
@@ -204,7 +181,7 @@ public:
   template<typename WinMngr>
   void re_compute( WinMngr const& window, node_index_t const& n )
   {
-    if ( window.is_leaf( n ) )
+    if ( window.is_input( n ) )
       return;
 
     std::vector<signature_t const*> sim_ptrs;
@@ -216,6 +193,21 @@ public:
     ntk_.foreach_output( n, [&]( auto const& fo ) {
       sims_[sig_to_sim_[fo]] = tts[io++];
     } );
+    return;
+  }
+
+  template<typename WinMngr>
+  void re_compute( WinMngr const& window, signal_t const& f )
+  {
+    if ( window.is_input( ntk_.get_node( f ) ) )
+      return;
+
+    std::vector<signature_t const*> sim_ptrs;
+    ntk_.foreach_fanin( f, [&]( auto const& fi, auto ii ) {
+      sim_ptrs.push_back( &sims_[sig_to_sim_[fi]] );
+    } );
+    auto const tt = ntk_.compute( f, sim_ptrs );
+    sims_[sig_to_sim_[f]] = tt;
     return;
   }
 

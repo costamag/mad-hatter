@@ -1,6 +1,6 @@
 #include "stats.hpp"
 #include "../../../../include/mad_hatter/network/network.hpp"
-#include "../../../../include/mad_hatter/trackers/trackers.hpp"
+#include "../../../../include/mad_hatter/analyzers/trackers/trackers.hpp"
 #include "../../context.hpp"
 #include <fstream>
 #include <iomanip>
@@ -64,7 +64,7 @@ static void cmd_print_stats( CLIContext& ctx, const std::vector<std::string>& ar
     format = args[1]; // user can do: print_stats json
   }
 
-  mad_hatter::trackers::arrival_times_tracker arrival( *ctx.ntk );
+  mad_hatter::analyzers::trackers::arrival_times_tracker arrival( *ctx.ntk );
 
   // collect stats from the network
   Stats stats;

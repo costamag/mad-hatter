@@ -1,5 +1,5 @@
-/* mad-hatter: C++ logic network library
- * Copyright (C) 2025 EPFL
+/* mad_hatter: C++ logic network library
+ * Copyright (C) 2018-2022  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,36 +24,38 @@
  */
 
 /*!
- * \file arrival_times_tracker.hpp
- * \brief Compute arrival time information of a network and updates upon change
+ * \file sensing_times_tracker.hpp
+ * \brief Compute sensing time information of a network and updates upon change
  *
  * \author Andrea Costamagna
  */
 
 #pragma once
 
-#include "../network/signal_map.hpp"
-#include "../network/tfo_manager.hpp"
+#include "../../network/signal_map.hpp"
+#include "../../network/tfo_manager.hpp"
 #include <limits>
-#include <mockturtle/networks/events.hpp>
 
 namespace mad_hatter
+{
+
+namespace analyzers
 {
 
 namespace trackers
 {
 
-/*! \brief Engine to evaluate the arrival times of a network.
+/*! \brief Engine to evaluate the sensing times of a network.
  *
- * This engine computes the arrival times of a network and keeps them up-to-date.
- * During construction it is possible to specify a vector of arrival times. If
- * not provided, the engine assumes 0 arrival time at all the PIs. At construction,
- * the arrival times are propagated in the network.
+ * This engine computes the sensing times of a network and keeps them up-to-date.
+ * During construction it is possible to specify a vector of sensing times. If
+ * not provided, the engine assumes 0 sensing time at all the PIs. At construction,
+ * the sensing times are propagated in the network.
  *
  * The engine is equipped with a transitive fanout (TFO) manager to handle the
  * timing updates. Two events trigger the update:
- * - Node addition: The arrival time of the node is computed from the fanins
- * - Node modification: The arrival time of the TFO of the affected nodes is updated.
+ * - Node addition: The sensing time of the node is computed from the fanins
+ * - Node modification: The sensing time of the TFO of the affected nodes is updated.
  *
  * \tparam Ntk the network type to be analyzed.
  *
@@ -66,19 +68,19 @@ namespace trackers
       bound_network ntk( gates );
       auto const a = ntk.create_pi();
       auto const f1 = ntk.create_node( { a }, 0 );
-      arrival_times_tracker arrival( ntk );
+      sensing_times_tracker sensing( ntk );
       auto const f2 = ntk.create_node( { f1 }, 0 );
    \endverbatim
  */
 template<class Ntk>
-class arrival_times_tracker
+class sensing_times_tracker
 {
 public:
   using node_index_t = typename Ntk::node;
   using signal_t = typename Ntk::signal;
 
 public:
-  arrival_times_tracker( Ntk& ntk )
+  sensing_times_tracker( Ntk& ntk )
       : ntk_( ntk ),
         times_( ntk ),
         tfo_( ntk )
@@ -86,10 +88,10 @@ public:
     init();
   }
 
-  arrival_times_tracker( Ntk& ntk, std::vector<double> const& input_arrivals )
+  sensing_times_tracker( Ntk& ntk, std::vector<double> const& input_sensings )
       : ntk_( ntk ),
         times_( ntk ),
-        input_( input_arrivals ),
+        input_( input_sensings ),
         tfo_( ntk )
   {
     init();
@@ -102,34 +104,35 @@ public:
     static_assert( mockturtle::has_incr_trav_id_v<Ntk>, "Ntk does not implement the incr_trav_id method" );
     static_assert( mockturtle::has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method" );
     static_assert( mad_hatter::traits::has_foreach_output_v<Ntk>, "Ntk does not implement the foreach_output method" );
-    static_assert( mockturtle::has_foreach_fanout_v<Ntk>, "Ntk does not implement the foreach_fanin method" );
+    static_assert( mockturtle::has_foreach_fanout_v<Ntk>, "Ntk does not implement the foreach_fanout method" );
     static_assert( mockturtle::has_foreach_pi_v<Ntk>, "Ntk does not implement the foreach_pi method" );
-    static_assert( mockturtle::has_foreach_po_v<Ntk>, "Ntk does not implement the foreach_pi method" );
+    static_assert( mockturtle::has_foreach_po_v<Ntk>, "Ntk does not implement the foreach_po method" );
     static_assert( mockturtle::has_set_value_v<Ntk>, "Ntk does not implement the set_visited method" );
     static_assert( mockturtle::has_value_v<Ntk>, "Ntk does not implement the set_visited method" );
     static_assert( mockturtle::has_set_visited_v<Ntk>, "Ntk does not implement the set_visited method" );
     static_assert( mockturtle::has_visited_v<Ntk>, "Ntk does not implement the set_visited method" );
     static_assert( mockturtle::has_get_node_v<Ntk>, "Ntk does not implement the get_node method" );
     static_assert( mockturtle::has_size_v<Ntk>, "Ntk does not implement the size method" );
-    compute_arrival_times();
+    compute_sensing_times();
 
     add_event_ = ntk_.events().register_add_event( [&]( const node_index_t& n ) {
       times_.resize();
-      compute_arrival_time( n );
+      compute_sensing_time( n );
     } );
 
     modified_event_ = ntk_.events().register_modified_event( [&]( const auto& n, auto old_children ) {
-      times_.resize();
-      update_arrival_times_tfo( n );
+      /* The tfo of the new node is modified as it acquires new fanouts */
+      update_sensing_times_tfo( n );
 
+      /* The tfo of the old children is modified since they loose the old node */
       for ( auto const& f : old_children )
       {
-        update_arrival_times_tfo( ntk_.get_node( f ) );
+        update_sensing_times_tfo( ntk_.get_node( f ) );
       }
     } );
   }
 
-  ~arrival_times_tracker()
+  ~sensing_times_tracker()
   {
     if ( add_event_ )
     {
@@ -144,15 +147,6 @@ public:
 
 #pragma region Interface methods
 public:
-  [[nodiscard]] double worst_delay() const
-  {
-    double worst_delay = 0;
-    ntk_.foreach_po( [&]( signal_t const& f ) {
-      worst_delay = std::max( worst_delay, times_[f] );
-    } );
-    return worst_delay;
-  }
-
   [[nodiscard]] double get_time( signal_t const f ) const
   {
     return times_[f];
@@ -171,7 +165,7 @@ private:
     ntk_.set_value( n, ntk_.trav_id() );
   };
 
-  void compute_arrival_times()
+  void compute_sensing_times()
   {
     times_.reset();
     if ( input_.size() < ntk_.num_pis() )
@@ -186,12 +180,12 @@ private:
     } );
 
     ntk_.foreach_po( [&]( auto f ) {
-      compute_arrival_times_tfi( f );
+      compute_sensing_times_tfi( f );
     } );
   }
 
-  /*! \brief Compute the arrival times of the nodes in the TFI of a signal's node*/
-  void compute_arrival_times_tfi( signal_t const& f )
+  /*! \brief Compute the sensing times of the nodes in the TFI of a signal's node*/
+  void compute_sensing_times_tfi( signal_t const& f )
   {
     node_index_t n = ntk_.get_node( f );
     if ( is_marked_ready( n ) || ntk_.is_pi( n ) )
@@ -200,16 +194,16 @@ private:
     }
 
     ntk_.foreach_fanin( n, [&]( auto fi, auto ii ) {
-      compute_arrival_times_tfi( fi );
+      compute_sensing_times_tfi( fi );
     } );
-    compute_arrival_time( n );
+    compute_sensing_time( n );
 
     make_ready( n );
   }
 
-  /*! \brief Efficient update of the arrival times in the TFO of a node.\
+  /*! \brief Efficient update of the sensing times in the TFO of a node.\
    */
-  void update_arrival_times_tfo( node_index_t const& n )
+  void update_sensing_times_tfo( node_index_t const& n )
   {
     /* mark all the nodes that must be considered */
     tfo_.init( n );
@@ -238,9 +232,9 @@ private:
           progress = true;
           tfo_.mark_ready( u );
           ntk_.foreach_output( u, [&]( auto const& fu ) {
-            double old_arrival = times_[fu];
-            compute_arrival_time_at_pin( fu );
-            if ( std::abs( times_[fu] - old_arrival ) > std::numeric_limits<double>::epsilon() )
+            double old_sensing = times_[fu];
+            compute_sensing_time_at_pin( fu );
+            if ( std::abs( times_[fu] - old_sensing ) > std::numeric_limits<double>::epsilon() )
             {
               ntk_.foreach_fanout( fu, [&]( node_index_t const& o ) {
                 if ( !tfo_.is_marked_seen( o ) ) // only insert if not seen
@@ -262,11 +256,11 @@ private:
     }
     if ( !progress )
     {
-      std::cerr << "[e] Infinite loop in arrival times analyzer" << std::endl;
+      std::cerr << "[e] Infinite loop in sensing times analyzer" << std::endl;
     }
   }
 
-  void compute_arrival_time_at_pin( signal_t const& f )
+  void compute_sensing_time_at_pin( signal_t const& f )
   {
     node_index_t n = ntk_.get_node( f );
     if ( ntk_.is_pi( n ) )
@@ -275,18 +269,18 @@ private:
     }
     else
     {
-      double time = 0;
+      auto time = std::numeric_limits<double>::max();
       ntk_.foreach_fanin( n, [&]( auto const& fi, auto const ii ) {
-        time = std::max( time, times_[fi] + ntk_.get_max_pin_delay( f, ii ) );
+        time = std::min( time, times_[fi] + ntk_.get_min_pin_delay( f, ii ) );
       } );
       times_[f] = time;
     }
   }
 
-  void compute_arrival_time( node_index_t const& n )
+  void compute_sensing_time( node_index_t const& n )
   {
     ntk_.foreach_output( n, [&]( auto const& f ) {
-      compute_arrival_time_at_pin( f );
+      compute_sensing_time_at_pin( f );
     } );
   }
 #pragma endregion
@@ -300,7 +294,8 @@ private:
   std::shared_ptr<typename mockturtle::network_events<Ntk>::add_event_type> add_event_;
   std::shared_ptr<typename mockturtle::network_events<Ntk>::modified_event_type> modified_event_;
 };
-
 } // namespace trackers
+
+} // namespace analyzers
 
 } // namespace mad_hatter

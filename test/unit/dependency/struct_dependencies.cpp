@@ -66,7 +66,7 @@ TEST_CASE( "Enumerate structural dependency cuts", "[struct_dependencies]" )
   ps.odc_levels = 4;
   mad_hatter::windowing::window_manager<DNtk> window( dntk, ps, st );
   CHECK( window.run( dntk.get_node( fs[8] ) ) );
-  auto const leaves = window.get_leaves();
+  auto const leaves = window.get_inputs();
   auto const divs = window.get_divisors();
   mad_hatter::windowing::window_simulator<DNtk, custom_struct_params::max_cuts_size> sim( dntk );
   sim.run( window );

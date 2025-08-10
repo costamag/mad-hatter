@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file area_evaluator.hpp
+  \file area_profiler.hpp
   \brief Analyzer of the area
 
   \author Andrea Costamagna
@@ -32,9 +32,9 @@
 
 #pragma once
 
+#include "../../analyzers/trackers/arrival_times_tracker.hpp"
 #include "../../databases/mapped_database.hpp"
-#include "../../trackers/arrival_times_tracker.hpp"
-#include "evaluators_utils.hpp"
+#include "profilers_utils.hpp"
 
 namespace mad_hatter
 {
@@ -42,11 +42,11 @@ namespace mad_hatter
 namespace opto
 {
 
-namespace evaluators
+namespace profilers
 {
 
-template<class Ntk>
-class area_evaluator
+template<class Ntk, typename WinMngr>
+class area_profiler
 {
 public:
   using node_index_t = typename Ntk::node;
@@ -55,7 +55,6 @@ public:
   static cost_t constexpr min_cost = std::numeric_limits<cost_t>::min();
   static cost_t constexpr max_cost = std::numeric_limits<cost_t>::max();
   static bool constexpr pass_window = false;
-  static bool constexpr node_depend = false;
   static bool constexpr has_arrival = true;
 
   struct node_with_cost_t
@@ -65,13 +64,17 @@ public:
   };
 
 public:
-  area_evaluator( Ntk& ntk, evaluator_params const& ps )
+  area_profiler( Ntk& ntk, WinMngr & win_manager, profiler_params const& ps )
       : ntk_( ntk ),
         ps_( ps ),
         nodes_( ntk_.size() ),
-        arrival_( ntk_ )
+        arrival_( ntk_ ),
+        win_manager_( win_manager )
   {
   }
+
+  void init()
+  {}
 
   double get_arrival( signal_t const& f ) const
   {
@@ -79,8 +82,9 @@ public:
   }
 
   template<class List_t>
-  cost_t evaluate( List_t const& list, std::vector<signal_t> const& leaves )
+  cost_t evaluate( List_t const& list, std::vector<signal_t> const& leaves, node_index_t const& nold = std::numeric_limits<node_index_t>::max() )
   {
+    (void)nold;
     signal_t const f = insert( ntk_, leaves, list );
     node_index_t const n = ntk_.get_node( f );
     cost_t const cost_deref = recursive_deref( n );
@@ -91,12 +95,13 @@ public:
     return cost_deref;
   }
 
-  cost_t evaluate_rewiring( node_index_t const& n, std::vector<signal_t> const& new_children, std::vector<signal_t> const& win_leaves )
+  cost_t evaluate_rewiring( node_index_t const& n, std::vector<signal_t> const& new_children )
   {
     for ( auto const& f : new_children )
       ntk_.incr_fanout_size( ntk_.get_node( f ) );
 
-    auto const cost = evaluate( n, win_leaves ) - ntk_.get_area( n );
+    auto const& win_inputs = win_manager_.get_inputs();
+    auto const cost = evaluate( n, win_inputs ) - ntk_.get_area( n );
 
     for ( auto const& f : new_children )
       ntk_.decr_fanout_size( ntk_.get_node( f ) );
@@ -104,7 +109,7 @@ public:
     return cost;
   }
 
-  cost_t evaluate( node_index_t const& n, std::vector<signal_t> const& children )
+  cost_t evaluate( node_index_t const& n, std::vector<signal_t> const& children, node_index_t nold = std::numeric_limits<node_index_t>::max() )
   {
     std::vector<node_index_t> leaves( children.size() );
     std::transform( children.begin(), children.end(), leaves.begin(), [&]( auto const f ) { return ntk_.get_node( f ); } );
@@ -148,7 +153,7 @@ private:
 
       double const node_cost = recursive_deref( n );
       recursive_ref( n );
-
+      assert( n < nodes_.size() );
       nodes_[n] = { n, node_cost };
 
       ntk_.set_visited( n, ntk_.trav_id() );
@@ -244,8 +249,7 @@ private:
 
   void sort_nodes()
   {
-    nodes_.reserve( ntk_.size() );
-    std::fill( nodes_.begin(), nodes_.end(), node_with_cost_t{} );
+    nodes_.resize( ntk_.size() );
     compute_costs();
     std::stable_sort( nodes_.begin(), nodes_.end(), [&]( auto const& a, auto const& b ) {
       return a.mffc_area > b.mffc_area;
@@ -254,12 +258,13 @@ private:
 
 private:
   Ntk& ntk_;
-  evaluator_params const& ps_;
+  profiler_params const& ps_;
   std::vector<node_with_cost_t> nodes_;
-  trackers::arrival_times_tracker<Ntk> arrival_;
+  analyzers::trackers::arrival_times_tracker<Ntk> arrival_;
+  WinMngr & win_manager_;
 };
 
-} /* namespace evaluators */
+} /* namespace profilers */
 
 } /* namespace opto */
 

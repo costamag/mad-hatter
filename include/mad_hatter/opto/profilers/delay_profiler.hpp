@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file delay_evaluator.hpp
+  \file delay_profiler.hpp
   \brief Analyzer of the delay
 
   \author Andrea Costamagna
@@ -32,10 +32,10 @@
 
 #pragma once
 
+#include "../../analyzers/trackers/arrival_times_tracker.hpp"
+#include "../../analyzers/trackers/required_times_tracker.hpp"
 #include "../../databases/mapped_database.hpp"
-#include "../../trackers/arrival_times_tracker.hpp"
-#include "../../trackers/required_times_tracker.hpp"
-#include "evaluators_utils.hpp"
+#include "profilers_utils.hpp"
 
 namespace mad_hatter
 {
@@ -43,11 +43,11 @@ namespace mad_hatter
 namespace opto
 {
 
-namespace evaluators
+namespace profilers
 {
 
-template<class Ntk>
-class delay_evaluator
+template<class Ntk, typename WinMngr>
+class delay_profiler
 {
 public:
   using node_index_t = typename Ntk::node;
@@ -56,7 +56,6 @@ public:
   static cost_t constexpr min_cost = std::numeric_limits<cost_t>::min();
   static cost_t constexpr max_cost = std::numeric_limits<cost_t>::max();
   static bool constexpr pass_window = false;
-  static bool constexpr node_depend = false;
   static bool constexpr has_arrival = true;
 
   struct node_with_cost_t
@@ -66,13 +65,17 @@ public:
   };
 
 public:
-  delay_evaluator( Ntk& ntk, evaluator_params const& ps )
+  delay_profiler( Ntk& ntk, WinMngr & win_manager, profiler_params const& ps )
       : ntk_( ntk ),
         ps_( ps ),
         nodes_( ntk_.size() ),
-        arrival_( ntk_ )
+        arrival_( ntk_ ),
+        win_manager_( win_manager )
   {
   }
+
+  void init()
+  {}
 
   double get_arrival( signal_t const& f ) const
   {
@@ -80,8 +83,9 @@ public:
   }
 
   template<class List_t>
-  cost_t evaluate( List_t const& list, std::vector<signal_t> const& leaves )
+  cost_t evaluate( List_t const& list, std::vector<signal_t> const& leaves, node_index_t const& nold = std::numeric_limits<node_index_t>::max() )
   {
+    (void)nold;
     signal_t const f = insert( ntk_, leaves, list );
     node_index_t const n = ntk_.get_node( f );
     cost_t time = 0.0;
@@ -93,7 +97,7 @@ public:
     return time;
   }
 
-  cost_t evaluate_rewiring( node_index_t const& n, std::vector<signal_t> const& new_children, std::vector<signal_t> const& win_leaves )
+  cost_t evaluate_rewiring( node_index_t const& n, std::vector<signal_t> const& new_children )
   {
     cost_t curr_cost = 0.0;
     ntk_.foreach_output( n, [&]( auto const& f ) {
@@ -110,7 +114,7 @@ public:
     return curr_cost - cand_cost;
   }
 
-  cost_t evaluate( node_index_t const& n, std::vector<signal_t> const& children )
+  cost_t evaluate( node_index_t const& n, std::vector<signal_t> const& children, node_index_t nold = std::numeric_limits<node_index_t>::max() )
   {
     cost_t time = 0.0;
     ntk_.foreach_output( n, [&]( auto const& f ) {
@@ -146,20 +150,20 @@ public:
 private:
   void compute_costs()
   {
-    trackers::required_times_tracker<Ntk> required( ntk_, arrival_.worst_delay() );
+    analyzers::trackers::required_times_tracker<Ntk> required( ntk_, arrival_.worst_delay() );
     ntk_.foreach_gate( [&]( auto const& n ) {
       double node_cost = 0;
       ntk_.foreach_output( n, [&]( auto const& f ) {
         node_cost = std::max( node_cost, required.get_time( f ) - arrival_.get_time( f ) );
       } );
+      assert( n < nodes_.size() );
       nodes_[n] = { n, node_cost };
     } );
   }
 
   void sort_nodes()
   {
-    nodes_.reserve( ntk_.size() );
-    std::fill( nodes_.begin(), nodes_.end(), node_with_cost_t{} );
+    nodes_.resize( ntk_.size() );
     compute_costs();
     std::stable_sort( nodes_.begin(), nodes_.end(), [&]( auto const& a, auto const& b ) {
       return a.mffc_delay > b.mffc_delay;
@@ -168,12 +172,14 @@ private:
 
 private:
   Ntk& ntk_;
-  evaluator_params const& ps_;
+  profiler_params const& ps_;
   std::vector<node_with_cost_t> nodes_;
-  trackers::arrival_times_tracker<Ntk> arrival_;
+  analyzers::trackers::arrival_times_tracker<Ntk> arrival_;
+  WinMngr & win_manager_;
+
 };
 
-} /* namespace evaluators */
+} /* namespace profilers */
 
 } /* namespace opto */
 

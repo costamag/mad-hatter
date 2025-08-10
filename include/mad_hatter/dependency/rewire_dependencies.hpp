@@ -63,10 +63,10 @@ public:
   }
 
   template<typename WinMng, typename WinSim>
-  void run( WinMng const& window, WinSim& simulator )
+  void run( WinMng& window, WinSim& simulator )
   {
     using signature_t = typename WinSim::signature_t;
-
+    window.mark_contained();
     cuts.clear();
     auto const n = window.get_pivot();
 

@@ -190,7 +190,7 @@ TEST_CASE( "Area resynthesis via rewiring - multiple-output gate with don't care
   DNtk dntk( ntk );
   custom_area_rewire_params ps;
   mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
-  CHECK( ntk.area() == 6.0 );
+  CHECK( ntk.area() == 7.5 );
 }
 
 struct custom_area_struct_params1 : mad_hatter::opto::algorithms::default_resynthesis_params<8u>

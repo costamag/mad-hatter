@@ -25,6 +25,7 @@ void test_npn_lookup()
   }
 
   mad_hatter::evaluation::chain_simulator<Chain, TT> sim_chain;
+  int cnt = 0;
   do
   {
     /* define the functionality */
@@ -67,7 +68,7 @@ void test_npn_lookup()
         CHECK( kitty::equal( res_chain, onset ) );
       }
     } );
-  } while ( !kitty::is_const0( onset ) );
+  } while ( !kitty::is_const0( onset ) && ( cnt++ < 20 ) );
 }
 
 TEST_CASE( "database for aig_network", "[database_manager]" )

@@ -6,7 +6,7 @@
 
 #include <lorina/genlib.hpp>
 #include <mad_hatter/network/network.hpp>
-#include <mad_hatter/power/power.hpp>
+#include <mad_hatter/analyzers/evaluators/power_evaluator.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 // Update the include path to the correct location of power_evaluator.hpp
@@ -15,7 +15,7 @@
 using namespace mockturtle;
 using namespace mad_hatter;
 using namespace network;
-using namespace power;
+using namespace analyzers::evaluators;
 
 std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 999 0.9 0.3 0.9 0.3\n"
                                  "GATE   inv2    2 O=!a;            PIN * INV 2 999 1.0 0.1 1.0 0.1\n"
@@ -63,7 +63,7 @@ TEST_CASE( "Power evaluation in Bound networks", "[power_evaluator]" )
   kitty::create_from_binary_string( tts_end[0], "0" );
   kitty::create_from_binary_string( tts_end[1], "0" );
 
-  workload<TT, num_steps> work( tts_init, tts_end );
+  analyzers::utils::workload<TT, num_steps> work( tts_init, tts_end );
 
   power_evaluator_stats st;
   power_evaluator<Ntk, TT, num_steps> power( ntk, st );
