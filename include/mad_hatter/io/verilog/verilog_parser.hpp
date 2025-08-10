@@ -252,6 +252,10 @@ public:
     on_action.declare_known( "1" );
     on_action.declare_known( "1'b0" );
     on_action.declare_known( "1'b1" );
+    on_action.declare_known( "1'h0" );
+    on_action.declare_known( "1'h1" );
+    on_action.declare_known( "3'h0" );
+    on_action.declare_known( "3'h1" );
   }
 
   bool get_token( std::string& token )

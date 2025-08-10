@@ -101,8 +101,15 @@ public:
 
     signals_["0"] = ntk_.get_constant( false );
     signals_["1"] = ntk_.get_constant( true );
-    signals_["1'b0"] = ntk_.get_constant( false );
-    signals_["1'b1"] = ntk_.get_constant( true );
+    std::vector<std::string> bases{ "h", "b", "d", "o" };
+    for ( auto i = 1u; i < 64u; ++i )
+    {
+      for ( auto const& base : bases )
+      {
+        signals_[std::to_string( i ) + "'" + base + "0"] = ntk_.get_constant( false );
+        signals_[std::to_string( i ) + "'" + base + "1"] = ntk_.get_constant( true );
+      }
+    }
   }
 
   void on_module_header( const std::string& module_name, const std::vector<std::string>& inouts ) const override
