@@ -35,6 +35,7 @@
 #pragma once
 
 #include "verilog_reader.hpp"
+#include <ctype.h>
 #include <iostream>
 #include <lorina/common.hpp>
 #include <lorina/detail/tokenizer.hpp>
@@ -1014,7 +1015,7 @@ public:
     valid = get_token( token ); // name or \name
     if ( !valid || token == "[" )
       return std::nullopt;
-    while ( token != "=" && token != ";" && cnt++ < 20 )
+    while ( token != "=" && token != ";" && cnt++ < 200 )
     {
       // vector assignment
       if ( ( token != "{" ) && ( token != "}" ) && ( token != "," ) )
@@ -1053,7 +1054,6 @@ public:
 
   bool parse_rhs_assign( const std::vector<std::string>& lhs )
   {
-
     valid = get_token( token );
     if ( !valid )
       return false;
@@ -1063,7 +1063,7 @@ public:
 
     std::string s;
     int cnt = 0;
-    while ( token != ";" && token != "assign" && token != "endmodule" && token != "=" && cnt++ < 20 )
+    while ( token != ";" && token != "assign" && token != "endmodule" && token != "=" && cnt++ < 200 )
     {
       // vector assignment
       if ( ( token != "-" ) && ( token != "+" ) && ( token != "{" ) && ( token != "}" ) && ( token != "," ) )
@@ -1094,7 +1094,7 @@ public:
       if ( !valid || token == "[" )
         return false;
     }
-    if ( token != ";" || ( rhs.size() != lhs.size() ) )
+    if ( token != ";" )
     {
       return false;
     }
@@ -1104,12 +1104,35 @@ public:
 
   bool assign_signals( std::vector<std::string> const& lhs, std::vector<std::string> const& rhs, bool const& is_compl )
   {
-    for ( auto i = 0u; i < lhs.size(); ++i )
+    int r = 0, l = 0;
+    while ( ( r < rhs.size() ) && ( l < lhs.size() ) )
     {
-      if ( !assign_signals( lhs[i], rhs[i], is_compl ) )
-        return false;
+      if ( isdigit( rhs[r].at( 0 ) ) )
+      {
+        std::string rep_str{ rhs[r].at( 0 ) };
+        int d = 1;
+        while ( isdigit( rhs[r].at( d ) ) )
+          rep_str += std::to_string( rhs[r].at( d++ ) );
+        std::string name = rhs[r].substr( d );
+        if ( name[0] == '\'' )
+        {
+          name = "1" + name;
+        }
+        auto const rep = std::stoi( rep_str );
+        for ( auto i = 0; i < rep; ++i )
+        {
+          if ( !assign_signals( lhs[l++], name, is_compl ) )
+            return false;
+        }
+        r++;
+      }
+      else
+      {
+        if ( !assign_signals( lhs[l++], rhs[r++], is_compl ) )
+          return false;
+      }
     }
-    return true;
+    return ( ( r == rhs.size() ) && ( l == lhs.size() ) );
   }
 
   bool assign_signals( std::string const& lhs, std::string const& rhs, bool const& is_compl )

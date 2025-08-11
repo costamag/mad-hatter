@@ -361,6 +361,86 @@ endmodule
   CHECK( out.str() == expected );
 }
 
+TEST_CASE( "Corner case 4 - vector assignment with explicit negative polarity", "[verilog_reader]" )
+{
+
+  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in_lib( test_library );
+  auto result_lib = lorina::read_genlib( in_lib, genlib_reader( gates ) );
+  CHECK( result_lib == lorina::return_code::success );
+
+  std::string file =
+      R"(module top( \a[0] , \a[1] , \b[0] , \b[1] ,
+            \xyz_inst.out1[0] , \xyz_inst.out1[1] , \xyz_inst.out1[2] , \xyz_inst.out1[3] ,
+            \xyz_inst.out1[4] , \xyz_inst.out1[5] , \xyz_inst.out1[6] , \xyz_inst.out1[7] );
+
+    // Ports
+    input  \a[0] , \a[1] , \b[0] , \b[1] ;
+    output \xyz_inst.out1[0] , \xyz_inst.out1[1] , \xyz_inst.out1[2] , \xyz_inst.out1[3] ,
+           \xyz_inst.out1[4] , \xyz_inst.out1[5] , \xyz_inst.out1[6] , \xyz_inst.out1[7] ;
+
+    // Internal nets (all are used)
+    wire \xyz_inst.f07[1] , \xyz_inst.f06[1] , \xyz_inst.f05[1] , \xyz_inst.f04[1] , \xyz_inst.f03[1] ;
+    wire t0;
+
+    // A couple of gates to drive the f** nets
+    and2 g0 (.a(\a[0]), .b(\b[0]), .O(\xyz_inst.f07[1]));
+    xor2 g1 (.a(\a[1]), .b(\b[1]), .O(\xyz_inst.f06[1]));
+    inv1 g2 (.a(\a[0]), .O(t0));
+    xor2 g3 (.a(t0), .b(\b[1]), .O(\xyz_inst.f05[1]));
+    buf  g4 (.a(\a[1]), .O(\xyz_inst.f04[1]));
+    buf  g5 (.a(\b[0]), .O(\xyz_inst.f03[1]));
+
+    // Subtraction with concatenations (8-bit wide on each side)
+    assign { \xyz_inst.out1[7] , \xyz_inst.out1[6] , \xyz_inst.out1[5] , \xyz_inst.out1[4] ,
+             \xyz_inst.out1[3] , \xyz_inst.out1[2] , \xyz_inst.out1[1] , \xyz_inst.out1[0] } =
+           - { \xyz_inst.f07[1] , \xyz_inst.f06[1] , \xyz_inst.f05[1] , \xyz_inst.f04[1] ,
+               \xyz_inst.f03[1] , 3'h0 };
+
+endmodule
+  )";
+
+  std::istringstream in_ntk( file );
+
+  bound_network ntk( gates );
+  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+
+  /* structural checks */
+  CHECK( result_ntk == lorina::return_code::success );
+  CHECK( ntk.num_pis() == 4 );
+  CHECK( ntk.num_pos() == 8 );
+  CHECK( ntk.size() == 20 ); // 2 constants, 4 PIs, 2 buffers
+  CHECK( ntk.num_gates() == 14 );
+
+  std::ostringstream out;
+  mad_hatter::io::verilog::write_verilog( ntk, out );
+
+  std::string expected =
+      "module top( x0 , x1 , x2 , x3 , y0 , y1 , y2 , y3 , y4 , y5 , y6 , y7 );\n"
+      "  input x0 , x1 , x2 , x3 ;\n"
+      "  output y0 , y1 , y2 , y3 , y4 , y5 , y6 , y7 ;\n"
+      "  wire n6 , n7 , n8 , n9 , n10 , n11 ;\n"
+      "  inv2  g00( .a (0), .O (y0) );\n"
+      "  inv2  g01( .a (0), .O (y1) );\n"
+      "  inv2  g02( .a (0), .O (y2) );\n"
+      "  buf   g03( .a (x2), .O (n11) );\n"
+      "  inv2  g04( .a (n11), .O (y3) );\n"
+      "  buf   g05( .a (x1), .O (n10) );\n"
+      "  inv2  g06( .a (n10), .O (y4) );\n"
+      "  inv1  g07( .a (x0), .O (n8) );\n"
+      "  xor2  g08( .a (n8), .b (x3), .O (n9) );\n"
+      "  inv2  g09( .a (n9), .O (y5) );\n"
+      "  xor2  g10( .a (x1), .b (x3), .O (n7) );\n"
+      "  inv2  g11( .a (n7), .O (y6) );\n"
+      "  and2  g12( .a (x0), .b (x2), .O (n6) );\n"
+      "  inv2  g13( .a (n6), .O (y7) );\n"
+      "endmodule\n";
+
+  CHECK( out.str() == expected );
+}
+
 /*
 
 std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 999 0.9 0.3 0.9 0.3\n"
