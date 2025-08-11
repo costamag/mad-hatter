@@ -101,8 +101,12 @@ public:
 
     signals_["0"] = ntk_.get_constant( false );
     signals_["1"] = ntk_.get_constant( true );
-    signals_["1'b0"] = ntk_.get_constant( false );
-    signals_["1'b1"] = ntk_.get_constant( true );
+    std::vector<std::string> bases{ "h", "b", "d", "o" };
+    for ( auto const& base : bases )
+    {
+      signals_["1'" + base + "0"] = ntk_.get_constant( false );
+      signals_["1'" + base + "1"] = ntk_.get_constant( true );
+    }
   }
 
   void on_module_header( const std::string& module_name, const std::vector<std::string>& inouts ) const override
@@ -176,6 +180,10 @@ public:
         output_names_.emplace_back( name, length );
       }
     }
+  }
+
+  void on_wires( const std::vector<std::string>& names, std::string const& size = "" ) const override
+  {
   }
 
   void on_assign( const std::string& lhs, const std::pair<std::string, bool>& rhs ) const override

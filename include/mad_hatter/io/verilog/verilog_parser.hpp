@@ -35,6 +35,9 @@
 #pragma once
 
 #include "verilog_reader.hpp"
+#include <algorithm>
+#include <cctype>
+#include <ctype.h>
 #include <iostream>
 #include <lorina/common.hpp>
 #include <lorina/detail/tokenizer.hpp>
@@ -42,6 +45,7 @@
 #include <lorina/diagnostics.hpp>
 #include <lorina/verilog_regex.hpp>
 #include <queue>
+#include <string>
 
 namespace mad_hatter
 {
@@ -59,7 +63,7 @@ public:
       : lorina::detail::tokenizer( in )
   {}
 
-  lorina::detail::tokenizer_return_code get_token_internal( std::string& token )
+  lorina::detail::tokenizer_return_code get_token_internal( std::string& token, bool use_spaces = false )
   {
     if ( _done )
     {
@@ -70,6 +74,9 @@ public:
     char c;
     while ( get_char( c ) )
     {
+      if ( token == "module" || token == "assign" || token == "input" || token == "wire" || token == "output" )
+        return lorina::detail::tokenizer_return_code::valid;
+
       if ( c == '\n' && _comment_mode )
       {
         _comment_mode = false;
@@ -84,8 +91,8 @@ public:
           while ( get_char( c ) )
           {
             // Stop if we hit a delimiter
-            if ( c == ' ' || c == '\n' || c == '\t' ||
-                 c == ',' || c == ';' || c == ')' || c == '(' )
+            if ( c == '\n' || c == '\t' ||
+                 c == '=' || c == '+' || c == '-' || c == ',' || c == ';' || c == ')' || c == '(' || c == '{' || c == '}' || ( use_spaces && c == ' ' ) )
             {
               // put delimiter back for next token
               lookahead += c;
@@ -96,7 +103,12 @@ public:
           return lorina::detail::tokenizer_return_code::valid;
         }
 
-        if ( ( c == ' ' || c == '\n' ) && !_quote_mode )
+        if ( ( !use_spaces && c == ' ' ) && !_quote_mode )
+        {
+          continue; // skip whitespace
+        }
+
+        if ( ( ( use_spaces && c == ' ' ) || ( c == '\n' ) ) && !_quote_mode )
         {
           if ( !token.empty() )
             return lorina::detail::tokenizer_return_code::valid;
@@ -107,7 +119,7 @@ public:
         if ( ( c == '(' || c == ')' || c == '{' || c == '}' ||
                c == ';' || c == ':' || c == ',' || c == '~' ||
                c == '&' || c == '|' || c == '^' || c == '#' ||
-               c == '[' || c == ']' ) &&
+               c == '[' || c == ']' || c == '=' || c == '+' || c == '-' ) &&
              !_quote_mode )
         {
           if ( token.empty() )
@@ -245,25 +257,39 @@ public:
                                                                                      const std::vector<std::pair<std::string, std::string>>& output_map, // output map
                                                                                      const std::vector<unsigned int>& ids )                              // some extra string parameter
                                                                                  {
-                                                                                   reader.on_cell( input_map, output_map, ids );
+                                                                                   if ( ( output_map[0].first == "lhs" ) && ( input_map[0].first == "rhs" ) )
+                                                                                   {
+                                                                                     reader.on_assign( output_map[0].second, { input_map[0].second, ids[0] > 0 } );
+                                                                                   }
+                                                                                   else
+                                                                                   {
+                                                                                     reader.on_cell( input_map, output_map, ids );
+                                                                                   }
                                                                                  } ) ) )
   {
     on_action.declare_known( "0" );
     on_action.declare_known( "1" );
     on_action.declare_known( "1'b0" );
     on_action.declare_known( "1'b1" );
+    on_action.declare_known( "1'h0" );
+    on_action.declare_known( "1'h1" );
+    on_action.declare_known( "1'd0" );
+    on_action.declare_known( "1'd1" );
+    on_action.declare_known( "1'o0" );
+    on_action.declare_known( "1'o1" );
   }
 
-  bool get_token( std::string& token )
+  bool get_token( std::string& token, bool use_spaces = false )
   {
     lorina::detail::tokenizer_return_code result;
     do
     {
       if ( tokens.empty() )
       {
-        result = tok.get_token_internal( token );
+        result = tok.get_token_internal( token, use_spaces );
         lorina::detail::trim( token );
 
+        token.erase( remove( token.begin(), token.end(), ' ' ), token.end() );
         // Normalize escaped identifiers: strip leading backslash
         if ( !token.empty() && token[0] == '\\' )
         {
@@ -371,7 +397,7 @@ public:
 
     do
     {
-      valid = get_token( token );
+      valid = get_token( token, true );
       if ( !valid )
         return false;
 
@@ -443,7 +469,7 @@ public:
           return false;
         }
 
-        valid = get_token( token );
+        valid = get_token( token, true );
         if ( !valid )
           return false;
       }
@@ -459,7 +485,7 @@ public:
           return false;
         }
 
-        valid = get_token( token );
+        valid = get_token( token, true );
         if ( !valid )
           return false;
       }
@@ -475,7 +501,7 @@ public:
           return false;
         }
 
-        valid = get_token( token );
+        valid = get_token( token, true );
         if ( !valid )
           return false;
       }
@@ -742,23 +768,21 @@ public:
     if ( token != "assign" )
       return false;
 
-    if ( !parse_signal_name() )
+    auto lhs = parse_lhs_assign();
+    if ( !lhs )
+    {
       return false;
+    }
 
-    const std::string lhs = token;
-    valid = get_token( token );
-    if ( !valid || token != "=" )
+    if ( token != "=" )
+    {
       return false;
+    }
 
     /* expression */
-    bool success = parse_rhs_expression( lhs );
+    bool success = parse_rhs_assign( *lhs );
     if ( !success )
     {
-      if ( diag )
-      {
-        diag->report( lorina::diag_id::ERR_VERILOG_ASSIGNMENT_RHS )
-            .add_argument( lhs );
-      }
       return false;
     }
 
@@ -1003,6 +1027,146 @@ public:
                                              std::make_tuple( module_name, params, inst_name, args ) );
 
     return success;
+  }
+
+  std::optional<std::vector<std::string>> parse_lhs_assign()
+  {
+    std::vector<std::string> lhs;
+    int cnt = 0;
+    valid = get_token( token ); // name or \name
+    if ( !valid || token == "[" )
+      return std::nullopt;
+    while ( token != "=" && token != ";" && cnt++ < 200 )
+    {
+      // vector assignment
+      if ( ( token != "{" ) && ( token != "}" ) && ( token != "," ) )
+      {
+        // Handle escaped identifiers like \f[0]
+        if ( token[0] == '\\' )
+        {
+          token = token.substr( 1 );
+        }
+
+        auto const name = token;
+
+        if ( token == "[" )
+        {
+          valid = get_token( token ); // size
+          if ( !valid )
+            return std::nullopt;
+          auto const size = token;
+
+          valid = get_token( token ); // should be "]"
+          if ( !valid || token != "]" )
+            return std::nullopt;
+          token = name + "[" + size + "]";
+        }
+        lhs.push_back( token );
+      }
+      valid = get_token( token ); // name or \name
+      if ( !valid || token == "[" )
+        return std::nullopt;
+    }
+    if ( token == "=" )
+      return lhs;
+    else
+      return std::nullopt;
+  }
+
+  bool parse_rhs_assign( const std::vector<std::string>& lhs )
+  {
+    valid = get_token( token );
+    if ( !valid )
+      return false;
+    bool const is_compl = ( token == "-" );
+    // else either it is { or it is a signal name
+    std::vector<std::string> rhs;
+
+    std::string s;
+    int cnt = 0;
+    while ( token != ";" && token != "assign" && token != "endmodule" && token != "=" && cnt++ < 200 )
+    {
+      // vector assignment
+      if ( ( token != "-" ) && ( token != "+" ) && ( token != "{" ) && ( token != "}" ) && ( token != "," ) )
+      {
+        // Handle escaped identifiers like \f[0]
+        if ( token[0] == '\\' )
+        {
+          token = token.substr( 1 );
+        }
+
+        auto const name = token;
+
+        if ( token == "[" )
+        {
+          valid = get_token( token ); // size
+          if ( !valid )
+            return false;
+          auto const size = token;
+
+          valid = get_token( token ); // should be "]"
+          if ( !valid || token != "]" )
+            return false;
+          token = name + "[" + size + "]";
+        }
+        rhs.push_back( token );
+      }
+      valid = get_token( token ); // name or \name
+      if ( !valid || token == "[" )
+        return false;
+    }
+    if ( token != ";" )
+    {
+      return false;
+    }
+
+    return assign_signals( lhs, rhs, is_compl );
+  }
+
+  bool assign_signals( std::vector<std::string> const& lhs, std::vector<std::string> const& rhs, bool const& is_compl )
+  {
+    int r = 0, l = 0;
+    while ( ( r < rhs.size() ) && ( l < lhs.size() ) )
+    {
+      if ( isdigit( rhs[r].at( 0 ) ) )
+      {
+        std::string rep_str{ rhs[r].at( 0 ) };
+        int d = 1;
+        while ( isdigit( rhs[r].at( d ) ) )
+          rep_str += std::to_string( rhs[r].at( d++ ) );
+        std::string name = rhs[r].substr( d );
+        if ( name[0] == '\'' )
+        {
+          name = "1" + name;
+        }
+        auto const rep = std::stoi( rep_str );
+        for ( auto i = 0; i < rep; ++i )
+        {
+          if ( !assign_signals( lhs[l++], name, is_compl ) )
+            return false;
+        }
+        r++;
+      }
+      else
+      {
+        if ( !assign_signals( lhs[l++], rhs[r++], is_compl ) )
+          return false;
+      }
+    }
+    return ( ( r == rhs.size() ) && ( l == lhs.size() ) );
+  }
+
+  bool assign_signals( std::string const& lhs, std::string const& rhs, bool const& is_compl )
+  {
+    std::vector<std::pair<std::string, bool>> args{ { rhs, is_compl } };
+
+    std::vector<std::pair<std::string, std::string>> input_assigns = { std::make_pair( "rhs", rhs ) };
+    std::vector<std::pair<std::string, std::string>> output_assigns = { std::make_pair( "lhs", lhs ) };
+    std::vector<unsigned int> const ids = is_compl ? std::vector<unsigned int>{ 1 } : std::vector<unsigned int>{ 0 };
+
+    on_action.call_deferred<CELL_FN>( /* dependencies */ { rhs }, { lhs },
+                                      /* gate-function params */ std::make_tuple( input_assigns, output_assigns, ids ) );
+    return true;
   }
 
   bool parse_rhs_expression( const std::string& lhs )
