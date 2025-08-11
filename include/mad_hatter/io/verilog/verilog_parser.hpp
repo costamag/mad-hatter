@@ -1066,7 +1066,7 @@ public:
     while ( token != ";" && token != "assign" && token != "endmodule" && token != "=" && cnt++ < 20 )
     {
       // vector assignment
-      if ( ( token != "{" ) && ( token != "}" ) && ( token != "," ) )
+      if ( ( token != "-" ) && ( token != "+" ) && ( token != "{" ) && ( token != "}" ) && ( token != "," ) )
       {
         // Handle escaped identifiers like \f[0]
         if ( token[0] == '\\' )
