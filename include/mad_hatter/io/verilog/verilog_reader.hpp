@@ -102,13 +102,10 @@ public:
     signals_["0"] = ntk_.get_constant( false );
     signals_["1"] = ntk_.get_constant( true );
     std::vector<std::string> bases{ "h", "b", "d", "o" };
-    for ( auto i = 1u; i < 64u; ++i )
+    for ( auto const& base : bases )
     {
-      for ( auto const& base : bases )
-      {
-        signals_[std::to_string( i ) + "'" + base + "0"] = ntk_.get_constant( false );
-        signals_[std::to_string( i ) + "'" + base + "1"] = ntk_.get_constant( true );
-      }
+      signals_["1'" + base + "0"] = ntk_.get_constant( false );
+      signals_["1'" + base + "1"] = ntk_.get_constant( true );
     }
   }
 
@@ -183,6 +180,10 @@ public:
         output_names_.emplace_back( name, length );
       }
     }
+  }
+
+  void on_wires( const std::vector<std::string>& names, std::string const& size = "" ) const override
+  {
   }
 
   void on_assign( const std::string& lhs, const std::pair<std::string, bool>& rhs ) const override

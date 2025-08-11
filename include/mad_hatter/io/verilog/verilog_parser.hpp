@@ -35,6 +35,8 @@
 #pragma once
 
 #include "verilog_reader.hpp"
+#include <algorithm>
+#include <cctype>
 #include <ctype.h>
 #include <iostream>
 #include <lorina/common.hpp>
@@ -43,6 +45,7 @@
 #include <lorina/diagnostics.hpp>
 #include <lorina/verilog_regex.hpp>
 #include <queue>
+#include <string>
 
 namespace mad_hatter
 {
@@ -60,7 +63,7 @@ public:
       : lorina::detail::tokenizer( in )
   {}
 
-  lorina::detail::tokenizer_return_code get_token_internal( std::string& token )
+  lorina::detail::tokenizer_return_code get_token_internal( std::string& token, bool use_spaces = false )
   {
     if ( _done )
     {
@@ -71,6 +74,9 @@ public:
     char c;
     while ( get_char( c ) )
     {
+      if ( token == "module" || token == "assign" || token == "input" || token == "wire" || token == "output" )
+        return lorina::detail::tokenizer_return_code::valid;
+
       if ( c == '\n' && _comment_mode )
       {
         _comment_mode = false;
@@ -85,8 +91,8 @@ public:
           while ( get_char( c ) )
           {
             // Stop if we hit a delimiter
-            if ( c == ' ' || c == '\n' || c == '\t' ||
-                 c == ',' || c == ';' || c == ')' || c == '(' )
+            if ( c == '\n' || c == '\t' ||
+                 c == '=' || c == '+' || c == '-' || c == ',' || c == ';' || c == ')' || c == '(' || c == '{' || c == '}' || ( use_spaces && c == ' ' ) )
             {
               // put delimiter back for next token
               lookahead += c;
@@ -97,7 +103,12 @@ public:
           return lorina::detail::tokenizer_return_code::valid;
         }
 
-        if ( ( c == ' ' || c == '\n' ) && !_quote_mode )
+        if ( ( !use_spaces && c == ' ' ) && !_quote_mode )
+        {
+          continue; // skip whitespace
+        }
+
+        if ( ( ( use_spaces && c == ' ' ) || ( c == '\n' ) ) && !_quote_mode )
         {
           if ( !token.empty() )
             return lorina::detail::tokenizer_return_code::valid;
@@ -108,7 +119,7 @@ public:
         if ( ( c == '(' || c == ')' || c == '{' || c == '}' ||
                c == ';' || c == ':' || c == ',' || c == '~' ||
                c == '&' || c == '|' || c == '^' || c == '#' ||
-               c == '[' || c == ']' ) &&
+               c == '[' || c == ']' || c == '=' || c == '+' || c == '-' ) &&
              !_quote_mode )
         {
           if ( token.empty() )
@@ -246,7 +257,14 @@ public:
                                                                                      const std::vector<std::pair<std::string, std::string>>& output_map, // output map
                                                                                      const std::vector<unsigned int>& ids )                              // some extra string parameter
                                                                                  {
-                                                                                   reader.on_cell( input_map, output_map, ids );
+                                                                                   if ( ( output_map[0].first == "lhs" ) && ( input_map[0].first == "rhs" ) )
+                                                                                   {
+                                                                                     reader.on_assign( output_map[0].second, { input_map[0].second, ids[0] > 0 } );
+                                                                                   }
+                                                                                   else
+                                                                                   {
+                                                                                     reader.on_cell( input_map, output_map, ids );
+                                                                                   }
                                                                                  } ) ) )
   {
     on_action.declare_known( "0" );
@@ -255,20 +273,23 @@ public:
     on_action.declare_known( "1'b1" );
     on_action.declare_known( "1'h0" );
     on_action.declare_known( "1'h1" );
-    on_action.declare_known( "3'h0" );
-    on_action.declare_known( "3'h1" );
+    on_action.declare_known( "1'd0" );
+    on_action.declare_known( "1'd1" );
+    on_action.declare_known( "1'o0" );
+    on_action.declare_known( "1'o1" );
   }
 
-  bool get_token( std::string& token )
+  bool get_token( std::string& token, bool use_spaces = false )
   {
     lorina::detail::tokenizer_return_code result;
     do
     {
       if ( tokens.empty() )
       {
-        result = tok.get_token_internal( token );
+        result = tok.get_token_internal( token, use_spaces );
         lorina::detail::trim( token );
 
+        token.erase( remove( token.begin(), token.end(), ' ' ), token.end() );
         // Normalize escaped identifiers: strip leading backslash
         if ( !token.empty() && token[0] == '\\' )
         {
@@ -376,7 +397,7 @@ public:
 
     do
     {
-      valid = get_token( token );
+      valid = get_token( token, true );
       if ( !valid )
         return false;
 
@@ -448,7 +469,7 @@ public:
           return false;
         }
 
-        valid = get_token( token );
+        valid = get_token( token, true );
         if ( !valid )
           return false;
       }
@@ -464,7 +485,7 @@ public:
           return false;
         }
 
-        valid = get_token( token );
+        valid = get_token( token, true );
         if ( !valid )
           return false;
       }
@@ -480,7 +501,7 @@ public:
           return false;
         }
 
-        valid = get_token( token );
+        valid = get_token( token, true );
         if ( !valid )
           return false;
       }
@@ -1139,8 +1160,12 @@ public:
   {
     std::vector<std::pair<std::string, bool>> args{ { rhs, is_compl } };
 
-    on_action.call_deferred<GATE_FN>( /* dependencies */ { rhs }, { lhs },
-                                      /* gate-function params */ std::make_tuple( args, lhs, "assign" ) );
+    std::vector<std::pair<std::string, std::string>> input_assigns = { std::make_pair( "rhs", rhs ) };
+    std::vector<std::pair<std::string, std::string>> output_assigns = { std::make_pair( "lhs", lhs ) };
+    std::vector<unsigned int> const ids = is_compl ? std::vector<unsigned int>{ 1 } : std::vector<unsigned int>{ 0 };
+
+    on_action.call_deferred<CELL_FN>( /* dependencies */ { rhs }, { lhs },
+                                      /* gate-function params */ std::make_tuple( input_assigns, output_assigns, ids ) );
     return true;
   }
 

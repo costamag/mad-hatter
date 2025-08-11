@@ -441,6 +441,69 @@ endmodule
   CHECK( out.str() == expected );
 }
 
+TEST_CASE( "Corner case 5 - signal names with erroneous spaces and vector instantiation of inputs and outputs", "[verilog_reader]" )
+{
+
+  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in_lib( test_library );
+  auto result_lib = lorina::read_genlib( in_lib, genlib_reader( gates ) );
+  CHECK( result_lib == lorina::return_code::success );
+
+  std::string file =
+      R"(module top(
+    \ripple_inst.a[0], \ripple_inst.a[1] ,
+    \ripple_inst.o[0], \ripple_inst.o[1]
+);
+    // Port directions with vector widths
+    input  \ripple_inst.a[0], \ripple_inst.a[1] ;
+    output \ripple_inst.o[0], \ripple_inst.o[1] ;
+
+    // Internal nets (all used)
+    wire _008_;
+    wire _038_;
+    wire t0;
+
+    // Your exact assignments (note the spaces before [1])
+    assign _008_ = \ripple_inst.a [1];
+    assign \ripple_inst.o [1] = _038_;
+    
+    // A couple of small gates to avoid floaters
+    // Build _038_ from a bit of the input bus and _008_
+    and2 g0 (.a(\ripple_inst.a [0]), .b(_008_), .O(_038_));
+    // Drive the other output bit directly (also with spaces)
+    buf  g1 (.a(\ripple_inst.a [0]), .O(\ripple_inst.o [0]));
+
+endmodule
+  )";
+
+  std::istringstream in_ntk( file );
+
+  bound_network ntk( gates );
+  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+
+  /* structural checks */
+  CHECK( result_ntk == lorina::return_code::success );
+  CHECK( ntk.num_pis() == 2 );
+  CHECK( ntk.num_pos() == 2 );
+  CHECK( ntk.size() == 6 ); // 2 constants, 4 PIs, 2 buffers
+  CHECK( ntk.num_gates() == 2 );
+
+  std::ostringstream out;
+  mad_hatter::io::verilog::write_verilog( ntk, out );
+
+  std::string expected =
+      "module top( x0 , x1 , y0 , y1 );\n"
+      "  input x0 , x1 ;\n"
+      "  output y0 , y1 ;\n"
+      "  buf   g0( .a (x0), .O (y0) );\n"
+      "  and2  g1( .a (x0), .b (x1), .O (y1) );\n"
+      "endmodule\n";
+
+  CHECK( out.str() == expected );
+}
+
 /*
 
 std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 999 0.9 0.3 0.9 0.3\n"
