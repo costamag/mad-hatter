@@ -241,6 +241,61 @@ TEST_CASE( "Corner case 1 - assign constant", "[verilog_reader]" )
   CHECK( out.str() == expected );
 }
 
+TEST_CASE( "Corner case 2 - vector assignment with positive polarity", "[verilog_reader]" )
+{
+
+  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in_lib( test_library );
+  auto result_lib = lorina::read_genlib( in_lib, genlib_reader( gates ) );
+  CHECK( result_lib == lorina::return_code::success );
+
+  std::string file =
+      R"(module top( \xyz_inst.a[0] , \xyz_inst.a[1] , \xyz_inst.a[2] , \xyz_inst.a[3] ,
+            \xyz_inst.i0.a[0] , \xyz_inst.i0.a[1] , \xyz_inst.i0.a[2] , \xyz_inst.i0.a[3] );
+    // Port directions
+    input  \xyz_inst.a[0] , \xyz_inst.a[1] , \xyz_inst.a[2] , \xyz_inst.a[3] ;
+    output \xyz_inst.i0.a[0] , \xyz_inst.i0.a[1] , \xyz_inst.i0.a[2] , \xyz_inst.i0.a[3] ;
+
+    // Intermediate net for variety
+    wire tmp;
+
+    // Vector-to-vector assign with escaped IDs
+    assign { \xyz_inst.i0.a[3] , \xyz_inst.i0.a[2] , \xyz_inst.i0.a[1] , tmp } =
+           { \xyz_inst.a[3]    , \xyz_inst.a[2]    , \xyz_inst.a[1]    , \xyz_inst.a[0]    };
+
+    // Some trivial logic to touch tmp
+    buf g1 (.a(tmp), .O(\xyz_inst.i0.a[0]));
+
+endmodule
+  )";
+
+  std::istringstream in_ntk( file );
+
+  bound_network ntk( gates );
+  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+
+  /* structural checks */
+  CHECK( result_ntk == lorina::return_code::success );
+  CHECK( ntk.num_pis() == 4 );
+  CHECK( ntk.num_pos() == 4 );
+  CHECK( ntk.size() == 7 ); // 2 constants, 4 PIs, 2 buffers
+  CHECK( ntk.num_gates() == 1 );
+
+  std::ostringstream out;
+  mad_hatter::io::verilog::write_verilog( ntk, out );
+
+  std::string expected =
+      "module top( x0 , x1 , x2 , x3 , y0 , y1 , y2 , y3 );\n"
+      "  input x0 , x1 , x2 , x3 ;\n"
+      "  output y0 , y1 , y2 , y3 ;\n"
+      "  buf   g0( .a (x0), .O (y0) );\n"
+      "endmodule\n";
+
+  CHECK( out.str() == expected );
+}
+
 /*
 
 std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 999 0.9 0.3 0.9 0.3\n"

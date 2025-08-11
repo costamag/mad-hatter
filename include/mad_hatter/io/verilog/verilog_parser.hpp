@@ -746,23 +746,21 @@ public:
     if ( token != "assign" )
       return false;
 
-    if ( !parse_signal_name() )
+    auto lhs = parse_lhs_assign();
+    if ( !lhs )
+    {
       return false;
+    }
 
-    const std::string lhs = token;
-    valid = get_token( token );
-    if ( !valid || token != "=" )
+    if ( token != "=" )
+    {
       return false;
+    }
 
     /* expression */
-    bool success = parse_rhs_expression( lhs );
+    bool success = parse_rhs_assign( *lhs );
     if ( !success )
     {
-      if ( diag )
-      {
-        diag->report( lorina::diag_id::ERR_VERILOG_ASSIGNMENT_RHS )
-            .add_argument( lhs );
-      }
       return false;
     }
 
@@ -1007,6 +1005,120 @@ public:
                                              std::make_tuple( module_name, params, inst_name, args ) );
 
     return success;
+  }
+
+  std::optional<std::vector<std::string>> parse_lhs_assign()
+  {
+    std::vector<std::string> lhs;
+    int cnt = 0;
+    valid = get_token( token ); // name or \name
+    if ( !valid || token == "[" )
+      return std::nullopt;
+    while ( token != "=" && token != ";" && cnt++ < 20 )
+    {
+      // vector assignment
+      if ( ( token != "{" ) && ( token != "}" ) && ( token != "," ) )
+      {
+        // Handle escaped identifiers like \f[0]
+        if ( token[0] == '\\' )
+        {
+          token = token.substr( 1 );
+        }
+
+        auto const name = token;
+
+        if ( token == "[" )
+        {
+          valid = get_token( token ); // size
+          if ( !valid )
+            return std::nullopt;
+          auto const size = token;
+
+          valid = get_token( token ); // should be "]"
+          if ( !valid || token != "]" )
+            return std::nullopt;
+          token = name + "[" + size + "]";
+        }
+        lhs.push_back( token );
+      }
+      valid = get_token( token ); // name or \name
+      if ( !valid || token == "[" )
+        return std::nullopt;
+    }
+    if ( token == "=" )
+      return lhs;
+    else
+      return std::nullopt;
+  }
+
+  bool parse_rhs_assign( const std::vector<std::string>& lhs )
+  {
+
+    valid = get_token( token );
+    if ( !valid )
+      return false;
+    bool const is_compl = ( token == "-" );
+    // else either it is { or it is a signal name
+    std::vector<std::string> rhs;
+
+    std::string s;
+    int cnt = 0;
+    while ( token != ";" && token != "assign" && token != "endmodule" && token != "=" && cnt++ < 20 )
+    {
+      // vector assignment
+      if ( ( token != "{" ) && ( token != "}" ) && ( token != "," ) )
+      {
+        // Handle escaped identifiers like \f[0]
+        if ( token[0] == '\\' )
+        {
+          token = token.substr( 1 );
+        }
+
+        auto const name = token;
+
+        if ( token == "[" )
+        {
+          valid = get_token( token ); // size
+          if ( !valid )
+            return false;
+          auto const size = token;
+
+          valid = get_token( token ); // should be "]"
+          if ( !valid || token != "]" )
+            return false;
+          token = name + "[" + size + "]";
+        }
+        rhs.push_back( token );
+      }
+      valid = get_token( token ); // name or \name
+      if ( !valid || token == "[" )
+        return false;
+    }
+    if ( token != ";" || ( rhs.size() != lhs.size() ) )
+    {
+      return false;
+    }
+
+    return assign_signals( lhs, rhs, is_compl );
+  }
+
+  bool assign_signals( std::vector<std::string> const& lhs, std::vector<std::string> const& rhs, bool const& is_compl )
+  {
+    for ( auto i = 0u; i < lhs.size(); ++i )
+    {
+      if ( !assign_signals( lhs[i], rhs[i], is_compl ) )
+        return false;
+    }
+    return true;
+  }
+
+  bool assign_signals( std::string const& lhs, std::string const& rhs, bool const& is_compl )
+  {
+    std::vector<std::pair<std::string, bool>> args{ { rhs, is_compl } };
+
+    on_action.call_deferred<GATE_FN>( /* dependencies */ { rhs }, { lhs },
+                                      /* gate-function params */ std::make_tuple( args, lhs, "assign" ) );
+    return true;
   }
 
   bool parse_rhs_expression( const std::string& lhs )
