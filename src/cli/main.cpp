@@ -1,5 +1,5 @@
-#include "cli/context.hpp"
 #include "cli/commands.hpp"
+#include "cli/context.hpp"
 #include "cli/repl.hpp"
 #include <CLI/CLI.hpp>
 #include <fstream>
@@ -23,7 +23,7 @@ int main( int argc, char* argv[] )
   app.add_option( "-o,--output", verilogOut, "Output Verilog design" );
   app.add_option( "-f,--file", scriptFile, "Script file with commands" );
   app.add_flag( "--no-repl", forceNonInteractive, "Run in non-interactive mode only" );
-  
+
   CLI11_PARSE( app, argc, argv );
 
   // batch mode via flags
@@ -55,7 +55,7 @@ int main( int argc, char* argv[] )
   if ( !forceNonInteractive )
   {
     replxx::Replxx repl;
-    std::string prompt = "mad> ";
+    std::string prompt = "rho> ";
 
     repl.set_completion_callback( [&]( std::string const& prefix, int& contextLen ) {
       replxx::Replxx::completions_t completions;
