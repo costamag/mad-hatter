@@ -49,6 +49,14 @@ namespace io
 namespace verilog
 {
 
+#ifndef DIAG_HERE_FILE
+#define DIAG_HERE_FILE __FILE__
+#endif
+
+#ifndef DIAG_HERE_LINE
+#define DIAG_HERE_LINE __LINE__
+#endif
+
 /*! \brief Reader function for VERILOG format.
  *
  * Reads a simplistic VERILOG format from a stream and invokes a callback
@@ -90,16 +98,16 @@ template<typename Ntk>
   std::ifstream in( lorina::detail::word_exp_filename( filename ), std::ifstream::in );
   if ( !in.is_open() )
   {
-    if ( diag )
-    {
-      diag->report( lorina::diag_id::ERR_FILE_OPEN ).add_argument( filename );
-    }
+    REPORT_DIAG( -1, diag, lorina::diagnostic_level::fatal, "failed to open file `{}`", filename.c_str() );
     return lorina::return_code::parse_error;
   }
   else
   {
     auto const ret = read_verilog( in, reader, diag );
     in.close();
+    if ( ret != lorina::return_code::success )
+      REPORT_DIAG( -1, diag, lorina::diagnostic_level::fatal, "failed to read the verilog file `{}`", filename.c_str() );
+
     return ret;
   }
 }

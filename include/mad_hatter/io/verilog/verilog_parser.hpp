@@ -56,6 +56,75 @@ namespace io
 namespace verilog
 {
 
+#ifndef DIAG_HERE_FILE
+#define DIAG_HERE_FILE __FILE__
+#endif
+
+#ifndef DIAG_HERE_LINE
+#define DIAG_HERE_LINE __LINE__
+#endif
+
+template<typename... Args>
+inline void report_diagnostic( int file_line,
+                               lorina::diagnostic_engine* diag,
+                               lorina::diagnostic_level level,
+                               const char* fmt,
+                               const char* file, int line,
+                               Args&&... args )
+{
+  if ( !diag )
+    return;
+
+  // primary message
+  auto id = diag->create_id( level, fmt );
+  auto rep = diag->report( id );
+
+  // call rep.add_argument(arg) for each arg in the pack
+  (void)std::initializer_list<int>{
+      ( (void)rep.add_argument( std::forward<Args>( args ) ), 0 )... };
+
+  // clickable location as a separate note
+  auto note_code = diag->create_id( level, "  ↪ {}:{}" );
+  diag->report( note_code ).add_argument( std::string( file ) ).add_argument( std::to_string( line ) );
+  if ( file_line >= 0 && ( level != lorina::diagnostic_level::note ) )
+  {
+    auto note_verilog = diag->create_id( lorina::diagnostic_level::remark, "  ↪ located at line {} of the verilog file" );
+    diag->report( note_verilog ).add_argument( std::to_string( file_line ) );
+  }
+}
+
+template<typename... Args>
+inline void report_diagnostic_raw( int file_line,
+                                   lorina::diagnostic_engine* diag,
+                                   lorina::diagnostic_level level,
+                                   const char* fmt,
+                                   Args&&... args )
+{
+  if ( !diag )
+    return;
+
+  // primary message
+  auto id = diag->create_id( level, fmt );
+  auto rep = diag->report( id );
+
+  // call rep.add_argument(arg) for each arg in the pack
+  (void)std::initializer_list<int>{
+      ( (void)rep.add_argument( std::forward<Args>( args ) ), 0 )... };
+  if ( file_line >= 0 && ( level != lorina::diagnostic_level::note ) )
+  {
+    auto note_verilog = diag->create_id( lorina::diagnostic_level::remark, "  ↪ located at line {} of the verilog file" );
+    diag->report( note_verilog ).add_argument( std::to_string( file_line ) );
+  }
+}
+
+// Convenience macro: inject __FILE__/__LINE__, forward the rest.
+// The '##' before __VA_ARGS__ swallows the preceding comma when there are no args (GNU extension).
+#define REPORT_DIAG( file_line, diag, level, fmt, ... ) \
+  report_diagnostic( ( file_line ), ( diag ), ( level ), ( fmt ), __FILE__, __LINE__, ##__VA_ARGS__ )
+
+#define REPORT_DIAG_RAW( file_line, diag, level, fmt, ... ) \
+  report_diagnostic_raw( ( file_line ), ( diag ), ( level ), ( fmt ), ##__VA_ARGS__ )
+
 class augmented_tokenizer : public lorina::detail::tokenizer
 {
 public:
@@ -74,6 +143,9 @@ public:
     char c;
     while ( get_char( c ) )
     {
+      if ( c == '\n' )
+        file_line++;
+
       if ( token == "module" || token == "assign" || token == "input" || token == "wire" || token == "output" )
         return lorina::detail::tokenizer_return_code::valid;
 
@@ -90,6 +162,9 @@ public:
           token += c; // keep the backslash in the token
           while ( get_char( c ) )
           {
+            if ( c == '\n' )
+              file_line++;
+
             // Stop if we hit a delimiter
             if ( c == '\n' || c == '\t' ||
                  c == '=' || c == '+' || c == '-' || c == ',' || c == ';' || c == ')' || c == '(' || c == '{' || c == '}' || ( use_spaces && c == ' ' ) )
@@ -145,6 +220,9 @@ public:
     _done = true;
     return lorina::detail::tokenizer_return_code::valid;
   }
+
+public:
+  int file_line = 0;
 };
 
 /*! \brief Simple parser for VERILOG format.
@@ -368,15 +446,18 @@ public:
 
   bool parse_modules()
   {
-    while ( get_token( token ) )
+    while ( get_token( token, /*skip_ws=*/true ) )
     {
       if ( token != "module" )
       {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "token `{}` should be `module`", token.c_str() );
         return false;
       }
-
       if ( !parse_module() )
       {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "failed to parse module" );
         return false;
       }
     }
@@ -388,10 +469,8 @@ public:
     bool success = parse_module_header();
     if ( !success )
     {
-      if ( diag )
-      {
-        diag->report( lorina::diag_id::ERR_VERILOG_MODULE_HEADER );
-      }
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "failed to parse module header" );
       return false;
     }
 
@@ -399,17 +478,18 @@ public:
     {
       valid = get_token( token, true );
       if ( !valid )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
-
+      }
       if ( token == "input" )
       {
         success = parse_inputs();
         if ( !success )
         {
-          if ( diag )
-          {
-            diag->report( lorina::diag_id::ERR_VERILOG_INPUT_DECLARATION );
-          }
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "failed to parse input" );
           return false;
         }
       }
@@ -418,10 +498,8 @@ public:
         success = parse_outputs();
         if ( !success )
         {
-          if ( diag )
-          {
-            diag->report( lorina::diag_id::ERR_VERILOG_OUTPUT_DECLARATION );
-          }
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "failed to parse output" );
           return false;
         }
       }
@@ -430,10 +508,8 @@ public:
         success = parse_wires();
         if ( !success )
         {
-          if ( diag )
-          {
-            diag->report( lorina::diag_id::ERR_VERILOG_WIRE_DECLARATION );
-          }
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "failed to parse wire" );
           return false;
         }
       }
@@ -442,10 +518,8 @@ public:
         success = parse_parameter();
         if ( !success )
         {
-          if ( diag )
-          {
-            diag->report( lorina::diag_id::ERR_VERILOG_WIRE_DECLARATION );
-          }
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "failed to parse parameter" );
           return false;
         }
       }
@@ -462,48 +536,59 @@ public:
         success = parse_assign();
         if ( !success )
         {
-          if ( diag )
-          {
-            diag->report( lorina::diag_id::ERR_VERILOG_ASSIGNMENT );
-          }
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "failed to parse assign" );
           return false;
         }
 
         valid = get_token( token, true );
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
       }
       else if ( reader.has_gate( token ) )
       {
+        std::string const gate_name = token;
         success = parse_bound_gate();
         if ( !success )
         {
-          if ( diag )
-          {
-            diag->report( lorina::diag_id::ERR_VERILOG_ASSIGNMENT );
-          }
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "failed to parse an instance of gate `{}` ", gate_name.c_str() );
           return false;
         }
 
         valid = get_token( token, true );
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
       }
       else
       {
+        REPORT_DIAG_RAW( tok.file_line, diag, lorina::diagnostic_level::warning,
+                         "token `{}` not recognized as a keywork or valid gate name", token.c_str() );
+        REPORT_DIAG_RAW( tok.file_line, diag, lorina::diagnostic_level::remark,
+                         "token `{}` assumed to be a new module name", token.c_str() );
         success = parse_module_instantiation();
         if ( !success )
         {
-          if ( diag )
-          {
-            diag->report( lorina::diag_id::ERR_VERILOG_MODULE_INSTANTIATION_STATEMENT );
-          }
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "unsuccessful module instantiation" );
           return false;
         }
 
         valid = get_token( token, true );
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
       }
     }
 
@@ -524,17 +609,24 @@ public:
     }
 
     if ( !result )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::note,
+                   "dangling objects not parsed" );
       return false;
+    }
 
     if ( token == "endmodule" )
     {
       /* callback */
       reader.on_endmodule();
-
+      REPORT_DIAG_RAW( tok.file_line, diag, lorina::diagnostic_level::note,
+                       "successful parsing" );
       return true;
     }
     else
     {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "expected `endmodule`, got `{}`", token.c_str() );
       return false;
     }
   }
@@ -542,28 +634,45 @@ public:
   bool parse_module_header()
   {
     if ( token != "module" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `module`", token.c_str() );
       return false;
-
+    }
     valid = get_token( token );
     if ( !valid )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
-
+    }
     module_name = token;
 
     valid = get_token( token );
     if ( !valid || token != "(" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
-
+    }
     std::vector<std::string> inouts;
     do
     {
       if ( !parse_signal_name() )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "failed to parse sigal name" );
         return false;
+      }
       inouts.emplace_back( token );
 
       valid = get_token( token ); // , or )
       if ( !valid || ( token != "," && token != ")" ) )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
     } while ( valid && token != ")" );
 
     valid = get_token( token );
@@ -580,8 +689,11 @@ public:
   {
     std::vector<std::string> inputs;
     if ( token != "input" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `input`", token.c_str() );
       return false;
-
+    }
     std::string size = "";
     if ( !parse_signal_name() || token == "[" )
     {
@@ -589,14 +701,22 @@ public:
       {
         valid = get_token( token );
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
 
         if ( token != "]" )
           size += token;
       } while ( valid && token != "]" );
 
       if ( !parse_signal_name() )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "failed to parse signal name" );
         return false;
+      }
     }
     inputs.emplace_back( token );
 
@@ -605,13 +725,21 @@ public:
       valid = get_token( token );
 
       if ( !valid || ( token != "," && token != ";" ) )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
 
       if ( token == ";" )
         break;
 
       if ( !parse_signal_name() )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "failed to parse signal name" );
         return false;
+      }
 
       inputs.emplace_back( token );
     }
@@ -645,7 +773,11 @@ public:
   {
     std::vector<std::string> outputs;
     if ( token != "output" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `output`", token.c_str() );
       return false;
+    }
 
     std::string size = "";
     if ( !parse_signal_name() || token == "[" )
@@ -654,14 +786,22 @@ public:
       {
         valid = get_token( token );
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
 
         if ( token != "]" )
           size += token;
       } while ( valid && token != "]" );
 
       if ( !parse_signal_name() )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "failed to parse signal name" );
         return false;
+      }
     }
     outputs.emplace_back( token );
 
@@ -670,13 +810,21 @@ public:
       valid = get_token( token );
 
       if ( !valid || ( token != "," && token != ";" ) )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
 
       if ( token == ";" )
         break;
 
       if ( !parse_signal_name() )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "failed to parse signal name" );
         return false;
+      }
 
       outputs.emplace_back( token );
     }
@@ -692,7 +840,11 @@ public:
   {
     std::vector<std::string> wires;
     if ( token != "wire" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be wire", token.c_str() );
       return false;
+    }
 
     std::string size = "";
     if ( !parse_signal_name() && token == "[" )
@@ -701,14 +853,22 @@ public:
       {
         valid = get_token( token );
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
 
         if ( token != "]" )
           size += token;
       } while ( valid && token != "]" );
 
       if ( !parse_signal_name() )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "failed to parse signal name" );
         return false;
+      }
     }
     wires.emplace_back( token );
 
@@ -717,13 +877,21 @@ public:
       valid = get_token( token );
 
       if ( !valid || ( token != "," && token != ";" ) )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
 
       if ( token == ";" )
         break;
 
       if ( !parse_signal_name() )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "failed to parse signal name" );
         return false;
+      }
 
       wires.emplace_back( token );
     }
@@ -737,25 +905,45 @@ public:
   bool parse_parameter()
   {
     if ( token != "parameter" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `parameter`", token.c_str() );
       return false;
+    }
 
     valid = get_token( token );
     if ( !valid )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
     auto const name = token;
 
     valid = get_token( token );
     if ( !valid || ( token != "=" ) )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
 
     valid = get_token( token );
     if ( !valid )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
     auto const value = token;
 
     valid = get_token( token );
     if ( !valid || ( token != ";" ) )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
 
     /* callback */
     reader.on_parameter( name, value );
@@ -766,16 +954,24 @@ public:
   bool parse_assign()
   {
     if ( token != "assign" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `assign`", token.c_str() );
       return false;
+    }
 
     auto lhs = parse_lhs_assign();
     if ( !lhs )
     {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "failed parsing the LHS of an assignment" );
       return false;
     }
 
     if ( token != "=" )
     {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `=` in assign", token.c_str() );
       return false;
     }
 
@@ -783,24 +979,38 @@ public:
     bool success = parse_rhs_assign( *lhs );
     if ( !success )
     {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "failed parsing the RHS of an assignment" );
       return false;
     }
 
     if ( token != ";" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `;`", token.c_str() );
       return false;
+    }
     return true;
   }
 
   bool parse_bound_gate()
   {
     if ( reader.has_gate( token ) == false )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "the loaded library does not contain the gate `{}`", token.c_str() );
       return false;
+    }
 
     const std::string gate_name = token;
 
     valid = get_token( token );
     if ( !valid )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
     const std::string node_name = token;
 
     /* true for pin name false for signal name */
@@ -809,7 +1019,11 @@ public:
 
     valid = get_token( token );
     if ( !valid )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
 
     enum class pin_state
     {
@@ -829,7 +1043,11 @@ public:
       {
         valid = get_token( token );
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
         continue;
       }
       /* only signal names and pin names here */
@@ -883,7 +1101,11 @@ public:
 
       valid = get_token( token );
       if ( !valid )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
     }
 
     on_action.call_deferred<CELL_FN>( /* dependencies */ inputs, outputs,
@@ -913,40 +1135,68 @@ public:
 
     valid = get_token( token );
     if ( !valid )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
 
     std::vector<std::string> params;
     if ( token == "#" )
     {
       valid = get_token( token ); // (
       if ( !valid || token != "(" )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
 
       do
       {
         valid = get_token( token ); // param
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
         params.emplace_back( token );
 
         valid = get_token( token ); // ,
         if ( !valid )
+        {
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "`{}` is not a valid token", token.c_str() );
           return false;
+        }
       } while ( valid && token == "," );
 
       if ( !valid || token != ")" )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
 
       valid = get_token( token );
       if ( !valid )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
     }
 
     std::string const inst_name = token; // name of instantiation
 
     valid = get_token( token );
     if ( !valid || token != "(" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
 
     std::vector<std::pair<std::string, std::string>> args;
     do
@@ -954,7 +1204,11 @@ public:
       valid = get_token( token );
 
       if ( !valid )
-        return false; // refers to signal
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
+        return false;
+      }
       std::string const arg0{ token };
 
       /* check if a signal with this name exists in the module declaration */
@@ -973,30 +1227,54 @@ public:
 
       valid = get_token( token );
       if ( !valid || token != "(" )
-        return false; // (
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
+        return false;
+      }
 
       valid = get_token( token );
       if ( !valid )
-        return false; // signal name
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
+        return false;
+      }
       auto const arg1 = token;
 
       valid = get_token( token );
       if ( !valid || token != ")" )
-        return false; // )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
+        return false;
+      }
 
       valid = get_token( token );
       if ( !valid )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
 
       args.emplace_back( std::make_pair( arg0, arg1 ) );
     } while ( token == "," );
 
     if ( !valid || token != ")" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
 
     valid = get_token( token );
     if ( !valid || token != ";" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
 
     std::vector<std::string> inputs;
     for ( const auto& input : modules[module_name].inputs )
@@ -1035,7 +1313,11 @@ public:
     int cnt = 0;
     valid = get_token( token ); // name or \name
     if ( !valid || token == "[" )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return std::nullopt;
+    }
     while ( token != "=" && token != ";" && cnt++ < 200 )
     {
       // vector assignment
@@ -1053,31 +1335,51 @@ public:
         {
           valid = get_token( token ); // size
           if ( !valid )
+          {
+            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                         "`{}` is not a valid token", token.c_str() );
             return std::nullopt;
+          }
           auto const size = token;
 
           valid = get_token( token ); // should be "]"
           if ( !valid || token != "]" )
+          {
+            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                         "`{}` is not a valid token", token.c_str() );
             return std::nullopt;
+          }
           token = name + "[" + size + "]";
         }
         lhs.push_back( token );
       }
       valid = get_token( token ); // name or \name
       if ( !valid || token == "[" )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return std::nullopt;
+      }
     }
     if ( token == "=" )
       return lhs;
     else
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `=`", token.c_str() );
       return std::nullopt;
+    }
   }
 
   bool parse_rhs_assign( const std::vector<std::string>& lhs )
   {
     valid = get_token( token );
     if ( !valid )
+    {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "`{}` is not a valid token", token.c_str() );
       return false;
+    }
     bool const is_compl = ( token == "-" );
     // else either it is { or it is a signal name
     std::vector<std::string> rhs;
@@ -1101,22 +1403,36 @@ public:
         {
           valid = get_token( token ); // size
           if ( !valid )
+          {
+            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                         "`{}` is not a valid token", token.c_str() );
             return false;
+          }
           auto const size = token;
 
           valid = get_token( token ); // should be "]"
           if ( !valid || token != "]" )
+          {
+            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                         "`{}` is not a valid token", token.c_str() );
             return false;
+          }
           token = name + "[" + size + "]";
         }
         rhs.push_back( token );
       }
       valid = get_token( token ); // name or \name
       if ( !valid || token == "[" )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
     }
     if ( token != ";" )
     {
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "token `{}` should be `;`", token.c_str() );
       return false;
     }
 
@@ -1142,18 +1458,41 @@ public:
         auto const rep = std::stoi( rep_str );
         for ( auto i = 0; i < rep; ++i )
         {
-          if ( !assign_signals( lhs[l++], name, is_compl ) )
+          if ( !assign_signals( lhs[l], name, is_compl ) )
+          {
+            auto const arg1 = name.c_str();
+            auto const arg2 = lhs[l].c_str();
+            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                         "failed assigning `{}` to `{}`", arg1, arg2 );
             return false;
+          }
+          l++;
         }
         r++;
       }
       else
       {
-        if ( !assign_signals( lhs[l++], rhs[r++], is_compl ) )
+        if ( !assign_signals( lhs[l], rhs[r], is_compl ) )
+        {
+          auto const arg1 = rhs[r].c_str();
+          auto const arg2 = lhs[l].c_str();
+          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                       "failed assigning `{}` to `{}`", arg1, arg2 );
           return false;
+        }
+        l++;
+        r++;
       }
     }
-    return ( ( r == rhs.size() ) && ( l == lhs.size() ) );
+    if ( ( r != rhs.size() ) || ( l != lhs.size() ) )
+    {
+      auto const rstr = std::to_string( r ).c_str();
+      auto const lstr = std::to_string( l ).c_str();
+      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                   "different number of entries in LHS and RHS of assign `{}` != `{}`", lstr, rstr );
+      return false;
+    }
+    return true;
   }
 
   bool assign_signals( std::string const& lhs, std::string const& rhs, bool const& is_compl )
@@ -1176,7 +1515,11 @@ public:
     {
       valid = get_token( token );
       if ( !valid )
+      {
+        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+                     "`{}` is not a valid token", token.c_str() );
         return false;
+      }
 
       if ( token == ";" || token == "assign" || token == "endmodule" )
         break;

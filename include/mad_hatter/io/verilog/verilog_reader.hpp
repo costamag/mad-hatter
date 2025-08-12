@@ -28,10 +28,6 @@
   \brief Lorina reader for VERILOG files
 
   \author Andrea Costamagna
-  \author Heinz Riener
-  \author Marcel Walter
-  \author Mathias Soeken
-  \author Siang-Yun (Sonia) Lee
 */
 
 #pragma once
@@ -59,6 +55,14 @@ namespace io
 
 namespace verilog
 {
+
+#ifndef DIAG_HERE_FILE
+#define DIAG_HERE_FILE __FILE__
+#endif
+
+#ifndef DIAG_HERE_LINE
+#define DIAG_HERE_LINE __LINE__
+#endif
 
 /*! \brief Lorina reader callback for VERILOG files.
  *
@@ -205,11 +209,14 @@ public:
     if constexpr ( traits::is_bound_network_type_v<Ntk> )
     {
       if ( name_ != top_module_name_ )
+      {
         return;
+      }
 
       if ( signals_.find( output_assign[0].second ) != signals_.end() )
+      {
         return;
-
+      }
       std::vector<typename Ntk::signal> children( input_assign.size() );
       for ( auto const& child : input_assign )
       {
@@ -227,7 +234,7 @@ public:
     }
     else
     {
-      std::cerr << "[e] Ntk does not support create_node\n";
+      fmt::print( stderr, "[e] this network type is not supported\n" );
     }
   }
 
