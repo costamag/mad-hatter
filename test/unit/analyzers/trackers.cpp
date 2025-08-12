@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Tests for mad_hatter boolean/simd_operations.hpp
+// Tests for rinox boolean/simd_operations.hpp
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -8,14 +8,14 @@
 #include <vector>
 
 #include <lorina/genlib.hpp>
-#include <mad_hatter/network/network.hpp>
-#include <mad_hatter/analyzers/trackers/trackers.hpp>
+#include <rinox/network/network.hpp>
+#include <rinox/analyzers/trackers/trackers.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
 
 using namespace mockturtle;
-using namespace mad_hatter;
+using namespace rinox;
 using namespace network;
 using namespace analyzers::trackers;
 

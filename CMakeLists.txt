@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
-project(mad_hatter)
+project(rinox)
 
 # Options
-option(HATTER_ENABLE_ASAN "Enable AddressSanitizer" OFF)
-option(HATTER_ENABLE_TESTS "Build unit tests" ON)
-option(HATTER_VERBOSE_COMPILE "Print compilation-time parameters" ON)
-set(HATTER_NUM_VARS_SIGN 6 CACHE STRING "Default cube size for signatures")
-set(HATTER_MAX_CUTS_SIZE 6 CACHE STRING "Default maximum number of leaves in cuts")
-set(HATTER_MAX_CUBE_SPFD 12 CACHE STRING "Default maximum cube size exactly represented")
-set(HATTER_MAX_NUM_LEAVES 12 CACHE STRING "Default maximum number of leaves in the window")
+option(RINOX_ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(RINOX_ENABLE_TESTS "Build unit tests" ON)
+option(RINOX_VERBOSE_COMPILE "Print compilation-time parameters" ON)
+set(RINOX_NUM_VARS_SIGN 6 CACHE STRING "Default cube size for signatures")
+set(RINOX_MAX_CUTS_SIZE 6 CACHE STRING "Default maximum number of leaves in cuts")
+set(RINOX_MAX_CUBE_SPFD 12 CACHE STRING "Default maximum cube size exactly represented")
+set(RINOX_MAX_NUM_LEAVES 12 CACHE STRING "Default maximum number of leaves in the window")
 
 # Sanitizer
-if (HATTER_ENABLE_ASAN)
+if (RINOX_ENABLE_ASAN)
   set(SANITIZE_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZE_FLAGS}")
   set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZE_FLAGS}")
@@ -25,7 +25,7 @@ if(UNIX)
   check_cxx_compiler_flag("-mavx2" HAS_MAVX2)
   check_cxx_compiler_flag("-mfma" HAS_MFMA)
   if(HAS_MAVX2 AND HAS_MFMA)
-    message(STATUS "[mad_hatter] Enabling AVX2 for SIMD operations")
+    message(STATUS "[rinox] Enabling AVX2 for SIMD operations")
     add_compile_options(-mavx2 -mfma)
   endif()
 endif()
@@ -46,10 +46,10 @@ file(GLOB_RECURSE MAD_CLI_SOURCES CONFIGURE_DEPENDS
 )
 list(FILTER MAD_CLI_SOURCES EXCLUDE REGEX "src/cli/main.cpp$")
 
-add_library(mad_cli ${MAD_CLI_SOURCES})
+add_library(rho_cli ${MAD_CLI_SOURCES})
 
 # Link CLI logic against mockturtle to inherit fmt and other includes
-target_link_libraries(mad_cli
+target_link_libraries(rho_cli
     PUBLIC
         mockturtle
         replxx
@@ -57,43 +57,50 @@ target_link_libraries(mad_cli
 )
 
 # Add include paths for CLI headers
-target_include_directories(mad_cli
+target_include_directories(rho_cli
     PUBLIC
         ${CMAKE_SOURCE_DIR}/src   # so "cli/context.hpp" works
 )
 
-target_compile_definitions(mad_cli PUBLIC
-  HATTER_NUM_VARS_SIGN=${HATTER_NUM_VARS_SIGN}
-  HATTER_MAX_CUTS_SIZE=${HATTER_MAX_CUTS_SIZE}
-  HATTER_MAX_CUBE_SPFD=${HATTER_MAX_CUBE_SPFD}
-  HATTER_MAX_NUM_LEAVES=${HATTER_MAX_NUM_LEAVES}
+target_compile_definitions(rho_cli PUBLIC
+  RINOX_NUM_VARS_SIGN=${RINOX_NUM_VARS_SIGN}
+  RINOX_MAX_CUTS_SIZE=${RINOX_MAX_CUTS_SIZE}
+  RINOX_MAX_CUBE_SPFD=${RINOX_MAX_CUBE_SPFD}
+  RINOX_MAX_NUM_LEAVES=${RINOX_MAX_NUM_LEAVES}
 )
 
-if(HATTER_VERBOSE_COMPILE)
+if(RINOX_VERBOSE_COMPILE)
   message(STATUS "Configuring mad-hatter with:")
-  message(STATUS "  HATTER_NUM_VARS_SIGN = ${HATTER_NUM_VARS_SIGN}")
-  message(STATUS "  HATTER_MAX_CUTS_SIZE = ${HATTER_MAX_CUTS_SIZE}")
-  message(STATUS "  HATTER_MAX_CUBE_SPFD = ${HATTER_MAX_CUBE_SPFD}")
-  message(STATUS "  HATTER_MAX_NUM_LEAVES = ${HATTER_MAX_NUM_LEAVES}")
+  message(STATUS "  RINOX_NUM_VARS_SIGN = ${RINOX_NUM_VARS_SIGN}")
+  message(STATUS "  RINOX_MAX_CUTS_SIZE = ${RINOX_MAX_CUTS_SIZE}")
+  message(STATUS "  RINOX_MAX_CUBE_SPFD = ${RINOX_MAX_CUBE_SPFD}")
+  message(STATUS "  RINOX_MAX_NUM_LEAVES = ${RINOX_MAX_NUM_LEAVES}")
 endif()
 
 # CLI executable
-add_executable(hatter src/cli/main.cpp)
-target_link_libraries(hatter PRIVATE mad_cli)
+add_executable(rinox src/cli/main.cpp)
+target_link_libraries(rinox PRIVATE rho_cli)
 
-# Public header-only interface library
-add_library(mad_hatter INTERFACE)
-target_include_directories(mad_hatter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# Public header-only interface library (rename to avoid clash)
+add_library(rinox_headers INTERFACE)
+add_library(rinox::rinox ALIAS rinox_headers)
 
-target_compile_definitions(mad_hatter INTERFACE
-  HATTER_NUM_VARS_SIGN=${HATTER_NUM_VARS_SIGN}
-  HATTER_MAX_CUTS_SIZE=${HATTER_MAX_CUTS_SIZE}
-  HATTER_MAX_CUBE_SPFD=${HATTER_MAX_CUBE_SPFD}
-  HATTER_MAX_NUM_LEAVES=${HATTER_MAX_NUM_LEAVES}
+target_include_directories(rinox_headers INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+target_compile_definitions(rinox_headers INTERFACE
+  RINOX_NUM_VARS_SIGN=${RINOX_NUM_VARS_SIGN}
+  RINOX_MAX_CUTS_SIZE=${RINOX_MAX_CUTS_SIZE}
+  RINOX_MAX_CUBE_SPFD=${RINOX_MAX_CUBE_SPFD}
+  RINOX_MAX_NUM_LEAVES=${RINOX_MAX_NUM_LEAVES}
+)
+
+# Make rho_cli consumers inherit headers/defines too
+target_link_libraries(rho_cli PUBLIC rinox_headers)
+
 # Tests
-if (HATTER_ENABLE_TESTS)
+if (RINOX_ENABLE_TESTS)
   enable_testing()
   add_subdirectory(test)
 endif()

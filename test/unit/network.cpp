@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Tests for mad_hatter boolean/simd_operations.hpp
+// Tests for rinox boolean/simd_operations.hpp
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -8,15 +8,15 @@
 #include <vector>
 
 #include <lorina/genlib.hpp>
-#include <mad_hatter/network/network.hpp>
+#include <rinox/network/network.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
 #include <mockturtle/views/depth_view.hpp>
 
 using namespace mockturtle;
-using namespace mad_hatter;
-using namespace mad_hatter::network;
+using namespace rinox;
+using namespace rinox::network;
 
 std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 999 0.9 0.3 0.9 0.3\n"
                                  "GATE   inv2    2 O=!a;            PIN * INV 2 999 1.0 0.1 1.0 0.1\n"
@@ -35,7 +35,7 @@ std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 
 
 TEST_CASE( "Cell-based Bound network: Primary I / O and constants", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = bound_network::signal;
 
   std::vector<gate> gates;
@@ -93,7 +93,7 @@ TEST_CASE( "Cell-based Bound network: Primary I / O and constants", "[network]" 
 
 TEST_CASE( "Array-based Bound network: Primary I / O and constants", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::ARRAY_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::ARRAY_BASED, 2>;
   using signal = bound_network::signal;
 
   bound_network ntk;
@@ -146,7 +146,7 @@ TEST_CASE( "Array-based Bound network: Primary I / O and constants", "[network]"
 
 TEST_CASE( "Cell-based Bound network: Cloning nodes and networks", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = bound_network::signal;
 
   std::vector<gate> gates;
@@ -185,7 +185,7 @@ TEST_CASE( "Cell-based Bound network: Cloning nodes and networks", "[network]" )
 
 TEST_CASE( "Array-based Bound network: Cloning nodes and networks", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::ARRAY_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::ARRAY_BASED, 2>;
   using signal = bound_network::signal;
 
   bound_network ntk;
@@ -223,7 +223,7 @@ TEST_CASE( "Array-based Bound network: Cloning nodes and networks", "[network]" 
 
 TEST_CASE( "Cell-based Bound network: Substitute multiple-output node with single-output nodes", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = bound_network::signal;
 
   std::vector<gate> gates;
@@ -274,7 +274,7 @@ TEST_CASE( "Cell-based Bound network: Substitute multiple-output node with singl
 
 TEST_CASE( "Array-based Bound network: Substitute multiple-output node with single-output nodes", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::ARRAY_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::ARRAY_BASED, 2>;
   using signal = bound_network::signal;
 
   bound_network ntk;
@@ -324,7 +324,7 @@ TEST_CASE( "Array-based Bound network: Substitute multiple-output node with sing
 
 TEST_CASE( "Array-based Bound network: Strashing", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::ARRAY_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::ARRAY_BASED, 2>;
 
   bound_network ntk;
   auto const a = ntk.create_pi();
@@ -353,7 +353,7 @@ TEST_CASE( "Array-based Bound network: Strashing", "[network]" )
 
 TEST_CASE( "Cell-based Bound network: Strashing", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
 
   std::vector<gate> gates;
 
@@ -382,7 +382,7 @@ TEST_CASE( "Cell-based Bound network: Strashing", "[network]" )
 
 TEST_CASE( "Cell-based Bound network: Simulation", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
 
   std::vector<gate> gates;
 
@@ -422,7 +422,7 @@ TEST_CASE( "Cell-based Bound network: Simulation", "[network]" )
 
 TEST_CASE( "Array-based Bound network: Simulation", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::ARRAY_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::ARRAY_BASED, 2>;
 
   bound_network ntk;
   auto const a = ntk.create_pi();
@@ -462,7 +462,7 @@ TEST_CASE( "Array-based Bound network: Simulation", "[network]" )
 
 TEST_CASE( "Cell-based Bound network wrapped in a depth view", "[network]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = bound_network::signal;
 
   std::vector<gate> gates;

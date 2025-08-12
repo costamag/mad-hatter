@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=g++-9 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=g++-9 -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |
@@ -47,7 +47,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=g++-10 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=g++-10 -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |
@@ -69,7 +69,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DHATTER_CXX_STANDARD=20 -DCMAKE_CXX_COMPILER=g++-10 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DRINOX_CXX_STANDARD=20 -DCMAKE_CXX_COMPILER=g++-10 -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |
@@ -91,7 +91,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=g++-12 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=g++-12 -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |
@@ -113,7 +113,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=clang++-11 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=clang++-11 -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |
@@ -135,7 +135,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=clang++-13 -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=clang++-13 -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |
@@ -157,7 +157,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=clang++-13 -DENABLE_ASAN=ON -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=clang++-13 -DENABLE_ASAN=ON -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests with ASAN
         run: |
@@ -179,5 +179,5 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=g++-9 -DHATTER_ENABLE_EXAMPLES=ON -DHATTER_ENABLE_EXPERIMENTS=ON -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=g++-9 -DRINOX_ENABLE_EXAMPLES=ON -DRINOX_ENABLE_EXPERIMENTS=ON -DRINOX_ENABLE_TESTS=ON ..
           make

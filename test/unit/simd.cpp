@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Tests for mad_hatter boolean/simd_operations.hpp
+// Tests for rinox boolean/simd_operations.hpp
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -8,9 +8,9 @@
 #include <kitty/dynamic_truth_table.hpp>
 #include <kitty/operations.hpp>
 #include <kitty/static_truth_table.hpp>
-#include <mad_hatter/boolean/simd.hpp>
+#include <rinox/boolean/simd.hpp>
 
-namespace nspace = mad_hatter::boolean;
+namespace nspace = rinox::boolean;
 
 TEST_CASE( "SIMD set_zero large tables", "[simd]" )
 {

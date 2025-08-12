@@ -22,7 +22,7 @@ target_include_directories(run_unit_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../include
   ${CMAKE_SOURCE_DIR}/src
 )
-target_link_libraries(run_unit_tests PRIVATE mad_cli Catch2::Catch2WithMain)
+target_link_libraries(run_unit_tests PRIVATE rho_cli Catch2::Catch2WithMain)
 
 catch_discover_tests(run_unit_tests)
 
@@ -34,6 +34,6 @@ set_target_properties(run_cli_tests PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test
 )
 target_include_directories(run_cli_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(run_cli_tests PRIVATE mad_cli Catch2::Catch2WithMain)
+target_link_libraries(run_cli_tests PRIVATE rho_cli Catch2::Catch2WithMain)
 
 catch_discover_tests(run_cli_tests)

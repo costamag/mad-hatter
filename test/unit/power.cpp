@@ -5,15 +5,15 @@
 #include <vector>
 
 #include <lorina/genlib.hpp>
-#include <mad_hatter/network/network.hpp>
-#include <mad_hatter/analyzers/evaluators/power_evaluator.hpp>
+#include <rinox/network/network.hpp>
+#include <rinox/analyzers/evaluators/power_evaluator.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 // Update the include path to the correct location of power_evaluator.hpp
 #include <mockturtle/utils/tech_library.hpp>
 
 using namespace mockturtle;
-using namespace mad_hatter;
+using namespace rinox;
 using namespace network;
 using namespace analyzers::evaluators;
 

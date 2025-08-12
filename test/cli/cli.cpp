@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Tests for mad_hatter boolean/simd_operations.hpp
+// Tests for rinox boolean/simd_operations.hpp
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>

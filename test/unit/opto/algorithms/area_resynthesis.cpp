@@ -4,8 +4,8 @@
 #include <kitty/kitty.hpp>
 #include <kitty/static_truth_table.hpp>
 
-#include <mad_hatter/network/network.hpp>
-#include <mad_hatter/opto/algorithms/resynthesize.hpp>
+#include <rinox/network/network.hpp>
+#include <rinox/opto/algorithms/resynthesize.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
 #include <mockturtle/views/depth_view.hpp>
@@ -21,7 +21,7 @@ std::string const test_library = "GATE   and2    1.0 O=a*b;                 PIN 
                                  "GATE   nand2   1.0 O=!(a*b);              PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
                                  "GATE   inv1    1.0 O=!a;                  PIN * INV 1   999 1.0 0.0 1.0 0.0";
 
-struct custom_area_rewire_params : mad_hatter::opto::algorithms::default_resynthesis_params<8u>
+struct custom_area_rewire_params : rinox::opto::algorithms::default_resynthesis_params<8u>
 {
   bool try_rewire = true;
   bool try_struct = false;
@@ -34,7 +34,7 @@ struct custom_area_rewire_params : mad_hatter::opto::algorithms::default_resynth
 
 TEST_CASE( "Area resynthesis via rewiring - single-output gate without don't cares", "[area_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -42,10 +42,10 @@ TEST_CASE( "Area resynthesis via rewiring - single-output gate without don't car
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
   Ntk ntk( gates );
@@ -66,13 +66,13 @@ TEST_CASE( "Area resynthesis via rewiring - single-output gate without don't car
   using DNtk = mockturtle::depth_view<Ntk>;
   DNtk dntk( ntk );
   custom_area_rewire_params ps;
-  mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
+  rinox::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
   CHECK( ntk.area() == 3 );
 }
 
 TEST_CASE( "Area resynthesis via rewiring - single-output gate with don't cares", "[area_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -80,10 +80,10 @@ TEST_CASE( "Area resynthesis via rewiring - single-output gate with don't cares"
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
   Ntk ntk( gates );
@@ -103,17 +103,17 @@ TEST_CASE( "Area resynthesis via rewiring - single-output gate with don't cares"
   ntk.create_po( f7 );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
   custom_area_rewire_params ps;
   ps.window_manager_ps.odc_levels = 3;
-  mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
+  rinox::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
   CHECK( ntk.area() == 5.5 );
 }
 
 TEST_CASE( "Area resynthesis via rewiring - multiple-output gate without don't cares", "[area_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -121,10 +121,10 @@ TEST_CASE( "Area resynthesis via rewiring - multiple-output gate without don't c
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
   Ntk ntk( gates );
@@ -144,16 +144,16 @@ TEST_CASE( "Area resynthesis via rewiring - multiple-output gate without don't c
   ntk.create_po( { f5.index, 1 } );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
   custom_area_rewire_params ps;
-  mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
+  rinox::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
   CHECK( ntk.area() == 3 );
 }
 
 TEST_CASE( "Area resynthesis via rewiring - multiple-output gate with don't cares", "[area_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -161,10 +161,10 @@ TEST_CASE( "Area resynthesis via rewiring - multiple-output gate with don't care
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
   Ntk ntk( gates );
@@ -186,14 +186,14 @@ TEST_CASE( "Area resynthesis via rewiring - multiple-output gate with don't care
   ntk.create_po( f9 );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
   custom_area_rewire_params ps;
-  mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
+  rinox::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_rewire_params>( dntk, db, ps );
   CHECK( ntk.area() == 7.5 );
 }
 
-struct custom_area_struct_params1 : mad_hatter::opto::algorithms::default_resynthesis_params<8u>
+struct custom_area_struct_params1 : rinox::opto::algorithms::default_resynthesis_params<8u>
 {
   bool try_rewire = false;
   bool try_struct = true;
@@ -204,7 +204,7 @@ struct custom_area_struct_params1 : mad_hatter::opto::algorithms::default_resynt
   static constexpr uint32_t max_cuts_size = 6u;
 };
 
-struct custom_area_struct_params2 : mad_hatter::opto::algorithms::default_resynthesis_params<8u>
+struct custom_area_struct_params2 : rinox::opto::algorithms::default_resynthesis_params<8u>
 {
   bool try_rewire = false;
   bool try_struct = true;
@@ -217,7 +217,7 @@ struct custom_area_struct_params2 : mad_hatter::opto::algorithms::default_resynt
 
 TEST_CASE( "Area resynthesis via cut rewriting - single-output gate without don't cares", "[area_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -225,13 +225,13 @@ TEST_CASE( "Area resynthesis via cut rewriting - single-output gate without don'
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> list;
   list.add_inputs( MaxNumVars );
   list.add_output( list.add_gate( { list.add_gate( { 0, 1 }, 8 ), 2 }, 1 ) );
   CHECK( db.add( list ) );
@@ -248,14 +248,14 @@ TEST_CASE( "Area resynthesis via cut rewriting - single-output gate without don'
   ntk.create_po( f4 );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
   custom_area_struct_params1 ps;
-  mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_struct_params1>( dntk, db, ps );
+  rinox::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_struct_params1>( dntk, db, ps );
   CHECK( ntk.area() == 2.0 );
 }
 
-struct custom_area_struct_params3 : mad_hatter::opto::algorithms::default_resynthesis_params<6u>
+struct custom_area_struct_params3 : rinox::opto::algorithms::default_resynthesis_params<6u>
 {
   bool try_rewire = false;
   bool try_struct = true;
@@ -267,7 +267,7 @@ struct custom_area_struct_params3 : mad_hatter::opto::algorithms::default_resynt
 
 TEST_CASE( "Area resynthesis via cut rewriting - single-output gate with don't cares", "[area_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -275,13 +275,13 @@ TEST_CASE( "Area resynthesis via cut rewriting - single-output gate with don't c
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 3u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list1, list2;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> list1, list2;
   list1.add_inputs( MaxNumVars );
   list2.add_inputs( MaxNumVars );
   list1.add_output( list1.add_gate( { list1.add_gate( { 0, 1 }, 1 ), 2 }, 0 ) );
@@ -301,15 +301,15 @@ TEST_CASE( "Area resynthesis via cut rewriting - single-output gate with don't c
   ntk.create_po( f4 );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
   custom_area_struct_params3 ps;
   ps.window_manager_ps.odc_levels = 3;
-  mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_struct_params3>( dntk, db, ps );
+  rinox::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_struct_params3>( dntk, db, ps );
   CHECK( ntk.area() == 3.5 );
 }
 
-struct custom_area_window_params1 : mad_hatter::opto::algorithms::default_resynthesis_params<6u>
+struct custom_area_window_params1 : rinox::opto::algorithms::default_resynthesis_params<6u>
 {
   bool try_rewire = false;
   bool try_struct = false;
@@ -321,7 +321,7 @@ struct custom_area_window_params1 : mad_hatter::opto::algorithms::default_resynt
 
 TEST_CASE( "Area resynthesis via window rewriting - single-output gate without don't cares", "[area_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -329,13 +329,13 @@ TEST_CASE( "Area resynthesis via window rewriting - single-output gate without d
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> list;
   list.add_inputs( MaxNumVars );
   list.add_output( list.add_gate( { list.add_gate( { 0, 2 }, 2 ), 1 }, 2 ) );
   CHECK( db.add( list ) );
@@ -356,16 +356,16 @@ TEST_CASE( "Area resynthesis via window rewriting - single-output gate without d
   ntk.create_po( f5 );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
   custom_area_window_params1 ps;
-  mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_window_params1>( dntk, db, ps );
+  rinox::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_window_params1>( dntk, db, ps );
   CHECK( ntk.area() == 4.0 );
 }
 
 TEST_CASE( "Area resynthesis via window rewriting - single-output gate with don't cares", "[area_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -373,13 +373,13 @@ TEST_CASE( "Area resynthesis via window rewriting - single-output gate with don'
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 3u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> list;
   list.add_inputs( MaxNumVars );
   list.add_output( list.add_gate( { list.add_gate( { 0, 1 }, 2 ), 2 }, 1 ) );
   CHECK( db.add( list ) );
@@ -401,10 +401,10 @@ TEST_CASE( "Area resynthesis via window rewriting - single-output gate with don'
   ntk.create_po( f7 );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
   custom_area_window_params1 ps;
   ps.window_manager_ps.odc_levels = 3;
-  mad_hatter::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_window_params1>( dntk, db, ps );
+  rinox::opto::algorithms::area_resynthesize<DNtk, Db, custom_area_window_params1>( dntk, db, ps );
   CHECK( ntk.area() == 5.5 );
 }

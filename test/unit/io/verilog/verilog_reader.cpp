@@ -4,8 +4,8 @@
 #include <sstream>
 #include <string>
 
-#include <mad_hatter/io/verilog/verilog.hpp>
-#include <mad_hatter/network/network.hpp>
+#include <rinox/io/verilog/verilog.hpp>
+#include <rinox/network/network.hpp>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
 #include <mockturtle/networks/buffered.hpp>
@@ -37,7 +37,7 @@ std::string const test_library = "GATE   inv1    1 O=!a;            PIN * INV 1 
 TEST_CASE( "Read structural verilog to mapped network", "[verilog_reader]" )
 {
 
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in_lib( test_library );
@@ -60,7 +60,7 @@ TEST_CASE( "Read structural verilog to mapped network", "[verilog_reader]" )
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -71,7 +71,7 @@ TEST_CASE( "Read structural verilog to mapped network", "[verilog_reader]" )
   CHECK( ntk.num_gates() == 6 );
 
   std::ostringstream out;
-  mad_hatter::io::verilog::write_verilog( ntk, out );
+  rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected = "module top( x0 , x1 , x2 , y0 , y1 , y2 , y3 );\n"
                          "  input x0 , x1 , x2 ;\n"
@@ -90,7 +90,7 @@ TEST_CASE( "Read structural verilog to mapped network", "[verilog_reader]" )
 TEST_CASE( "Read structural verilog to mapped network  with the inputs permutated", "[verilog_reader]" )
 {
 
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in_lib( test_library );
@@ -113,7 +113,7 @@ TEST_CASE( "Read structural verilog to mapped network  with the inputs permutate
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -124,7 +124,7 @@ TEST_CASE( "Read structural verilog to mapped network  with the inputs permutate
   CHECK( ntk.num_gates() == 6 );
 
   std::ostringstream out;
-  mad_hatter::io::verilog::write_verilog( ntk, out );
+  rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected = "module top( x0 , x1 , x2 , y0 , y1 , y2 , y3 );\n"
                          "  input x0 , x1 , x2 ;\n"
@@ -143,7 +143,7 @@ TEST_CASE( "Read structural verilog to mapped network  with the inputs permutate
 TEST_CASE( "Read structural verilog to mapped network in the format used by abc", "[verilog_reader]" )
 {
 
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in_lib( test_library );
@@ -166,7 +166,7 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -177,7 +177,7 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
   CHECK( ntk.num_gates() == 6 );
 
   std::ostringstream out;
-  mad_hatter::io::verilog::write_verilog( ntk, out );
+  rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected = "module top( x0 , x1 , x2 , y0 , y1 , y2 , y3 );\n"
                          "  input x0 , x1 , x2 ;\n"
@@ -196,7 +196,7 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
 TEST_CASE( "Corner case 1 - assign constant", "[verilog_reader]" )
 {
 
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in_lib( test_library );
@@ -218,7 +218,7 @@ TEST_CASE( "Corner case 1 - assign constant", "[verilog_reader]" )
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -229,7 +229,7 @@ TEST_CASE( "Corner case 1 - assign constant", "[verilog_reader]" )
   CHECK( ntk.num_gates() == 1 );
 
   std::ostringstream out;
-  mad_hatter::io::verilog::write_verilog( ntk, out );
+  rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
       "module top( x0 , y0 );\n"
@@ -244,7 +244,7 @@ TEST_CASE( "Corner case 1 - assign constant", "[verilog_reader]" )
 TEST_CASE( "Corner case 2 - vector assignment with positive polarity", "[verilog_reader]" )
 {
 
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in_lib( test_library );
@@ -274,7 +274,7 @@ endmodule
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -284,7 +284,7 @@ endmodule
   CHECK( ntk.num_gates() == 1 );
 
   std::ostringstream out;
-  mad_hatter::io::verilog::write_verilog( ntk, out );
+  rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
       "module top( x0 , x1 , x2 , x3 , y0 , y1 , y2 , y3 );\n"
@@ -299,7 +299,7 @@ endmodule
 TEST_CASE( "Corner case 3 - vector assignment with explicit positive polarity", "[verilog_reader]" )
 {
 
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in_lib( test_library );
@@ -337,7 +337,7 @@ endmodule
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -347,7 +347,7 @@ endmodule
   CHECK( ntk.num_gates() == 2 );
 
   std::ostringstream out;
-  mad_hatter::io::verilog::write_verilog( ntk, out );
+  rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
       "module top( x0 , x1 , x2 , x3 , x4 , x5 , x6 , x7 , y0 , y1 , y2 , y3 , y4 , y5 , y6 , y7 );\n"
@@ -364,7 +364,7 @@ endmodule
 TEST_CASE( "Corner case 4 - vector assignment with explicit negative polarity", "[verilog_reader]" )
 {
 
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in_lib( test_library );
@@ -405,7 +405,7 @@ endmodule
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -415,7 +415,7 @@ endmodule
   CHECK( ntk.num_gates() == 14 );
 
   std::ostringstream out;
-  mad_hatter::io::verilog::write_verilog( ntk, out );
+  rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
       "module top( x0 , x1 , x2 , x3 , y0 , y1 , y2 , y3 , y4 , y5 , y6 , y7 );\n"
@@ -444,7 +444,7 @@ endmodule
 TEST_CASE( "Corner case 5 - signal names with erroneous spaces and vector instantiation of inputs and outputs", "[verilog_reader]" )
 {
 
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in_lib( test_library );
@@ -481,7 +481,7 @@ endmodule
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = mad_hatter::io::verilog::read_verilog( in_ntk, mad_hatter::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -491,7 +491,7 @@ endmodule
   CHECK( ntk.num_gates() == 2 );
 
   std::ostringstream out;
-  mad_hatter::io::verilog::write_verilog( ntk, out );
+  rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
       "module top( x0 , x1 , y0 , y1 );\n"

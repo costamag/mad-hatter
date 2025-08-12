@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=$(which g++-12) -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=$(which g++-12) -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |
@@ -40,7 +40,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |
@@ -63,7 +63,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++ -DHATTER_ENABLE_TESTS=ON ..
+          cmake -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++ -DRINOX_ENABLE_TESTS=ON ..
           make run_unit_tests
       - name: Run tests
         run: |

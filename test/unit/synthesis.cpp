@@ -3,17 +3,17 @@
 
 #include <kitty/kitty.hpp>
 
-#include <mad_hatter/dependency/dependency.hpp>
-#include <mad_hatter/evaluation/evaluation.hpp>
-#include <mad_hatter/synthesis/synthesis.hpp>
-#include <mad_hatter/synthesis/xaig_decompose.hpp>
+#include <rinox/dependency/dependency.hpp>
+#include <rinox/evaluation/evaluation.hpp>
+#include <rinox/synthesis/synthesis.hpp>
+#include <rinox/synthesis/xaig_decompose.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
 #include <mockturtle/networks/aig.hpp>
 #include <mockturtle/networks/xag.hpp>
 
-using namespace mad_hatter::synthesis;
-using namespace mad_hatter::evaluation;
-using namespace mad_hatter::evaluation::chains;
+using namespace rinox::synthesis;
+using namespace rinox::evaluation;
+using namespace rinox::evaluation::chains;
 using namespace mockturtle;
 
 /* remove Boolean matching with don't cares from testing */
@@ -170,7 +170,7 @@ TEST_CASE( "Termination condition for LUT decomposition", "[synthesis]" )
   static constexpr uint32_t MaxCutSize = 3u;
   using CSTT = kitty::static_truth_table<MaxCutSize>;
   using ISTT = kitty::ternary_truth_table<CSTT>;
-  mad_hatter::synthesis::lut_decomposer<MaxCutSize, MaxNumVars> decomposer;
+  rinox::synthesis::lut_decomposer<MaxCutSize, MaxNumVars> decomposer;
 
   CSTT care1, mask1;
   kitty::create_from_binary_string( care1, "10001100" );
@@ -186,7 +186,7 @@ TEST_CASE( "Termination condition for LUT decomposition", "[synthesis]" )
     for ( auto i : spec.inputs )
       sim_ptrs.push_back( &specs[i].sim._bits );
 
-    auto itt = mad_hatter::dependency::extract_function<kitty::static_truth_table<MaxCutSize>, MaxNumVars>( sim_ptrs, specs[lit].sim._bits, specs[lit].sim._care );
+    auto itt = rinox::dependency::extract_function<kitty::static_truth_table<MaxCutSize>, MaxNumVars>( sim_ptrs, specs[lit].sim._bits, specs[lit].sim._care );
     CHECK( kitty::equal( expected, itt._bits ) );
     CHECK( kitty::is_const0( ~itt._care ) );
     return true;

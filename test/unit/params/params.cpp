@@ -3,9 +3,9 @@
 
 TEST_CASE("Check compile-time params", "[params]") {
   std::cout << "Params in runtime:\n";
-  std::cout << "  HATTER_NUM_VARS_SIGN = " << HATTER_NUM_VARS_SIGN << "\n";
-  std::cout << "  HATTER_MAX_CUTS_SIZE = " << HATTER_MAX_CUTS_SIZE << "\n";
-  std::cout << "  HATTER_MAX_CUBE_SPFD = " << HATTER_MAX_CUBE_SPFD << "\n";
-  std::cout << "  HATTER_MAX_NUM_LEAVES = " << HATTER_MAX_NUM_LEAVES << "\n";
-  REQUIRE(HATTER_MAX_NUM_LEAVES > 0);
+  std::cout << "  RINOX_NUM_VARS_SIGN = " << RINOX_NUM_VARS_SIGN << "\n";
+  std::cout << "  RINOX_MAX_CUTS_SIZE = " << RINOX_MAX_CUTS_SIZE << "\n";
+  std::cout << "  RINOX_MAX_CUBE_SPFD = " << RINOX_MAX_CUBE_SPFD << "\n";
+  std::cout << "  RINOX_MAX_NUM_LEAVES = " << RINOX_MAX_NUM_LEAVES << "\n";
+  REQUIRE(RINOX_MAX_NUM_LEAVES > 0);
 }

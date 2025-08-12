@@ -1,6 +1,6 @@
 #include "verilog.hpp"
-#include "../../../../include/mad_hatter/io/verilog/verilog.hpp"
-#include "../../../../include/mad_hatter/network/network.hpp"
+#include "../../../../include/rinox/io/verilog/verilog.hpp"
+#include "../../../../include/rinox/network/network.hpp"
 #include "../../context.hpp"
 #include <fstream>
 #include <iostream>
@@ -29,8 +29,8 @@ static void cmd_read_verilog( CLIContext& ctx, const std::vector<std::string>& a
   lorina::text_diagnostics consumer;
   lorina::diagnostic_engine diag( &consumer );
 
-  auto result_ntk = mad_hatter::io::verilog::read_verilog(
-      in_ntk, mad_hatter::io::verilog::verilog_reader( *ctx.ntk ), &diag );
+  auto result_ntk = rinox::io::verilog::read_verilog(
+      in_ntk, rinox::io::verilog::verilog_reader( *ctx.ntk ), &diag );
   if ( result_ntk == lorina::return_code::success )
     std::cout << "Design loaded.\n";
   else
@@ -55,7 +55,7 @@ static void cmd_write_verilog( CLIContext& ctx, const std::vector<std::string>& 
     std::cerr << "Cannot write to " << args[1] << "\n";
     return;
   }
-  mad_hatter::io::verilog::write_verilog( *ctx.ntk, out );
+  rinox::io::verilog::write_verilog( *ctx.ntk, out );
   std::cout << "Design written to " << args[1] << "\n";
 }
 

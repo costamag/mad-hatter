@@ -4,9 +4,9 @@
 #include <kitty/kitty.hpp>
 #include <kitty/static_truth_table.hpp>
 
-#include <mad_hatter/analyzers/evaluators/power_evaluator.hpp>
-#include <mad_hatter/network/network.hpp>
-#include <mad_hatter/opto/algorithms/resynthesize.hpp>
+#include <rinox/analyzers/evaluators/power_evaluator.hpp>
+#include <rinox/network/network.hpp>
+#include <rinox/opto/algorithms/resynthesize.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
 #include <mockturtle/views/depth_view.hpp>
@@ -24,7 +24,7 @@ std::string const test_library = "GATE   and2    1.0 O=a*b;                 PIN 
                                  "GATE   xor3    1.0 O=a^b^c;               PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 10
                                  "GATE   nor3    1.0 O=!(a+b+c);            PIN * INV 1   999 1.0 0.0 1.0 0.0";  // 11
 
-struct custom_power_rewire_params : mad_hatter::opto::algorithms::default_resynthesis_params<8u>
+struct custom_power_rewire_params : rinox::opto::algorithms::default_resynthesis_params<8u>
 {
   bool try_rewire = true;
   bool try_struct = false;
@@ -37,7 +37,7 @@ struct custom_power_rewire_params : mad_hatter::opto::algorithms::default_resynt
 
 TEST_CASE( "Power resynthesis via rewiring - single-output gate without don't cares", "[power_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -45,10 +45,10 @@ TEST_CASE( "Power resynthesis via rewiring - single-output gate without don't ca
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
   Ntk ntk( gates );
@@ -76,14 +76,14 @@ TEST_CASE( "Power resynthesis via rewiring - single-output gate without don't ca
     kitty::create_nth_var( tts_ini[i], i );
   for ( ; i < 8; ++i )
     kitty::create_nth_var( tts_end[i - 4], i );
-  mad_hatter::analyzers::utils::workload<kitty::static_truth_table<8>, 10> workload( tts_ini, tts_end );
-  mad_hatter::analyzers::evaluators::power_evaluator_stats st;
-  mad_hatter::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<8>, 10> power( dntk, st );
+  rinox::analyzers::utils::workload<kitty::static_truth_table<8>, 10> workload( tts_ini, tts_end );
+  rinox::analyzers::evaluators::power_evaluator_stats st;
+  rinox::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<8>, 10> power( dntk, st );
 
   power.run( workload );
   auto const power_before = st.dyn_power;
   custom_power_rewire_params ps;
-  mad_hatter::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_rewire_params>( dntk, db, ps );
+  rinox::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_rewire_params>( dntk, db, ps );
   power.run( workload );
   auto const power_after = st.dyn_power;
   CHECK( dntk.area() == 2.5 );
@@ -93,7 +93,7 @@ TEST_CASE( "Power resynthesis via rewiring - single-output gate without don't ca
 
 TEST_CASE( "Power resynthesis via rewiring - single-output gate with don't cares", "[power_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -101,10 +101,10 @@ TEST_CASE( "Power resynthesis via rewiring - single-output gate with don't cares
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
   Ntk ntk( gates );
@@ -133,15 +133,15 @@ TEST_CASE( "Power resynthesis via rewiring - single-output gate with don't cares
     kitty::create_nth_var( tts_ini[i], i );
   for ( ; i < 8; ++i )
     kitty::create_nth_var( tts_end[i - 4], i );
-  mad_hatter::analyzers::utils::workload<kitty::static_truth_table<8>, 10> workload( tts_ini, tts_end );
-  mad_hatter::analyzers::evaluators::power_evaluator_stats st;
-  mad_hatter::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<8>, 10> power( dntk, st );
+  rinox::analyzers::utils::workload<kitty::static_truth_table<8>, 10> workload( tts_ini, tts_end );
+  rinox::analyzers::evaluators::power_evaluator_stats st;
+  rinox::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<8>, 10> power( dntk, st );
   power.run( workload );
 
   auto const power_before = st.dyn_power;
   custom_power_rewire_params ps;
   ps.window_manager_ps.odc_levels = 3;
-  mad_hatter::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_rewire_params>( dntk, db, ps );
+  rinox::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_rewire_params>( dntk, db, ps );
 
   power.run( workload );
   auto const power_after = st.dyn_power;
@@ -152,7 +152,7 @@ TEST_CASE( "Power resynthesis via rewiring - single-output gate with don't cares
 
 TEST_CASE( "Power resynthesis via rewiring - multiple-output gate without don't cares", "[power_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -160,10 +160,10 @@ TEST_CASE( "Power resynthesis via rewiring - multiple-output gate without don't 
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
   Ntk ntk( gates );
@@ -191,14 +191,14 @@ TEST_CASE( "Power resynthesis via rewiring - multiple-output gate without don't 
     kitty::create_nth_var( tts_ini[i], i );
   for ( ; i < 10; ++i )
     kitty::create_nth_var( tts_end[i - 5], i );
-  mad_hatter::analyzers::utils::workload<kitty::static_truth_table<10>, 10> workload( tts_ini, tts_end );
-  mad_hatter::analyzers::evaluators::power_evaluator_stats st;
-  mad_hatter::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<10>, 10> power( dntk, st );
+  rinox::analyzers::utils::workload<kitty::static_truth_table<10>, 10> workload( tts_ini, tts_end );
+  rinox::analyzers::evaluators::power_evaluator_stats st;
+  rinox::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<10>, 10> power( dntk, st );
 
   power.run( workload );
   auto const power_before = st.dyn_power;
   custom_power_rewire_params ps;
-  mad_hatter::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_rewire_params>( dntk, db, ps );
+  rinox::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_rewire_params>( dntk, db, ps );
 
   power.run( workload );
   auto const power_after = st.dyn_power;
@@ -209,7 +209,7 @@ TEST_CASE( "Power resynthesis via rewiring - multiple-output gate without don't 
 
 TEST_CASE( "Power resynthesis via rewiring - multiple-output gate with don't cares", "[power_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -217,10 +217,10 @@ TEST_CASE( "Power resynthesis via rewiring - multiple-output gate with don't car
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
   Ntk ntk( gates );
@@ -251,15 +251,15 @@ TEST_CASE( "Power resynthesis via rewiring - multiple-output gate with don't car
     kitty::create_nth_var( tts_ini[i], i );
   for ( ; i < 8; ++i )
     kitty::create_nth_var( tts_end[i - 4], i );
-  mad_hatter::analyzers::utils::workload<kitty::static_truth_table<8>, 10> workload( tts_ini, tts_end );
-  mad_hatter::analyzers::evaluators::power_evaluator_stats st;
-  mad_hatter::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<8>, 10> power( dntk, st );
+  rinox::analyzers::utils::workload<kitty::static_truth_table<8>, 10> workload( tts_ini, tts_end );
+  rinox::analyzers::evaluators::power_evaluator_stats st;
+  rinox::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<8>, 10> power( dntk, st );
 
   power.run( workload );
   auto const power_before = st.dyn_power;
   custom_power_rewire_params ps;
   ps.window_manager_ps.odc_levels = 3;
-  mad_hatter::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_rewire_params>( dntk, db, ps );
+  rinox::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_rewire_params>( dntk, db, ps );
 
   power.run( workload );
   auto const power_after = st.dyn_power;
@@ -268,7 +268,7 @@ TEST_CASE( "Power resynthesis via rewiring - multiple-output gate with don't car
   CHECK( power_after < power_before );
 }
 
-struct custom_power_struct_params1 : mad_hatter::opto::algorithms::default_resynthesis_params<8u>
+struct custom_power_struct_params1 : rinox::opto::algorithms::default_resynthesis_params<8u>
 {
   bool try_rewire = false;
   bool try_struct = true;
@@ -279,7 +279,7 @@ struct custom_power_struct_params1 : mad_hatter::opto::algorithms::default_resyn
   static constexpr uint32_t max_cuts_size = 6u;
 };
 
-struct custom_power_struct_params2 : mad_hatter::opto::algorithms::default_resynthesis_params<8u>
+struct custom_power_struct_params2 : rinox::opto::algorithms::default_resynthesis_params<8u>
 {
   bool try_rewire = false;
   bool try_struct = true;
@@ -292,7 +292,7 @@ struct custom_power_struct_params2 : mad_hatter::opto::algorithms::default_resyn
 
 TEST_CASE( "Power resynthesis via cut rewriting - single-output gate without don't cares", "[power_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -300,13 +300,13 @@ TEST_CASE( "Power resynthesis via cut rewriting - single-output gate without don
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> list;
   list.add_inputs( MaxNumVars );
   list.add_output( list.add_gate( { list.add_gate( { 0, 1 }, 0 ) }, 9 ) );
   CHECK( db.add( list ) );
@@ -331,15 +331,15 @@ TEST_CASE( "Power resynthesis via cut rewriting - single-output gate without don
     kitty::create_nth_var( tts_ini[i], i );
   for ( ; i < 6; ++i )
     kitty::create_nth_var( tts_end[i - 3], i );
-  mad_hatter::analyzers::utils::workload<kitty::static_truth_table<6>, 10> workload( tts_ini, tts_end );
-  mad_hatter::analyzers::evaluators::power_evaluator_stats st;
-  mad_hatter::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<6>, 10> power( dntk, st );
+  rinox::analyzers::utils::workload<kitty::static_truth_table<6>, 10> workload( tts_ini, tts_end );
+  rinox::analyzers::evaluators::power_evaluator_stats st;
+  rinox::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<6>, 10> power( dntk, st );
 
   power.run( workload );
   auto const power_before = st.dyn_power;
   custom_power_struct_params1 ps;
   ps.window_manager_ps.odc_levels = 0;
-  mad_hatter::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_struct_params1>( dntk, db, ps );
+  rinox::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_struct_params1>( dntk, db, ps );
 
   power.run( workload );
 
@@ -349,7 +349,7 @@ TEST_CASE( "Power resynthesis via cut rewriting - single-output gate without don
   CHECK( power_after < power_before );
 }
 
-struct custom_power_struct_params3 : mad_hatter::opto::algorithms::default_resynthesis_params<6u>
+struct custom_power_struct_params3 : rinox::opto::algorithms::default_resynthesis_params<6u>
 {
   bool try_rewire = false;
   bool try_struct = true;
@@ -361,7 +361,7 @@ struct custom_power_struct_params3 : mad_hatter::opto::algorithms::default_resyn
 
 TEST_CASE( "Power resynthesis via cut rewriting - single-output gate with don't cares", "[power_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -369,13 +369,13 @@ TEST_CASE( "Power resynthesis via cut rewriting - single-output gate with don't 
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 3u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> list;
   list.add_inputs( MaxNumVars );
   list.add_output( list.add_gate( { 0, 1, 2 }, 5 ) );
   CHECK( db.add( list ) );
@@ -403,15 +403,15 @@ TEST_CASE( "Power resynthesis via cut rewriting - single-output gate with don't 
     kitty::create_nth_var( tts_ini[i], i );
   for ( ; i < 6; ++i )
     kitty::create_nth_var( tts_end[i - 3], i );
-  mad_hatter::analyzers::utils::workload<kitty::static_truth_table<6>, 10> workload( tts_ini, tts_end );
-  mad_hatter::analyzers::evaluators::power_evaluator_stats st;
-  mad_hatter::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<6>, 10> power( dntk, st );
+  rinox::analyzers::utils::workload<kitty::static_truth_table<6>, 10> workload( tts_ini, tts_end );
+  rinox::analyzers::evaluators::power_evaluator_stats st;
+  rinox::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<6>, 10> power( dntk, st );
 
   power.run( workload );
   auto const power_before = st.dyn_power;
   custom_power_struct_params3 ps;
   ps.window_manager_ps.odc_levels = 3;
-  mad_hatter::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_struct_params3>( dntk, db, ps );
+  rinox::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_struct_params3>( dntk, db, ps );
 
   power.run( workload );
 
@@ -421,7 +421,7 @@ TEST_CASE( "Power resynthesis via cut rewriting - single-output gate with don't 
   CHECK( power_after < power_before );
 }
 
-struct custom_power_window_params1 : mad_hatter::opto::algorithms::default_resynthesis_params<6u>
+struct custom_power_window_params1 : rinox::opto::algorithms::default_resynthesis_params<6u>
 {
   bool try_rewire = false;
   bool try_struct = false;
@@ -433,7 +433,7 @@ struct custom_power_window_params1 : mad_hatter::opto::algorithms::default_resyn
 
 TEST_CASE( "Power resynthesis via window rewriting - single-output gate without don't cares", "[power_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -441,13 +441,13 @@ TEST_CASE( "Power resynthesis via window rewriting - single-output gate without 
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> list;
   list.add_inputs( MaxNumVars );
   list.add_output( list.add_gate( { list.add_gate( { 0, 1 }, 1 ), 2 }, 1 ) );
   CHECK( db.add( list ) );
@@ -477,15 +477,15 @@ TEST_CASE( "Power resynthesis via window rewriting - single-output gate without 
     kitty::create_nth_var( tts_ini[i], i );
   for ( ; i < 6; ++i )
     kitty::create_nth_var( tts_end[i - 3], i );
-  mad_hatter::analyzers::utils::workload<kitty::static_truth_table<6>, 10> workload( tts_ini, tts_end );
-  mad_hatter::analyzers::evaluators::power_evaluator_stats st;
-  mad_hatter::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<6>, 10> power( dntk, st );
+  rinox::analyzers::utils::workload<kitty::static_truth_table<6>, 10> workload( tts_ini, tts_end );
+  rinox::analyzers::evaluators::power_evaluator_stats st;
+  rinox::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<6>, 10> power( dntk, st );
 
   power.run( workload );
   auto const power_before = st.dyn_power;
   custom_power_window_params1 ps;
   ps.window_manager_ps.odc_levels = 0;
-  mad_hatter::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_window_params1>( dntk, db, ps );
+  rinox::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_window_params1>( dntk, db, ps );
 
   power.run( workload );
 
@@ -497,7 +497,7 @@ TEST_CASE( "Power resynthesis via window rewriting - single-output gate without 
 
 TEST_CASE( "Power resynthesis via window rewriting - single-output gate with don't cares", "[power_resynthesis]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -505,13 +505,13 @@ TEST_CASE( "Power resynthesis via window rewriting - single-output gate with don
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 3u;
-  using Db = mad_hatter::databases::mapped_database<Ntk, MaxNumVars>;
+  using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> list;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> list;
   list.add_inputs( MaxNumVars );
   list.add_output( list.add_gate( { list.add_gate( { 0 }, 9 ), 2 }, 0 ) );
   CHECK( db.add( list ) );
@@ -544,15 +544,15 @@ TEST_CASE( "Power resynthesis via window rewriting - single-output gate with don
     kitty::create_nth_var( tts_ini[i], i );
   for ( ; i < 8; ++i )
     kitty::create_nth_var( tts_end[i - 4], i );
-  mad_hatter::analyzers::utils::workload<kitty::static_truth_table<8>, 10> workload( tts_ini, tts_end );
-  mad_hatter::analyzers::evaluators::power_evaluator_stats st;
-  mad_hatter::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<8>, 10> power( dntk, st );
+  rinox::analyzers::utils::workload<kitty::static_truth_table<8>, 10> workload( tts_ini, tts_end );
+  rinox::analyzers::evaluators::power_evaluator_stats st;
+  rinox::analyzers::evaluators::power_evaluator<DNtk, kitty::static_truth_table<8>, 10> power( dntk, st );
 
   power.run( workload );
   auto const power_before = st.dyn_power;
   custom_power_window_params1 ps;
   ps.window_manager_ps.odc_levels = 3;
-  mad_hatter::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_window_params1>( dntk, db, ps );
+  rinox::opto::algorithms::power_resynthesize<DNtk, Db, custom_power_window_params1>( dntk, db, ps );
 
   power.run( workload );
 

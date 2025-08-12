@@ -4,10 +4,10 @@
 #include <kitty/kitty.hpp>
 #include <kitty/static_truth_table.hpp>
 
-#include <mad_hatter/dependency/rewire_dependencies.hpp>
-#include <mad_hatter/network/network.hpp>
-#include <mad_hatter/windowing/window_manager.hpp>
-#include <mad_hatter/windowing/window_simulator.hpp>
+#include <rinox/dependency/rewire_dependencies.hpp>
+#include <rinox/network/network.hpp>
+#include <rinox/windowing/window_manager.hpp>
+#include <rinox/windowing/window_simulator.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
 #include <mockturtle/views/depth_view.hpp>
@@ -18,14 +18,14 @@ std::string const test_library = "GATE   and2    1.0 O=a*b;                 PIN 
                                  "GATE   or3     1.0 O=a+b+c;               PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
                                  "GATE   maj3    1.0 O=(a*b)+(b*c)+(a*c);   PIN * INV 1   999 1.0 0.0 1.0 0.0";
 
-struct window_manager_params : mad_hatter::windowing::default_window_manager_params
+struct window_manager_params : rinox::windowing::default_window_manager_params
 {
   static constexpr uint32_t max_num_leaves = 16u;
 };
 
 TEST_CASE( "Rewiring analysis for reconvergent network", "[rewire_dependencies]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in( test_library );
@@ -65,15 +65,15 @@ TEST_CASE( "Rewiring analysis for reconvergent network", "[rewire_dependencies]"
   ntk.create_po( fs[16] );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
 
   window_manager_params ps;
   ps.odc_levels = 4u;
 
-  mad_hatter::windowing::window_manager<DNtk, window_manager_params> window( dntk, ps, st );
+  rinox::windowing::window_manager<DNtk, window_manager_params> window( dntk, ps, st );
   CHECK( window.run( dntk.get_node( fs[17] ) ) );
-  mad_hatter::windowing::window_simulator sim( dntk );
+  rinox::windowing::window_simulator sim( dntk );
   sim.run( window );
   auto tta = sim.get( fs[2] );
   auto ttb = sim.get( fs[3] );
@@ -85,7 +85,7 @@ TEST_CASE( "Rewiring analysis for reconvergent network", "[rewire_dependencies]"
   auto const exp = ~( ( tta & ttb ) | ( ttc & ttd ) | ( tte & ttf ) );
   CHECK( kitty::equal( exp, care ) );
 
-  mad_hatter::dependency::rewire_dependencies dep( ntk );
+  rinox::dependency::rewire_dependencies dep( ntk );
   dep.run( window, sim );
 
   dep.foreach_cut( [&]( auto const& cut, auto i ) {

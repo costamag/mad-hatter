@@ -4,8 +4,8 @@
 #include <kitty/kitty.hpp>
 #include <kitty/static_truth_table.hpp>
 
-#include <mad_hatter/network/network.hpp>
-#include <mad_hatter/windowing/window_manager.hpp>
+#include <rinox/network/network.hpp>
+#include <rinox/windowing/window_manager.hpp>
 
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
@@ -15,12 +15,12 @@ std::string const test_library = "GATE   inv1    1.0 O=!a ;         PIN * INV 1 
                                  "GATE   and2    1.0 O=a*b;         PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
                                  "GATE   xor2    1.0 O=a^b;         PIN * INV 1   999 3.0 0.0 3.0 0.0";
 
-struct window_manager_params1 : mad_hatter::windowing::default_window_manager_params
+struct window_manager_params1 : rinox::windowing::default_window_manager_params
 {
   static constexpr uint32_t max_num_leaves = 3u;
 };
 
-struct window_manager_params2 : mad_hatter::windowing::default_window_manager_params
+struct window_manager_params2 : rinox::windowing::default_window_manager_params
 {
   static constexpr uint32_t max_num_leaves = 8u;
 };
@@ -28,7 +28,7 @@ struct window_manager_params2 : mad_hatter::windowing::default_window_manager_pa
 TEST_CASE( "Window construction with reconvergent structure", "[window_manager]" )
 {
 
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in( test_library );
@@ -71,13 +71,13 @@ TEST_CASE( "Window construction with reconvergent structure", "[window_manager]"
   ntk.create_po( fs[18] );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
 
   window_manager_params1 ps1;
   ps1.odc_levels = 3u;
 
-  mad_hatter::windowing::window_manager<DNtk, window_manager_params1> window( dntk, ps1, st );
+  rinox::windowing::window_manager<DNtk, window_manager_params1> window( dntk, ps1, st );
 
   CHECK( window.run( dntk.get_node( fs[13] ) ) );
   CHECK( window.is_valid() );
@@ -93,7 +93,7 @@ TEST_CASE( "Window construction with reconvergent structure", "[window_manager]"
   window_manager_params2 ps2;
   ps2.odc_levels = 3u;
 
-  mad_hatter::windowing::window_manager<DNtk, window_manager_params2> window2( dntk, ps2, st );
+  rinox::windowing::window_manager<DNtk, window_manager_params2> window2( dntk, ps2, st );
 
   CHECK( window2.run( dntk.get_node( fs[13] ) ) );
   CHECK( window2.is_valid() );
@@ -121,7 +121,7 @@ std::string const test_library2 = "GATE   and2    1.0 O=a*b;                 PIN
 
 TEST_CASE( "Reconvergence after multiple-output gate", "[window_manager]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -129,7 +129,7 @@ TEST_CASE( "Reconvergence after multiple-output gate", "[window_manager]" )
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   Ntk ntk( gates );
   auto const a = ntk.create_pi();
@@ -154,10 +154,10 @@ TEST_CASE( "Reconvergence after multiple-output gate", "[window_manager]" )
   using DNtk = mockturtle::depth_view<Ntk>;
   DNtk dntk( ntk );
   window_manager_params2 ps;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   ps.odc_levels = 3u;
 
-  mad_hatter::windowing::window_manager<DNtk, window_manager_params2> window( dntk, ps, st );
+  rinox::windowing::window_manager<DNtk, window_manager_params2> window( dntk, ps, st );
 
   CHECK( window.run( dntk.get_node( f4 ) ) );
   auto const mffc = window.get_mffc();
@@ -169,7 +169,7 @@ TEST_CASE( "Reconvergence after multiple-output gate", "[window_manager]" )
 
 TEST_CASE( "Pathological case 2", "[window_manager]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename Ntk::signal;
   std::vector<mockturtle::gate> gates;
 
@@ -177,7 +177,7 @@ TEST_CASE( "Pathological case 2", "[window_manager]" )
   auto result = lorina::read_genlib( in, mockturtle::genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   Ntk ntk( gates );
   auto const a = ntk.create_pi();
@@ -200,10 +200,10 @@ TEST_CASE( "Pathological case 2", "[window_manager]" )
   using DNtk = mockturtle::depth_view<Ntk>;
   DNtk dntk( ntk );
   window_manager_params2 ps;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   ps.odc_levels = 3u;
 
-  mad_hatter::windowing::window_manager<DNtk, window_manager_params2> window( dntk, ps, st );
+  rinox::windowing::window_manager<DNtk, window_manager_params2> window( dntk, ps, st );
 
   CHECK( window.run( dntk.get_node( f1 ) ) );
   auto const mffc = window.get_mffc();
@@ -221,14 +221,14 @@ std::string const test_library3 = "GATE   and2    1.0 O=a*b;                 PIN
                                   "GATE   or3     1.0 O=a+b+c;               PIN * INV 1   999 1.0 0.0 1.0 0.0\n"
                                   "GATE   maj3    1.0 O=(a*b)+(b*c)+(a*c);   PIN * INV 1   999 1.0 0.0 1.0 0.0";
 
-struct window_manager_params3 : mad_hatter::windowing::default_window_manager_params
+struct window_manager_params3 : rinox::windowing::default_window_manager_params
 {
   static constexpr uint32_t max_num_leaves = 16u;
 };
 
 TEST_CASE( "Managing exploding number of divisors", "[window_manager]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in( test_library3 );
@@ -268,20 +268,20 @@ TEST_CASE( "Managing exploding number of divisors", "[window_manager]" )
   ntk.create_po( fs[16] );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
 
   window_manager_params3 ps;
   ps.odc_levels = 4u;
 
-  mad_hatter::windowing::window_manager<DNtk, window_manager_params3> window( dntk, ps, st );
+  rinox::windowing::window_manager<DNtk, window_manager_params3> window( dntk, ps, st );
   CHECK( window.run( dntk.get_node( fs[17] ) ) );
   CHECK( ( window.num_divisors() < fs.size() ) );
 }
 
 TEST_CASE( "Managing incorrect window construction for simple network", "[window_manager]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in( test_library3 );
@@ -311,13 +311,13 @@ TEST_CASE( "Managing incorrect window construction for simple network", "[window
   ntk.create_po( fs[9] );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
 
   window_manager_params3 ps;
   ps.odc_levels = 0u;
 
-  mad_hatter::windowing::window_manager<DNtk, window_manager_params3> window( dntk, ps, st );
+  rinox::windowing::window_manager<DNtk, window_manager_params3> window( dntk, ps, st );
   CHECK( window.run( dntk.get_node( fs[9] ) ) );
   CHECK( window.num_inputs() == 3 );
 }

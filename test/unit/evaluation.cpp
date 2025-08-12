@@ -3,17 +3,17 @@
 
 #include <kitty/print.hpp>
 #include <kitty/static_truth_table.hpp>
-#include <mad_hatter/evaluation/chain_simulator.hpp>
-#include <mad_hatter/evaluation/chains.hpp>
+#include <rinox/evaluation/chain_simulator.hpp>
+#include <rinox/evaluation/chains.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/networks/mig.hpp>
 #include <mockturtle/networks/xag.hpp>
 
 using namespace mockturtle;
-using namespace mad_hatter::evaluation;
-using namespace mad_hatter::evaluation::chains;
-using namespace mad_hatter::libraries;
+using namespace rinox::evaluation;
+using namespace rinox::evaluation::chains;
+using namespace rinox::libraries;
 
 TEST_CASE( "simulation of xag_boolean_chain with static truth tables", "[evaluation]" )
 {
@@ -217,7 +217,7 @@ TEST_CASE( "simulation of bound_chain with static truth tables", "[evaluation]" 
   auto result = lorina::read_genlib( in_genlib, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+  bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
   chain.add_inputs( 4u );
   auto const a = chain.pi_at( 0 );
   auto const b = chain.pi_at( 1 );
@@ -245,8 +245,8 @@ TEST_CASE( "simulation of bound_chain with static truth tables", "[evaluation]" 
     xs_r.emplace_back( &xs[i] );
   }
 
-  augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
-  chain_simulator<bound_chain<mad_hatter::network::design_type_t::CELL_BASED>, kitty::static_truth_table<4u>> sim( lib );
+  augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
+  chain_simulator<bound_chain<rinox::network::design_type_t::CELL_BASED>, kitty::static_truth_table<4u>> sim( lib );
   sim( chain, xs_r );
   for ( auto i = 0u; i < xs.size(); ++i )
   {

@@ -38,7 +38,7 @@ jobs:
           -G "${{matrix.env}}"
           -A x64
           -T ${{matrix.toolset}}
-          -DHATTER_ENABLE_TESTS=ON
+          -DRINOX_ENABLE_TESTS=ON
         working-directory: ${{github.workspace}}\build
 
       - name: Build mad-hatter

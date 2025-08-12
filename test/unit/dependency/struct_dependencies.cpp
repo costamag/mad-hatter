@@ -4,10 +4,10 @@
 #include <kitty/kitty.hpp>
 #include <kitty/static_truth_table.hpp>
 
-#include <mad_hatter/dependency/struct_dependencies.hpp>
-#include <mad_hatter/network/network.hpp>
-#include <mad_hatter/windowing/window_manager.hpp>
-#include <mad_hatter/windowing/window_simulator.hpp>
+#include <rinox/dependency/struct_dependencies.hpp>
+#include <rinox/network/network.hpp>
+#include <rinox/windowing/window_manager.hpp>
+#include <rinox/windowing/window_simulator.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
 #include <mockturtle/views/depth_view.hpp>
@@ -24,14 +24,14 @@ struct custom_struct_params
   static constexpr uint32_t max_cuts_size = 6u;
 };
 
-struct window_manager_params : mad_hatter::windowing::default_window_manager_params
+struct window_manager_params : rinox::windowing::default_window_manager_params
 {
   static constexpr uint32_t max_num_leaves = 6u;
 };
 
 TEST_CASE( "Enumerate structural dependency cuts", "[struct_dependencies]" )
 {
-  using Ntk = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using Ntk = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in( test_library );
@@ -59,19 +59,19 @@ TEST_CASE( "Enumerate structural dependency cuts", "[struct_dependencies]" )
   ntk.create_po( fs[8] );
 
   using DNtk = mockturtle::depth_view<Ntk>;
-  mad_hatter::windowing::window_manager_stats st;
+  rinox::windowing::window_manager_stats st;
   DNtk dntk( ntk );
 
   window_manager_params ps;
   ps.odc_levels = 4;
-  mad_hatter::windowing::window_manager<DNtk> window( dntk, ps, st );
+  rinox::windowing::window_manager<DNtk> window( dntk, ps, st );
   CHECK( window.run( dntk.get_node( fs[8] ) ) );
   auto const leaves = window.get_inputs();
   auto const divs = window.get_divisors();
-  mad_hatter::windowing::window_simulator<DNtk, custom_struct_params::max_cuts_size> sim( dntk );
+  rinox::windowing::window_simulator<DNtk, custom_struct_params::max_cuts_size> sim( dntk );
   sim.run( window );
 
-  mad_hatter::dependency::struct_dependencies<DNtk, custom_struct_params> dep( dntk );
+  rinox::dependency::struct_dependencies<DNtk, custom_struct_params> dep( dntk );
   dep.run( window, sim );
 
   std::set<std::set<signal>> sets;

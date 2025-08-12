@@ -1,22 +1,24 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Mad Hatter Logo" width="200"/>
+  <img src="assets/logo.svg" alt="Rinox Logo" width="200"/>
 </p>
 
-<h1 align="center">Mad Hatter Resynthesizer</h1>
+<h1 align="center">
+  <strong>RINOX</strong> = <strong>R</strong>esynthesis for <strong>I</strong>nterconnect and <strong>N</strong>ode <strong>O</strong>ptimization with e<strong>X</strong>ploration
+</h1>
 
 <p align="center">
   <em>A modern logic resynthesis tool powered by <a href="https://github.com/lsils/mockturtle">mockturtle</a></em>
 </p>
 
 <p align="center">
-  <a href="https://github.com/costamag/mad-hatter/actions">
-    <img src="https://github.com/costamag/mad-hatter/actions/workflows/ci.yml/badge.svg" alt="Build Status">
+  <a href="https://github.com/costamag/rinox/actions">
+    <img src="https://github.com/costamag/rinox/actions/workflows/ci.yml/badge.svg" alt="Build Status">
   </a>
-  <a href="https://github.com/costamag/mad-hatter/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/costamag/mad-hatter.svg" alt="License">
+  <a href="https://github.com/costamag/rinox/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/costamag/rinox.svg" alt="License">
   </a>
-  <a href="https://github.com/costamag/mad-hatter/stargazers">
-    <img src="https://img.shields.io/github/stars/costamag/mad-hatter.svg" alt="Stars">
+  <a href="https://github.com/costamag/rinox/stargazers">
+    <img src="https://img.shields.io/github/stars/costamag/rinox.svg" alt="Stars">
   </a>
 </p>
 
@@ -26,7 +28,14 @@
 - [🚀 Features](#-features)
 - [📦 Installation](#-installation)
 - [📖 Related Papers](#-related-papers)
-- [✍️ Citing Mad Hatter](#️-citing-mad-hatter)
+- [✍️ Citing Rinox](#️-citing-rinox)
+
+---
+
+## 🧠 What is Rinox?
+
+Rinox is a high-performance logic resynthesis tool for optimizing interconnects and nodes in digital circuits.  
+It integrates advanced SPFD-based algorithms with [mockturtle](https://github.com/lsils/mockturtle) and offers an interactive command-line interface for exploring optimization strategies.
 
 ---
 
@@ -42,17 +51,28 @@
 ## 📦 Installation
 
 ```bash
-git clone --recurse-submodules https://github.com/costamag/mad-hatter.git
-cd mad-hatter
+git clone --recurse-submodules https://github.com/costamag/rinox.git
+cd rinox
 mkdir build && cd build
 cmake ..
 make
 ```
 
 ---
+
+## 💡 Why "Rinox"?
+
+The name **Rinox** is both technical and personal.  
+
+- **Technical**: It stands for **R**esynthesis for **I**nterconnect and **N**ode **O**ptimization with e**X**ploration, reflecting the tool's focus on advanced logic resynthesis techniques.  
+- **Personal**: It is a tribute to **Rino**, a skilled carpenter whose dedication and craftsmanship inspired this project. The **X** also marks the tenth major rewrite of the code before making it public.
+
+
+---
+
 ## 📖 Related Papers
 
-Mad Hatter is based on research in logic resynthesis and SPFD techniques.  
+Rinox is based on research in logic resynthesis and SPFD techniques.  
 Some key references:
 
 <details>

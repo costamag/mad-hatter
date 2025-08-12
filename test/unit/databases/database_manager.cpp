@@ -1,8 +1,8 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include <mad_hatter/databases/database_manager.hpp>
-#include <mad_hatter/evaluation/evaluation.hpp>
+#include <rinox/databases/database_manager.hpp>
+#include <rinox/evaluation/evaluation.hpp>
 #include <mockturtle/networks/aig.hpp>
 #include <mockturtle/networks/mig.hpp>
 #include <mockturtle/networks/xag.hpp>
@@ -15,7 +15,7 @@ void test_npn_lookup()
   static constexpr uint32_t num_vars = 4u;
   using TT = kitty::static_truth_table<num_vars>;
   TT onset;
-  mad_hatter::databases::database_manager<Ntk> mng;
+  rinox::databases::database_manager<Ntk> mng;
   std::array<TT, num_vars> xs;
   std::vector<TT const*> xs_ptrs;
   for ( auto i = 0u; i < num_vars; ++i )
@@ -24,7 +24,7 @@ void test_npn_lookup()
     xs_ptrs.push_back( &xs[i] );
   }
 
-  mad_hatter::evaluation::chain_simulator<Chain, TT> sim_chain;
+  rinox::evaluation::chain_simulator<Chain, TT> sim_chain;
   int cnt = 0;
   do
   {
@@ -73,15 +73,15 @@ void test_npn_lookup()
 
 TEST_CASE( "database for aig_network", "[database_manager]" )
 {
-  test_npn_lookup<mockturtle::aig_network, mad_hatter::evaluation::chains::xag_chain<true>>();
+  test_npn_lookup<mockturtle::aig_network, rinox::evaluation::chains::xag_chain<true>>();
 }
 
 TEST_CASE( "database for xag_network", "[database_manager]" )
 {
-  test_npn_lookup<mockturtle::xag_network, mad_hatter::evaluation::chains::xag_chain<true>>();
+  test_npn_lookup<mockturtle::xag_network, rinox::evaluation::chains::xag_chain<true>>();
 }
 
 TEST_CASE( "database for mig_network", "[database_manager]" )
 {
-  test_npn_lookup<mockturtle::mig_network, mad_hatter::evaluation::chains::mig_chain>();
+  test_npn_lookup<mockturtle::mig_network, rinox::evaluation::chains::mig_chain>();
 }

@@ -6,10 +6,10 @@
 #include <vector>
 
 #include <lorina/genlib.hpp>
-#include <mad_hatter/analyzers/trackers/arrival_times_tracker.hpp>
-#include <mad_hatter/databases/mapped_database.hpp>
-#include <mad_hatter/evaluation/chains/bound_chain.hpp>
-#include <mad_hatter/network/network.hpp>
+#include <rinox/analyzers/trackers/arrival_times_tracker.hpp>
+#include <rinox/databases/mapped_database.hpp>
+#include <rinox/evaluation/chains/bound_chain.hpp>
+#include <rinox/network/network.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/io/super_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
@@ -26,18 +26,18 @@ std::string const test_library = "GATE   zero    0 O=CONST0;\n"                 
 
 TEST_CASE( "Adding chains implementing projection to the db", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<mockturtle::gate> gates;
 
   std::istringstream in( test_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
   static constexpr uint32_t MaxNumVars = 4u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain0, chain1, chain2, chain3;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain0, chain1, chain2, chain3;
   chain0.add_inputs( MaxNumVars );
   auto const a = chain0.pi_at( 0 );
   auto const b = chain0.pi_at( 1 );
@@ -104,22 +104,22 @@ std::string const symmetric_library =
 
 TEST_CASE( "Inserting chains with one-input node in mapped databases", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
 
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
   {
-    mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+    rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
     chain.add_inputs( MaxNumVars );
     chain.add_output( chain.add_gate( { i }, 0 ) );
     CHECK( !( first ^ db.add( chain ) ) );
@@ -129,17 +129,17 @@ TEST_CASE( "Inserting chains with one-input node in mapped databases", "[mapped_
 
 TEST_CASE( "Inserting chains with two-input node in mapped databases", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
 
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
@@ -149,7 +149,7 @@ TEST_CASE( "Inserting chains with two-input node in mapped databases", "[mapped_
       if ( i == j )
         continue;
 
-      mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+      rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
       chain.add_inputs( MaxNumVars );
       chain.add_output( chain.add_gate( { i, j }, 1 ) );
       CHECK( !( first ^ db.add( chain ) ) );
@@ -160,17 +160,17 @@ TEST_CASE( "Inserting chains with two-input node in mapped databases", "[mapped_
 
 TEST_CASE( "Inserting symmetric single-node chains with three inputs in mapped databases", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
   int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
@@ -187,7 +187,7 @@ TEST_CASE( "Inserting symmetric single-node chains with three inputs in mapped d
         ++cnt;
         if ( cnt > 20 )
           break;
-        mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+        rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
         chain.add_inputs( MaxNumVars );
         chain.add_output( chain.add_gate( { i, j, k }, 2 ) );
         if ( first )
@@ -202,17 +202,17 @@ TEST_CASE( "Inserting symmetric single-node chains with three inputs in mapped d
 
 TEST_CASE( "Inserting asymmetric single-node chains with three inputs in mapped databases", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
   int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
@@ -229,7 +229,7 @@ TEST_CASE( "Inserting asymmetric single-node chains with three inputs in mapped 
         ++cnt;
         if ( cnt > 20 )
           break;
-        mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+        rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
         chain.add_inputs( MaxNumVars );
         chain.add_output( chain.add_gate( { i, j, k }, 3 ) );
         CHECK( !( first ^ db.add( chain ) ) );
@@ -241,17 +241,17 @@ TEST_CASE( "Inserting asymmetric single-node chains with three inputs in mapped 
 
 TEST_CASE( "Inserting symmetric single-node chains with 4 inputs in mapped databases", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
   int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
@@ -273,7 +273,7 @@ TEST_CASE( "Inserting symmetric single-node chains with 4 inputs in mapped datab
           ++cnt;
           if ( cnt > 20 )
             break;
-          mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+          rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
           chain.add_inputs( MaxNumVars );
           chain.add_output( chain.add_gate( { i, j, k, l }, 4 ) );
           CHECK( !( first ^ db.add( chain ) ) );
@@ -286,17 +286,17 @@ TEST_CASE( "Inserting symmetric single-node chains with 4 inputs in mapped datab
 
 TEST_CASE( "Inserting asymmetric single-node chains with 4 inputs in mapped databases", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
   int cnt = 0;
   bool first = true;
   for ( auto i = 0u; i < MaxNumVars; ++i )
@@ -318,7 +318,7 @@ TEST_CASE( "Inserting asymmetric single-node chains with 4 inputs in mapped data
           ++cnt;
           if ( cnt > 20 )
             break;
-          mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+          rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
           chain.add_inputs( MaxNumVars );
           chain.add_output( chain.add_gate( { i, j, k, l }, 5 ) );
           CHECK( !( first ^ db.add( chain ) ) );
@@ -331,17 +331,17 @@ TEST_CASE( "Inserting asymmetric single-node chains with 4 inputs in mapped data
 
 TEST_CASE( "Inserting two nodes chain in database", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
 
   int cnt = 0;
   bool first = true;
@@ -364,7 +364,7 @@ TEST_CASE( "Inserting two nodes chain in database", "[mapped_database]" )
           ++cnt;
           if ( cnt > 20 )
             break;
-          mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+          rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
           chain.add_inputs( MaxNumVars );
           auto l0 = chain.add_gate( { i, j }, 1 );
           auto l1 = chain.add_gate( { l0, k, l }, 3 );
@@ -379,18 +379,18 @@ TEST_CASE( "Inserting two nodes chain in database", "[mapped_database]" )
 
 TEST_CASE( "Dominant and dominated chains in mapped database", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain1, chain2, chain3;
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain1, chain2, chain3;
   chain1.add_inputs( MaxNumVars );
   chain2.add_inputs( MaxNumVars );
   chain3.add_inputs( MaxNumVars );
@@ -421,18 +421,18 @@ TEST_CASE( "Dominant and dominated chains in mapped database", "[mapped_database
 
 TEST_CASE( "Saving a mapped database", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   std::vector<gate> gates;
 
   std::istringstream in( symmetric_library );
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 6u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain1, chain2, chain3, chain4;
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain1, chain2, chain3, chain4;
   chain1.add_inputs( MaxNumVars );
   chain2.add_inputs( MaxNumVars );
   chain3.add_inputs( MaxNumVars );
@@ -484,7 +484,7 @@ TEST_CASE( "Saving a mapped database", "[mapped_database]" )
 }
 TEST_CASE( "Database look-up with 2-input completely specified function", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename bound_network::signal;
   std::vector<gate> gates;
 
@@ -492,12 +492,12 @@ TEST_CASE( "Database look-up with 2-input completely specified function", "[mapp
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 3u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
   chain.add_inputs( MaxNumVars );
   chain.add_output( chain.add_gate( { chain.add_gate( { 0 }, 0 ), 1 }, 1 ) );
   CHECK( db.add( chain ) );
@@ -520,7 +520,7 @@ TEST_CASE( "Database look-up with 2-input completely specified function", "[mapp
 
   // symmetric function
 
-  mad_hatter::evaluation::chain_simulator<mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED>, TT> sim( lib );
+  rinox::evaluation::chain_simulator<rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED>, TT> sim( lib );
 
   auto tt = ( ~xs[0] ) & xs[1];
   auto fs_c = fs;
@@ -530,8 +530,8 @@ TEST_CASE( "Database look-up with 2-input completely specified function", "[mapp
   db.foreach_entry( *match, [&]( auto const& entry ) {
     auto const n = db.write( entry, ntk, fs_c );
 
-    mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain_res( MaxNumVars );
-    mad_hatter::evaluation::chains::extract( chain_res, ntk, fs, ntk.make_signal( n ) );
+    rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain_res( MaxNumVars );
+    rinox::evaluation::chains::extract( chain_res, ntk, fs, ntk.make_signal( n ) );
     sim( chain_res, sim_ptrs );
 
     auto const res = sim.get_simulation( chain_res, sim_ptrs, chain_res.po_at( 0 ) );
@@ -548,7 +548,7 @@ TEST_CASE( "Database look-up with 2-input completely specified function", "[mapp
 
 TEST_CASE( "Database look-up with 3-input completely specified function", "[mapped_database]" )
 {
-  using bound_network = mad_hatter::network::bound_network<mad_hatter::network::design_type_t::CELL_BASED, 2>;
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
   using signal = typename bound_network::signal;
   std::vector<gate> gates;
 
@@ -556,12 +556,12 @@ TEST_CASE( "Database look-up with 3-input completely specified function", "[mapp
   auto result = lorina::read_genlib( in, genlib_reader( gates ) );
   CHECK( result == lorina::return_code::success );
 
-  mad_hatter::libraries::augmented_library<mad_hatter::network::design_type_t::CELL_BASED> lib( gates );
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
   static constexpr uint32_t MaxNumVars = 4u;
-  mad_hatter::databases::mapped_database<bound_network, MaxNumVars> db( lib );
+  rinox::databases::mapped_database<bound_network, MaxNumVars> db( lib );
 
-  mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain;
+  rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain;
   chain.add_inputs( MaxNumVars );
   auto const l0 = chain.add_gate( { 0u }, 0u );
   auto const l1 = chain.add_gate( { 1u, 2u }, 1u );
@@ -583,9 +583,9 @@ TEST_CASE( "Database look-up with 3-input completely specified function", "[mapp
   }
 
   std::vector<double> times{ 0, 10, 20, 40 };
-  mad_hatter::analyzers::trackers::arrival_times_tracker arrival( ntk, times );
+  rinox::analyzers::trackers::arrival_times_tracker arrival( ntk, times );
 
-  mad_hatter::evaluation::chain_simulator<mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED>, TT> sim( lib );
+  rinox::evaluation::chain_simulator<rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED>, TT> sim( lib );
 
   int i = 0;
   auto tt = ( ~xs[1] ) | ( xs[2] & xs[3] );
@@ -595,8 +595,8 @@ TEST_CASE( "Database look-up with 3-input completely specified function", "[mapp
   db.foreach_entry( *match, [&]( auto const& entry ) {
     auto const n = db.write( entry, ntk, fs_c );
     ntk.create_po( ntk.make_signal( n ) );
-    mad_hatter::evaluation::chains::bound_chain<mad_hatter::network::design_type_t::CELL_BASED> chain_res( MaxNumVars );
-    mad_hatter::evaluation::chains::extract( chain_res, ntk, fs, ntk.make_signal( n ) );
+    rinox::evaluation::chains::bound_chain<rinox::network::design_type_t::CELL_BASED> chain_res( MaxNumVars );
+    rinox::evaluation::chains::extract( chain_res, ntk, fs, ntk.make_signal( n ) );
     sim( chain_res, sim_ptrs );
 
     auto const res = sim.get_simulation( chain_res, sim_ptrs, chain_res.po_at( 0 ) );
