@@ -36,6 +36,7 @@
 
 #pragma once
 
+#include "../diagnostics.hpp"
 #include "verilog_parser.hpp"
 #include "verilog_reader.hpp"
 #include "write_verilog.hpp"

@@ -1,26 +1,22 @@
-<p align="center">
-  <img src="assets/logo.svg" alt="Rinox Logo" width="200"/>
-</p>
+<div align="center">
 
-<h1 align="center">
+<img src="assets/logo.svg" alt="Rinox Logo" width="200"/>
+
+<h1>
   <strong>RINOX</strong> = <strong>R</strong>esynthesis for <strong>I</strong>nterconnect and <strong>N</strong>ode <strong>O</strong>ptimization with e<strong>X</strong>ploration
 </h1>
 
-<p align="center">
-  <em>A modern logic resynthesis tool powered by <a href="https://github.com/lsils/mockturtle">mockturtle</a></em>
-</p>
+<em>A modern logic resynthesis tool powered by <a href="https://github.com/lsils/mockturtle">mockturtle</a></em>
 
-<p align="center">
-  <a href="https://github.com/costamag/rinox/actions">
-    <img src="https://github.com/costamag/rinox/actions/workflows/ci.yml/badge.svg" alt="Build Status">
-  </a>
-  <a href="https://github.com/costamag/rinox/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/costamag/rinox.svg" alt="License">
-  </a>
-  <a href="https://github.com/costamag/rinox/stargazers">
-    <img src="https://img.shields.io/github/stars/costamag/rinox.svg" alt="Stars">
-  </a>
-</p>
+[![Build Status](https://github.com/costamag/rinox/actions/workflows/ci.yml/badge.svg)](https://github.com/costamag/rinox/actions)
+[![License](https://img.shields.io/github/license/costamag/rinox.svg)](https://github.com/costamag/rinox/blob/main/LICENSE)
+[![Stars](https://img.shields.io/github/stars/costamag/rinox.svg)](https://github.com/costamag/rinox/stargazers)
+
+---
+
+> 🚧 **Status: Work in Progress** — expect frequent changes.
+
+</div>
 
 ---
 

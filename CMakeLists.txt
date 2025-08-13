@@ -40,26 +40,26 @@ add_subdirectory(lib/mockturtle)
 add_subdirectory(lib/replxx)
 add_subdirectory(lib/cli11)
 
-# Shared CLI logic as a library (exclude main.cpp)
-file(GLOB_RECURSE MAD_CLI_SOURCES CONFIGURE_DEPENDS
-    src/cli/*.cpp
-)
-list(FILTER MAD_CLI_SOURCES EXCLUDE REGEX "src/cli/main.cpp$")
+# RapidJSON (header-only) — submodule at lib/rapidjson
+set(RAPIDJSON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/lib/rapidjson/include)
+if(NOT EXISTS "${RAPIDJSON_INCLUDE_DIR}/rapidjson/document.h")
+  message(FATAL_ERROR "RapidJSON headers not found at ${RAPIDJSON_INCLUDE_DIR}.
+Make sure you added the submodule: git submodule add https://github.com/Tencent/rapidjson.git lib/rapidjson")
+endif()
 
+# Shared CLI logic as a library (exclude main.cpp)
+file(GLOB_RECURSE MAD_CLI_SOURCES CONFIGURE_DEPENDS src/cli/*.cpp)
+list(FILTER MAD_CLI_SOURCES EXCLUDE REGEX "src/cli/main.cpp$")
 add_library(rho_cli ${MAD_CLI_SOURCES})
 
-# Link CLI logic against mockturtle to inherit fmt and other includes
-target_link_libraries(rho_cli
-    PUBLIC
-        mockturtle
-        replxx
-        CLI11::CLI11
-)
+target_link_libraries(rho_cli PUBLIC mockturtle replxx CLI11::CLI11)
 
-# Add include paths for CLI headers
+# Include paths
 target_include_directories(rho_cli
-    PUBLIC
-        ${CMAKE_SOURCE_DIR}/src   # so "cli/context.hpp" works
+  PUBLIC
+    ${CMAKE_SOURCE_DIR}/src          # so "cli/context.hpp" works
+  SYSTEM PRIVATE
+    ${RAPIDJSON_INCLUDE_DIR}         # RapidJSON for sources in rho_cli
 )
 
 target_compile_definitions(rho_cli PUBLIC
@@ -81,12 +81,13 @@ endif()
 add_executable(rinox src/cli/main.cpp)
 target_link_libraries(rinox PRIVATE rho_cli)
 
-# Public header-only interface library (rename to avoid clash)
+# Public header-only interface library
 add_library(rinox_headers INTERFACE)
 add_library(rinox::rinox ALIAS rinox_headers)
 
 target_include_directories(rinox_headers INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${RAPIDJSON_INCLUDE_DIR}           # expose RapidJSON to all consumers
 )
 
 target_compile_definitions(rinox_headers INTERFACE

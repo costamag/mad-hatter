@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v1
         with:
           submodules: true
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v1
         with:
           submodules: true
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
@@ -59,7 +59,7 @@ jobs:
         run: |
           brew update
           brew install llvm@15
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
