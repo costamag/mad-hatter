@@ -1,6 +1,6 @@
-# Technology Libraries for mad-hatter
+# Technology Libraries for rinox
 
-This folder contains technology libraries used by `mad-hatter` for 
+This folder contains technology libraries used by `rinox` for 
 technology mapping, logic synthesis, and analysis.  
 
 ## Directory Structure
@@ -32,5 +32,5 @@ techno/
 
 ## Example Usage
 ```bash
-./mad-hatter-cli --genlib asap7.genlib --verilog design.v
+./rinox-cli --genlib asap7.genlib --verilog design.v
 ```

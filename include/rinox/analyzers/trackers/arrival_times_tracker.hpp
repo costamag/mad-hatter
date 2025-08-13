@@ -1,4 +1,4 @@
-/* mad-hatter: C++ logic network library
+/* rinox: C++ logic network library
  * Copyright (C) 2025 EPFL
  *
  * Permission is hereby granted, free of charge, to any person

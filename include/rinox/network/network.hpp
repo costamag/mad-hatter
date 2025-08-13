@@ -1,4 +1,4 @@
-/* mad-hatter: C++ logic network library
+/* rinox: C++ logic network library
  * Copyright (C) 2025 EPFL
  *
  * Permission is hereby granted, free of charge, to any person
@@ -103,7 +103,7 @@ public:
   template<
       design_type_t D = DesignType,
       std::enable_if_t<D == design_type_t::CELL_BASED, int> = 0>
-  bound_network( libraries::augmented_library<DesignType> const& library )
+  bound_network( libraries::augmented_library<DesignType> library )
       : _storage( std::make_shared<storage_network<DesignType, NumBitsOutputs>>( library ) ),
         _events( std::make_shared<typename decltype( _events )::element_type>() )
   {
@@ -116,7 +116,7 @@ public:
   template<
       design_type_t D = DesignType,
       std::enable_if_t<D == design_type_t::CELL_BASED, int> = 0>
-  bound_network( std::vector<mockturtle::gate> const& gates )
+  bound_network( std::vector<mockturtle::gate> gates )
       : _storage( std::make_shared<storage_network<DesignType, NumBitsOutputs>>( gates ) ),
         _events( std::make_shared<typename decltype( _events )::element_type>() )
   {

@@ -1,5 +1,5 @@
-/* lorina: C++ parsing library
- * Copyright (C) 2018-2021  EPFL
+/* rinox: C++ parsing library
+ * Copyright (C) 2025 EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -27,14 +27,13 @@
   \file verilog.hpp
   \brief Implements simplistic Verilog parser
 
-  \author Heinz Riener
-  \author Mathias Soeken
-  \author Siang-Yun (Sonia) Lee
+  \author Andrea Costamagna
 */
 
 #pragma once
 
-#include "verilog_reader.hpp"
+#include "../utils/diagnostics.hpp"
+#include "../utils/reader.hpp"
 #include <algorithm>
 #include <cctype>
 #include <ctype.h>
@@ -55,75 +54,6 @@ namespace io
 
 namespace verilog
 {
-
-#ifndef DIAG_HERE_FILE
-#define DIAG_HERE_FILE __FILE__
-#endif
-
-#ifndef DIAG_HERE_LINE
-#define DIAG_HERE_LINE __LINE__
-#endif
-
-template<typename... Args>
-inline void report_diagnostic( int file_line,
-                               lorina::diagnostic_engine* diag,
-                               lorina::diagnostic_level level,
-                               const char* fmt,
-                               const char* file, int line,
-                               Args&&... args )
-{
-  if ( !diag )
-    return;
-
-  // primary message
-  auto id = diag->create_id( level, fmt );
-  auto rep = diag->report( id );
-
-  // call rep.add_argument(arg) for each arg in the pack
-  (void)std::initializer_list<int>{
-      ( (void)rep.add_argument( std::forward<Args>( args ) ), 0 )... };
-
-  // clickable location as a separate note
-  auto note_code = diag->create_id( level, "  ↪ {}:{}" );
-  diag->report( note_code ).add_argument( std::string( file ) ).add_argument( std::to_string( line ) );
-  if ( file_line >= 0 && ( level != lorina::diagnostic_level::note ) )
-  {
-    auto note_verilog = diag->create_id( lorina::diagnostic_level::remark, "  ↪ located at line {} of the verilog file" );
-    diag->report( note_verilog ).add_argument( std::to_string( file_line ) );
-  }
-}
-
-template<typename... Args>
-inline void report_diagnostic_raw( int file_line,
-                                   lorina::diagnostic_engine* diag,
-                                   lorina::diagnostic_level level,
-                                   const char* fmt,
-                                   Args&&... args )
-{
-  if ( !diag )
-    return;
-
-  // primary message
-  auto id = diag->create_id( level, fmt );
-  auto rep = diag->report( id );
-
-  // call rep.add_argument(arg) for each arg in the pack
-  (void)std::initializer_list<int>{
-      ( (void)rep.add_argument( std::forward<Args>( args ) ), 0 )... };
-  if ( file_line >= 0 && ( level != lorina::diagnostic_level::note ) )
-  {
-    auto note_verilog = diag->create_id( lorina::diagnostic_level::remark, "  ↪ located at line {} of the verilog file" );
-    diag->report( note_verilog ).add_argument( std::to_string( file_line ) );
-  }
-}
-
-// Convenience macro: inject __FILE__/__LINE__, forward the rest.
-// The '##' before __VA_ARGS__ swallows the preceding comma when there are no args (GNU extension).
-#define REPORT_DIAG( file_line, diag, level, fmt, ... ) \
-  report_diagnostic( ( file_line ), ( diag ), ( level ), ( fmt ), __FILE__, __LINE__, ##__VA_ARGS__ )
-
-#define REPORT_DIAG_RAW( file_line, diag, level, fmt, ... ) \
-  report_diagnostic_raw( ( file_line ), ( diag ), ( level ), ( fmt ), ##__VA_ARGS__ )
 
 class augmented_tokenizer : public lorina::detail::tokenizer
 {

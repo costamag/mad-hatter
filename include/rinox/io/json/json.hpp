@@ -24,22 +24,17 @@
  */
 
 /*!
-  \file verilog_reader.hpp
+  \file json.hpp
   \brief Lorina reader for VERILOG files
 
   \author Andrea Costamagna
-  \author Heinz Riener
-  \author Marcel Walter
-  \author Mathias Soeken
-  \author Siang-Yun (Sonia) Lee
 */
 
 #pragma once
 
 #include "../utils/diagnostics.hpp"
 #include "../utils/reader.hpp"
-#include "verilog_parser.hpp"
-#include "write_verilog.hpp"
+#include "json_parser.hpp"
 
 namespace rinox
 {
@@ -47,7 +42,7 @@ namespace rinox
 namespace io
 {
 
-namespace verilog
+namespace json
 {
 
 #ifndef DIAG_HERE_FILE
@@ -69,9 +64,9 @@ namespace verilog
  * \return Success if parsing has been successful, or parse error if parsing has failed
  */
 template<typename Ntk>
-[[nodiscard]] inline lorina::return_code read_verilog( std::istream& in, const reader<Ntk>& reader, lorina::diagnostic_engine* diag = nullptr )
+[[nodiscard]] inline lorina::return_code read_json( std::istream& in, const reader<Ntk>& reader, lorina::diagnostic_engine* diag = nullptr )
 {
-  verilog_parser parser( in, reader, diag );
+  json_parser parser( in, reader, diag );
   auto result = parser.parse_modules();
   if ( !result )
   {
@@ -94,7 +89,7 @@ template<typename Ntk>
  * \return Success if parsing has been successful, or parse error if parsing has failed
  */
 template<typename Ntk>
-[[nodiscard]] inline lorina::return_code read_verilog( const std::string& filename, const reader<Ntk>& reader, lorina::diagnostic_engine* diag = nullptr )
+[[nodiscard]] inline lorina::return_code read_json( const std::string& filename, const reader<Ntk>& reader, lorina::diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( lorina::detail::word_exp_filename( filename ), std::ifstream::in );
   if ( !in.is_open() )
@@ -104,16 +99,16 @@ template<typename Ntk>
   }
   else
   {
-    auto const ret = read_verilog( in, reader, diag );
+    auto const ret = read_json( in, reader, diag );
     in.close();
     if ( ret != lorina::return_code::success )
-      REPORT_DIAG( -1, diag, lorina::diagnostic_level::fatal, "failed to read the verilog file `{}`", filename.c_str() );
+      REPORT_DIAG( -1, diag, lorina::diagnostic_level::fatal, "failed to read the json file `{}`", filename.c_str() );
 
     return ret;
   }
 }
 
-} /* namespace verilog */
+} /* namespace json */
 
 } /* namespace io */
 

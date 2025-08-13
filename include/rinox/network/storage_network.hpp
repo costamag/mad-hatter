@@ -108,7 +108,7 @@ public:
   template<
       network::design_type_t D = DesignType,
       std::enable_if_t<D == network::design_type_t::CELL_BASED, int> = 0>
-  storage_network( augmented_library_t const& library )
+  storage_network( augmented_library_t library )
       : library( library )
   {
     /* reserve space for nodes */
@@ -130,7 +130,7 @@ public:
   template<
       network::design_type_t D = DesignType,
       std::enable_if_t<D == network::design_type_t::CELL_BASED, int> = 0>
-  storage_network( std::vector<gate> const& gates )
+  storage_network( std::vector<gate> gates )
       : library( gates )
   {
     /* reserve space for nodes */

@@ -21,7 +21,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-9
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
@@ -43,7 +43,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-10
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
@@ -65,7 +65,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-10 g++-10
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
@@ -87,7 +87,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-12
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
@@ -109,7 +109,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang-11
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
@@ -131,7 +131,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang-13
-      - name: Build mad-hatter
+      - name: Build rinox
         run: |
           mkdir build
           cd build
@@ -153,7 +153,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang-13
-      - name: Build mad-hatter with ASAN
+      - name: Build rinox with ASAN
         run: |
           mkdir build
           cd build
@@ -175,7 +175,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-9
-      - name: Build mad-hatter (full)
+      - name: Build rinox (full)
         run: |
           mkdir build
           cd build
