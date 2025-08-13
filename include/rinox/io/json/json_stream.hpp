@@ -31,6 +31,7 @@
 */
 
 #pragma once
+#include "../utils/diagnostics.hpp"
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/stringbuffer.h>
@@ -106,8 +107,8 @@ enum class instance_return_code
 class json_stream
 {
 public:
-  explicit json_stream( std::istream& in, std::string_view module_to_read = "top" )
-      : module_name_( module_to_read )
+  explicit json_stream( std::istream& in, std::string_view module_to_read = "top", lorina::diagnostic_engine* diag = nullptr )
+      : module_name_( module_to_read ), diag_( diag )
   {
     rapidjson::IStreamWrapper isw( in );
     doc_.ParseStream( isw );
@@ -376,6 +377,7 @@ private:
   const rapidjson::Value* ports_ = nullptr;
   const rapidjson::Value* cells_ = nullptr;
   const rapidjson::Value* nets_ = nullptr;
+  lorina::diagnostic_engine* diag_;
 
   rapidjson::Value::ConstMemberIterator p_it_{}, p_end_{};
   rapidjson::Value::ConstMemberIterator c_it_{}, c_end_{};
