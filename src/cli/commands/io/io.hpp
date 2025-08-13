@@ -1,3 +1,4 @@
+#include "json.hpp"
 #include "stats.hpp"
 #include "verilog.hpp"
 
