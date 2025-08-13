@@ -59,6 +59,16 @@ struct json_bit_t
   std::variant<int64_t, std::string> v;
 };
 
+inline bool operator==( const json_bit_t& a, const json_bit_t& b ) noexcept
+{
+  // std::variant already has operator== (C++17), so just delegate
+  return a.v == b.v;
+}
+inline bool operator!=( const json_bit_t& a, const json_bit_t& b ) noexcept
+{
+  return !( a == b );
+}
+
 struct port_instance_t
 {
   std::string name, direction;

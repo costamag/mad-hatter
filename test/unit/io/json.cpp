@@ -120,5 +120,74 @@ TEST_CASE( "Read structural json to mapped network", "[json_parsing]" )
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::json::json_stream( in_ntk );
+  rinox::io::json::json_stream jstream( in_ntk );
+  rinox::io::json::instance_t inst;
+  rinox::io::json::instance_return_code code;
+
+  std::vector<std::string> ports_names{ "a", "b", "y" };
+  std::vector<std::string> ports_dirs{ "input", "input", "output" };
+  std::vector<int64_t> ports_bits{ 2, 3, 5 };
+
+  for ( auto i = 0u; i < 3u; ++i )
+  {
+    code = jstream.get_instance( inst );
+    CHECK( code == rinox::io::json::instance_return_code::valid );
+    CHECK( std::holds_alternative<rinox::io::json::port_instance_t>( inst ) );
+    auto const* p = std::get_if<rinox::io::json::port_instance_t>( &inst );
+    REQUIRE( p != nullptr );
+    CHECK( p->name == ports_names[i] );
+    CHECK( p->direction == ports_dirs[i] );
+    CHECK( p->bits.size() == 1 );
+    CHECK( std::holds_alternative<int64_t>( p->bits[0].v ) );
+    CHECK( std::get<int64_t>( p->bits[0].v ) == ports_bits[i] );
+  }
+
+  std::vector<std::string> cell_name{ "nand0", "inv0" };
+  ;
+  std::vector<std::string> cell_type{ "nand2", "inv1" };
+  std::vector<std::string> cell_model;
+  std::vector<std::unordered_map<std::string, std::string>> cell_port_dirs( 2u );
+  cell_port_dirs[0]["a"] = "input";
+  cell_port_dirs[0]["b"] = "input";
+  cell_port_dirs[0]["O"] = "output";
+  cell_port_dirs[1]["a"] = "input";
+  cell_port_dirs[1]["O"] = "output";
+  std::vector<std::unordered_map<std::string, std::vector<rinox::io::json::json_bit_t>>> cell_connections( 2u );
+  cell_connections[0]["a"] = { rinox::io::json::json_bit_t{ 2 } };
+  cell_connections[0]["b"] = { rinox::io::json::json_bit_t{ 3 } };
+  cell_connections[0]["O"] = { rinox::io::json::json_bit_t{ 4 } };
+  cell_connections[1]["a"] = { rinox::io::json::json_bit_t{ 4 } };
+  cell_connections[1]["O"] = { rinox::io::json::json_bit_t{ 5 } };
+  std::vector<std::vector<std::pair<std::string, std::string>>> cell_parameters{ {}, {} };
+  std::vector<std::vector<std::pair<std::string, std::string>>> cell_attributes{ {}, {} };
+  for ( auto i = 0u; i < 2u; ++i )
+  {
+    code = jstream.get_instance( inst );
+    CHECK( code == rinox::io::json::instance_return_code::valid );
+    CHECK( std::holds_alternative<rinox::io::json::cell_instance_t>( inst ) );
+    auto const* p = std::get_if<rinox::io::json::cell_instance_t>( &inst );
+    REQUIRE( p != nullptr );
+    CHECK( p->name == cell_name[i] );
+    CHECK( p->type == cell_type[i] );
+    CHECK( p->port_dirs == cell_port_dirs[i] );
+    CHECK( p->connections == cell_connections[i] );
+  }
+
+  std::vector<std::string> net_name{ "a", "b", "n1", "y" };
+  std::vector<std::vector<rinox::io::json::json_bit_t>> net_bits;
+  for ( int64_t bit = 2; bit < 6; ++bit )
+    net_bits.push_back( std::vector<rinox::io::json::json_bit_t>{ rinox::io::json::json_bit_t{ bit } } );
+
+  for ( auto i = 0u; i < 4u; ++i )
+  {
+    code = jstream.get_instance( inst );
+    CHECK( code == rinox::io::json::instance_return_code::valid );
+    CHECK( std::holds_alternative<rinox::io::json::net_name_instance_t>( inst ) );
+    auto const* p = std::get_if<rinox::io::json::net_name_instance_t>( &inst );
+    REQUIRE( p != nullptr );
+    CHECK( p->name == net_name[i] );
+    CHECK( p->bits == net_bits[i] );
+  }
+  code = jstream.get_instance( inst );
+  CHECK( code == rinox::io::json::instance_return_code::end );
 }

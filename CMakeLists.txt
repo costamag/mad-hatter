@@ -85,9 +85,11 @@ target_link_libraries(rinox PRIVATE rho_cli)
 add_library(rinox_headers INTERFACE)
 add_library(rinox::rinox ALIAS rinox_headers)
 
-target_include_directories(rinox_headers INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${RAPIDJSON_INCLUDE_DIR}           # expose RapidJSON to all consumers
+target_include_directories(rinox_headers
+  INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+  SYSTEM INTERFACE
+    ${RAPIDJSON_INCLUDE_DIR}
 )
 
 target_compile_definitions(rinox_headers INTERFACE
