@@ -61,7 +61,6 @@ struct json_bit_t
 
 inline bool operator==( const json_bit_t& a, const json_bit_t& b ) noexcept
 {
-  // std::variant already has operator== (C++17), so just delegate
   return a.v == b.v;
 }
 inline bool operator!=( const json_bit_t& a, const json_bit_t& b ) noexcept
@@ -117,47 +116,64 @@ public:
       parse_ok_ = false;
       return;
     }
-
     if ( !doc_.HasMember( "modules" ) || !doc_["modules"].IsObject() )
     {
       parse_ok_ = false;
       return;
     }
-    auto& modules = doc_["modules"];
-    for ( auto itr = modules.MemberBegin(); itr != modules.MemberEnd(); ++itr )
+
+    if ( !module_name_.empty() )
     {
-      const std::string name = itr->name.GetString();
-      if ( module_name_.empty() || name == module_name_ )
+      set_module( module_name_ );
+    }
+  }
+
+  std::vector<std::string> module_names() const
+  {
+    std::vector<std::string> names;
+    if ( !doc_.IsObject() || !doc_.HasMember( "modules" ) || !doc_["modules"].IsObject() )
+      return names;
+    const auto& mods = doc_["modules"];
+    for ( auto it = mods.MemberBegin(); it != mods.MemberEnd(); ++it )
+      names.push_back( it->name.GetString() );
+    return names;
+  }
+
+  bool set_module( std::string_view name )
+  {
+    if ( !doc_.IsObject() || !doc_.HasMember( "modules" ) || !doc_["modules"].IsObject() )
+      return false;
+    const auto& mods = doc_["modules"];
+    for ( auto it = mods.MemberBegin(); it != mods.MemberEnd(); ++it )
+    {
+      if ( name == it->name.GetString() )
       {
-        module_ = &itr->value;
-        module_name_ = name;
-        break;
+        module_ = &it->value;
+        module_name_ = it->name.GetString();
+
+        ports_ = cells_ = nets_ = nullptr;
+        if ( module_->HasMember( "ports" ) && ( *module_ )["ports"].IsObject() )
+        {
+          ports_ = &( *module_ )["ports"];
+          p_it_ = ports_->MemberBegin();
+          p_end_ = ports_->MemberEnd();
+        }
+        if ( module_->HasMember( "cells" ) && ( *module_ )["cells"].IsObject() )
+        {
+          cells_ = &( *module_ )["cells"];
+          c_it_ = cells_->MemberBegin();
+          c_end_ = cells_->MemberEnd();
+        }
+        if ( module_->HasMember( "netnames" ) && ( *module_ )["netnames"].IsObject() )
+        {
+          nets_ = &( *module_ )["netnames"];
+          n_it_ = nets_->MemberBegin();
+          n_end_ = nets_->MemberEnd();
+        }
+        return true;
       }
     }
-    if ( !module_ || !module_->IsObject() )
-    {
-      parse_ok_ = false;
-      return;
-    }
-
-    if ( module_->HasMember( "ports" ) && ( *module_ )["ports"].IsObject() )
-    {
-      ports_ = &( *module_ )["ports"];
-      p_it_ = ports_->MemberBegin();
-      p_end_ = ports_->MemberEnd();
-    }
-    if ( module_->HasMember( "cells" ) && ( *module_ )["cells"].IsObject() )
-    {
-      cells_ = &( *module_ )["cells"];
-      c_it_ = cells_->MemberBegin();
-      c_end_ = cells_->MemberEnd();
-    }
-    if ( module_->HasMember( "netnames" ) && ( *module_ )["netnames"].IsObject() )
-    {
-      nets_ = &( *module_ )["netnames"];
-      n_it_ = nets_->MemberBegin();
-      n_end_ = nets_->MemberEnd();
-    }
+    return false;
   }
 
   instance_return_code get_instance( instance_t& out )

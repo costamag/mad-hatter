@@ -36,9 +36,9 @@
 
 #pragma once
 
-#include "../diagnostics.hpp"
+#include "../utils/diagnostics.hpp"
+#include "../utils/reader.hpp"
 #include "verilog_parser.hpp"
-#include "verilog_reader.hpp"
 #include "write_verilog.hpp"
 
 namespace rinox
@@ -69,7 +69,7 @@ namespace verilog
  * \return Success if parsing has been successful, or parse error if parsing has failed
  */
 template<typename Ntk>
-[[nodiscard]] inline lorina::return_code read_verilog( std::istream& in, const verilog_reader<Ntk>& reader, lorina::diagnostic_engine* diag = nullptr )
+[[nodiscard]] inline lorina::return_code read_verilog( std::istream& in, const reader<Ntk>& reader, lorina::diagnostic_engine* diag = nullptr )
 {
   verilog_parser parser( in, reader, diag );
   auto result = parser.parse_modules();
@@ -94,7 +94,7 @@ template<typename Ntk>
  * \return Success if parsing has been successful, or parse error if parsing has failed
  */
 template<typename Ntk>
-[[nodiscard]] inline lorina::return_code read_verilog( const std::string& filename, const verilog_reader<Ntk>& reader, lorina::diagnostic_engine* diag = nullptr )
+[[nodiscard]] inline lorina::return_code read_verilog( const std::string& filename, const reader<Ntk>& reader, lorina::diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( lorina::detail::word_exp_filename( filename ), std::ifstream::in );
   if ( !in.is_open() )

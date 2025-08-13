@@ -34,8 +34,8 @@
 
 #pragma once
 
-#include "../diagnostics.hpp"
-#include "verilog_reader.hpp"
+#include "../utils/diagnostics.hpp"
+#include "../utils/reader.hpp"
 #include <algorithm>
 #include <cctype>
 #include <ctype.h>

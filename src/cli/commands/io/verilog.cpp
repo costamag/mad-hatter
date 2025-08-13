@@ -30,7 +30,7 @@ static void cmd_read_verilog( CLIContext& ctx, const std::vector<std::string>& a
   lorina::diagnostic_engine diag( &consumer );
 
   auto result_ntk = rinox::io::verilog::read_verilog(
-      in_ntk, rinox::io::verilog::verilog_reader( *ctx.ntk ), &diag );
+      in_ntk, rinox::io::reader( *ctx.ntk ), &diag );
   if ( result_ntk == lorina::return_code::success )
     std::cout << "Design loaded.\n";
   else

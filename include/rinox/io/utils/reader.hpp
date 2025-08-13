@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file verilog_reader.hpp
+  \file reader.hpp
   \brief Lorina reader for VERILOG files
 
   \author Andrea Costamagna
@@ -53,17 +53,6 @@ namespace rinox
 namespace io
 {
 
-namespace verilog
-{
-
-#ifndef DIAG_HERE_FILE
-#define DIAG_HERE_FILE __FILE__
-#endif
-
-#ifndef DIAG_HERE_LINE
-#define DIAG_HERE_LINE __LINE__
-#endif
-
 /*! \brief Lorina reader callback for VERILOG files.
  *
  * **Required network functions:**
@@ -83,14 +72,14 @@ namespace verilog
    .. code-block:: c++
 
       mig_network mig;
-      lorina::read_verilog( "file.v", verilog_reader( mig ) );
+      lorina::read_verilog( "file.v", reader( mig ) );
    \endverbatim
  */
 template<typename Ntk>
-class verilog_reader : public lorina::verilog_reader
+class reader : public lorina::verilog_reader
 {
 public:
-  explicit verilog_reader( Ntk& ntk, std::string const& top_module_name = "top" ) : ntk_( ntk ), top_module_name_( top_module_name )
+  explicit reader( Ntk& ntk, std::string const& top_module_name = "top" ) : ntk_( ntk ), top_module_name_( top_module_name )
   {
     static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
     static_assert( mockturtle::has_create_pi_v<Ntk>, "Ntk does not implement the create_pi function" );
@@ -424,8 +413,6 @@ private:
 
   std::regex hex_string{ "(\\d+)'h([0-9a-fA-F]+)" };
 };
-
-} /* namespace verilog */
 
 } /* namespace io */
 

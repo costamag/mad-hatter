@@ -11,6 +11,7 @@
 #include <mockturtle/networks/muxig.hpp>
 #include <mockturtle/networks/xag.hpp>
 #include <mockturtle/networks/xmg.hpp>
+#include <rinox/io/utils/reader.hpp>
 #include <rinox/io/verilog/verilog.hpp>
 #include <rinox/network/network.hpp>
 
@@ -60,7 +61,7 @@ TEST_CASE( "Read structural verilog to mapped network", "[verilog_reader]" )
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -113,7 +114,7 @@ TEST_CASE( "Read structural verilog to mapped network  with the inputs permutate
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -166,7 +167,7 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -218,7 +219,7 @@ TEST_CASE( "Corner case 1 - assign constant", "[verilog_reader]" )
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -274,7 +275,7 @@ endmodule
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -337,7 +338,7 @@ endmodule
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -405,7 +406,7 @@ endmodule
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
@@ -481,7 +482,7 @@ endmodule
   std::istringstream in_ntk( file );
 
   bound_network ntk( gates );
-  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::verilog::verilog_reader( ntk ) );
+  const auto result_ntk = rinox::io::verilog::read_verilog( in_ntk, rinox::io::reader( ntk ) );
 
   /* structural checks */
   CHECK( result_ntk == lorina::return_code::success );
