@@ -39,7 +39,9 @@ It integrates advanced SPFD-based algorithms with [mockturtle](https://github.co
 
 - SPFD-based logic resynthesis  
 - Powered by [mockturtle](https://github.com/lsils/mockturtle)  
-- Interactive CLI with [replxx](https://github.com/AmokHuginnsson/replxx)  
+- Interactive CLI with [replxx](https://github.com/AmokHuginnsson/replxx)
+- Non interactive CLI with [CLI11](https://github.com/CLIUtils/CLI11)
+- Supports json parsing [rapidjson](https://github.com/Tencent/rapidjson)
 - Cross-platform build with CMake  
 
 ---
