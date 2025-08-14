@@ -1,20 +1,46 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="Rinox Logo" width="200"/>
+  <!-- Project mark -->
+  <img src="assets/logo.svg" alt="Rinox Logo" width="200" style="max-width:100%; height:auto;" />
 
-<h1>
-  <strong>RINOX</strong> = <strong>R</strong>esynthesis for <strong>I</strong>nterconnect and <strong>N</strong>ode <strong>O</strong>ptimization with e<strong>X</strong>ploration
-</h1>
+  <br />
 
-<em>A modern logic resynthesis tool powered by <a href="https://github.com/lsils/mockturtle">mockturtle</a></em>
+  <!-- Acronym wordmark with the wiggly X -->
+  <img src="assets/acronym.svg" alt="RINOX Acronym" width="200" style="max-width:100%; height:auto;" />
 
-[![Build Status](https://github.com/costamag/rinox/actions/workflows/ci.yml/badge.svg)](https://github.com/costamag/rinox/actions)
-[![License](https://img.shields.io/github/license/costamag/rinox.svg)](https://github.com/costamag/rinox/blob/main/LICENSE)
-[![Stars](https://img.shields.io/github/stars/costamag/rinox.svg)](https://github.com/costamag/rinox/stargazers)
+  <!-- Subtitle / expansion -->
+  <h3 style="margin: 8px 0 0;">
+    <strong>R</strong>esynthesis for
+    <strong>I</strong>nterconnect and
+    <strong>N</strong>ode
+    <strong>O</strong>ptimization with e<em style="font-size:1.2em;">X</em>ploration
+  </h3>
 
----
+  <!-- Tagline -->
+  <em>A modern logic resynthesis tool powered by
+    <a href="https://github.com/lsils/mockturtle">mockturtle</a>
+  </em>
 
-> 🚧 **Status: Work in Progress** — expect frequent changes.
+  <!-- Badges -->
+  <p>
+    <a href="https://github.com/costamag/rinox/actions">
+      <img src="https://github.com/costamag/rinox/actions/workflows/ci.yml/badge.svg" alt="Build Status">
+    </a>
+    <a href="https://github.com/costamag/rinox/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/costamag/rinox.svg" alt="License">
+    </a>
+    <a href="https://github.com/costamag/rinox/stargazers">
+      <img src="https://img.shields.io/github/stars/costamag/rinox.svg" alt="Stars">
+    </a>
+  </p>
+
+  <!-- Separator -->
+  <hr style="width: 90%; max-width: 720px;" />
+
+  <!-- Status -->
+  <p>
+    🚧 Status: <span style="color:#d9534f; font-weight:bold;">Work in Progress</span> — expect frequent changes. 🚦 🔴
+  </p>
 
 </div>
 
