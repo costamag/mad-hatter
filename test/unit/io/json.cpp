@@ -311,3 +311,108 @@ TEST_CASE( "Read json to mapped network with multiple output gates", "[json_pars
   CHECK( ntk.size() == 8 );
   CHECK( ntk.num_gates() == 3 );
 }
+
+TEST_CASE( "Read json to mapped network with multiple output gates and constants", "[json_parsing]" )
+{
+
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in_lib( test_library );
+  auto result_lib = lorina::read_genlib( in_lib, genlib_reader( gates ) );
+  CHECK( result_lib == lorina::return_code::success );
+
+  std::string file = R"({
+  "creator": "Yosys 0.30",
+  "modules": {
+    "top": {
+      "attributes": {},
+      "ports": {
+        "a":   { "direction": "input",  "bits": [ 2 ] },
+        "b":   { "direction": "input",  "bits": [ 3 ] },
+        "din": { "direction": "input",  "bits": [ 20, "1", 22, "0" ], "upto": 1 },
+        "dout":{ "direction": "output", "bits": [ "1", 30, 31, "0" ], "upto": 0 }
+      },
+
+      "cells": {
+        "buf_to_dout_bit2": {
+          "hide_name": 0,
+          "type": "buf",
+          "parameters": {},
+          "attributes": {},
+          "port_directions": { "a": "input", "O": "output" },
+          "connections": { "a": [ 15 ], "O": [ 31 ] }
+        },
+
+        "and_const00": {
+          "hide_name": 0,
+          "type": "and2",
+          "parameters": {},
+          "attributes": {},
+          "port_directions": { "a": "input", "b": "input", "O": "output" },
+          "connections": { "a": [ "0" ], "b": [ "0" ], "O": [ 14 ] }
+        },
+
+        "xor_from_din": {
+          "hide_name": 0,
+          "type": "xor2",
+          "parameters": {},
+          "attributes": {},
+          "port_directions": { "a": "input", "b": "input", "O": "output" },
+          "connections": { "a": [ 20 ], "b": [ 22 ], "O": [ 15 ] }
+        },
+
+        "inv_a_to_dout_bit1": {
+          "hide_name": 0,
+          "type": "inv1",
+          "parameters": {},
+          "attributes": {},
+          "port_directions": { "a": "input", "O": "output" },
+          "connections": { "a": [ 2 ], "O": [ 30 ] }
+        }
+      },
+
+      "netnames": {
+        "a":     { "hide_name": 0, "bits": [ 2 ] },
+        "b":     { "hide_name": 0, "bits": [ 3 ] },
+
+        "din":   { "hide_name": 0, "bits": [ 20, "1", 22, "0" ], "upto": 1 },
+        "dout":  { "hide_name": 0, "bits": [ "1", 30, 31, "0" ], "upto": 0 },
+
+        "n_and00": { "hide_name": 1, "bits": [ 14 ] },
+        "n_xor":   { "hide_name": 1, "bits": [ 15 ] }
+      }
+    }
+  }
+})";
+
+  bound_network ntk( gates );
+  using signal = bound_network::signal;
+  std::istringstream in_ntk( file );
+  const auto result_ntk = rinox::io::json::read_json( in_ntk, rinox::io::reader( ntk ) );
+  /* structural checks */
+  CHECK( result_ntk == lorina::return_code::success );
+  CHECK( ntk.num_pis() == 4 );
+  CHECK( ntk.num_pos() == 4 );
+  CHECK( ntk.size() == 10 );
+  CHECK( ntk.num_gates() == 4 );
+  std::unordered_map<std::string, signal> fs;
+  fs["0"] = ntk.make_signal( 0 );
+  fs["1"] = ntk.make_signal( 1 );
+  fs["2"] = ntk.make_signal( ntk.pi_at( 0 ) );
+  fs["3"] = ntk.make_signal( ntk.pi_at( 1 ) );
+  fs["20"] = ntk.make_signal( ntk.pi_at( 2 ) );
+  fs["22"] = ntk.make_signal( ntk.pi_at( 3 ) );
+  fs["14"] = ntk.create_node<true>( { fs["0"], fs["0"] }, 3u );
+  fs["15"] = ntk.create_node<true>( { fs["20"], fs["22"] }, 4u );
+  fs["30"] = ntk.create_node<true>( { fs["2"] }, 0u );
+  fs["31"] = ntk.create_node<true>( { fs["15"] }, 7u );
+  CHECK( ntk.po_at( 0 ) == fs["1"] );
+  CHECK( ntk.po_at( 1 ) == fs["30"] );
+  CHECK( ntk.po_at( 2 ) == fs["31"] );
+  CHECK( ntk.po_at( 3 ) == fs["0"] );
+  CHECK( ntk.num_pis() == 4 );
+  CHECK( ntk.num_pos() == 4 );
+  CHECK( ntk.size() == 10 );
+  CHECK( ntk.num_gates() == 4 );
+}

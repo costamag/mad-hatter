@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include <fmt/color.h>
+#include <fmt/format.h>
 #include <lorina/common.hpp>
 #include <lorina/diagnostics.hpp>
 #include <string>
@@ -131,6 +133,59 @@ inline void report_diagnostic_raw( int file_line,
 
 #define REPORT_DIAG_RAW( file_line, diag, level, fmt, ... ) \
   report_diagnostic_raw( ( file_line ), ( diag ), ( level ), ( fmt ), ##__VA_ARGS__ )
+
+/*! \brief A consumer for diagnostics. */
+class text_diagnostics : public lorina::diagnostic_consumer
+{
+public:
+  text_diagnostics() = default;
+  virtual ~text_diagnostics() = default;
+
+  /*! \brief Handle diagnostic.
+   *
+   * \param level Severity level
+   * \param message Diagnostic message
+   */
+  void handle_diagnostic( lorina::diagnostic_level level, std::string const& message ) const override
+  {
+    switch ( level )
+    {
+    case lorina::diagnostic_level::ignore:
+      break;
+    case lorina::diagnostic_level::note:
+    {
+      fmt::print( stdout, fmt::emphasis::bold | fg( fmt::terminal_color::bright_green ), "[i]" );
+      fmt::print( stdout, fmt::emphasis::bold | fg( fmt::terminal_color::bright_green ), " {}\n", message );
+    }
+    break;
+    case lorina::diagnostic_level::remark:
+    {
+      fmt::print( stderr, fmt::emphasis::bold | fg( fmt::terminal_color::bright_green ), "[I]" );
+      fmt::print( stderr, fmt::emphasis::bold | fg( fmt::terminal_color::bright_green ), " {}\n", message );
+    }
+    break;
+    case lorina::diagnostic_level::warning:
+    {
+      fmt::print( stderr, fmt::emphasis::bold | fg( fmt::terminal_color::bright_magenta ), "[w]" );
+      fmt::print( stderr, fmt::emphasis::bold | fg( fmt::terminal_color::bright_magenta ), " {}\n", message );
+    }
+    break;
+    case lorina::diagnostic_level::error:
+    {
+      fmt::print( stderr, fmt::emphasis::bold | fg( fmt::terminal_color::bright_red ), "[e]" );
+      fmt::print( stderr, fmt::emphasis::bold | fg( fmt::terminal_color::bright_red ), " {}\n", message );
+    }
+    break;
+    case lorina::diagnostic_level::fatal:
+    default:
+    {
+      fmt::print( stderr, fmt::emphasis::bold | fg( fmt::terminal_color::bright_red ), "[E]" );
+      fmt::print( stderr, fmt::emphasis::bold | fg( fmt::terminal_color::bright_red ), " {}\n", message );
+    }
+    break;
+    }
+  }
+};
 
 } // namespace io
 
