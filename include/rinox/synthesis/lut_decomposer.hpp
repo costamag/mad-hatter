@@ -57,7 +57,7 @@ public:
     support.resize( static_cast<size_t>( times.size() ) );
     std::iota( support.begin(), support.end(), uint8_t{ 0 } );
 
-    return decompose_( support, func ).has_value();
+    return decompose_( support, times, func ).has_value();
   }
 
   template<typename Fn>
@@ -72,14 +72,14 @@ public:
   }
 
 private:
-  [[nodiscard]] std::optional<uint8_t> decompose_( const std::vector<uint8_t>& support, incomplete_cut_func_t& func )
+  [[nodiscard]] std::optional<uint8_t> decompose_( const std::vector<uint8_t>& support, const std::vector<double>& times, incomplete_cut_func_t & func )
   {
     auto reduced = reduce_support_( support, func );
     if ( reduced.size() <= MaxNumVars )
     {
       return termine_decompose_( std::move( reduced ), std::move( func ) );
     }
-    return std::nullopt;
+    return shannon_decompose_( reduced, times, func );
   }
 
   [[nodiscard]] std::vector<uint8_t> reduce_support_( const std::vector<uint8_t>& support, incomplete_cut_func_t& func )
@@ -97,6 +97,26 @@ private:
     const auto lit = static_cast<uint8_t>( specs_.size() );
     specs_.emplace_back( std::move( support ), std::move( func ) );
     return lit;
+  }
+
+  [[nodiscard]] std::optional<uint8_t> shannon_decompose_( std::vector<uint8_t> support, std::vector<double> const& times, incomplete_cut_func_t const& func )
+  {
+    auto it = std::max_element(times.begin(), times.end());
+    if( it == times.end())
+      return std::nullopt;
+    auto litx = static_cast<uint8_t>( std::distance(times.begin(), it));
+    auto func0 = kitty::cofactor0( func, litx );
+    auto func1 = kitty::cofactor1( func, litx );
+    auto res0 = decompose_( support, times, func0 );
+    auto res1 = decompose_( support, times, func1 );
+    if ( res0 && res1 )
+    {
+      auto lit = static_cast<uint8_t>( specs_.size() );
+      std::vector<uint8_t> supp{ litx, *res0, *res1 };
+      specs_.emplace_back( supp, func );
+      return lit;
+    }
+    return std::nullopt;
   }
 
 private:
