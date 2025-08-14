@@ -1,5 +1,6 @@
 #include "json.hpp"
 #include "../../../../include/rinox/io/json/json.hpp"
+#include "../../../../include/rinox/io/utils/diagnostics.hpp"
 #include "../../../../include/rinox/network/network.hpp"
 #include "../../context.hpp"
 #include <fstream>
@@ -26,7 +27,7 @@ static void cmd_read_json( CLIContext& ctx, const std::vector<std::string>& args
   }
   ctx.ntk.emplace( ctx.gates );
 
-  lorina::text_diagnostics consumer;
+  rinox::io::text_diagnostics consumer;
   lorina::diagnostic_engine diag( &consumer );
 
   auto result_ntk = rinox::io::json::read_json(
@@ -34,7 +35,7 @@ static void cmd_read_json( CLIContext& ctx, const std::vector<std::string>& args
   if ( result_ntk == lorina::return_code::success )
     std::cout << "Design loaded.\n";
   else
-    std::cerr << "Failed to read verilog.\n";
+    std::cerr << "Failed to read json.\n";
 }
 
 std::map<std::string, CommandHandler> register_json_commands()
