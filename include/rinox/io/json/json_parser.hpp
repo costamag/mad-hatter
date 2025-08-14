@@ -185,7 +185,7 @@ private:
 
     for ( auto const& p : ports )
     {
-      const auto sz = size_from_bits_( p.bits.size() );
+      const auto sz = "1"; // size_from_bits_( p.bits.size() );
       if ( p.direction == "input" )
       {
         for ( auto const& b : p.bits )
@@ -193,7 +193,7 @@ private:
           if ( std::holds_alternative<int64_t>( b.v ) )
           {
             const std::string bit_id = std::to_string( std::get<int64_t>( b.v ) );
-            reader_.on_inputs( { bit_id }, sz );
+            reader_.on_inputs( { bit_id } );
             on_action_.declare_known( bit_id );
           }
           else
@@ -207,7 +207,15 @@ private:
           if ( std::holds_alternative<int64_t>( b.v ) )
           {
             const std::string bit_id = std::to_string( std::get<int64_t>( b.v ) );
-            reader_.on_outputs( { bit_id }, sz );
+            reader_.on_outputs( { bit_id } );
+          }
+          else
+          {
+            auto const s = std::get<std::string>( b.v );
+            if ( s == "1" )
+              reader_.on_outputs( { s } );
+            else
+              reader_.on_outputs( { "0" } );
           }
         }
       }
