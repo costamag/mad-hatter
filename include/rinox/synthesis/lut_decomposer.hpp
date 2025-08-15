@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../boolean/support_minimizer.hpp"
 #include "../dependency/dependency_cut.hpp"
-#include "../boolean/truth.hpp"
 #include <fmt/format.h>
 #include <kitty/static_truth_table.hpp>
 #include <numeric>
@@ -29,7 +29,7 @@ struct spec_t
       : inputs( std::move( inputs_ ) ), sim( std::move( sim_ ) ) {}
 };
 
-template<uint32_t MaxCutSize = 6u, uint32_t MaxNumVars = 6u>
+template<uint32_t MaxCutSize = 6u, uint32_t MaxNumVars = 6u, bool ExacSuppMin = false>
 class lut_decomposer
 {
 public:
@@ -75,7 +75,7 @@ public:
 private:
   [[nodiscard]] std::optional<uint8_t> decompose_( std::vector<uint8_t> support, std::vector<double> times, incomplete_cut_func_t func )
   {
-    boolean::min_base_inplace( func, support, times );
+    supp_minimizer_.run( func, support, times );
     if ( support.size() <= MaxNumVars )
     {
       return termine_decompose_( std::move( support ), std::move( func ) );
@@ -84,48 +84,51 @@ private:
   }
 
   [[nodiscard]] std::optional<uint8_t>
-  termine_decompose_(std::vector<uint8_t> support, incomplete_cut_func_t func)
+  termine_decompose_( std::vector<uint8_t> support, incomplete_cut_func_t func )
   {
-      const auto lit = static_cast<uint8_t>(specs_.size());
-      specs_.emplace_back(std::move(support), std::move(func)); // now actually moves
-      return lit;
+    const auto lit = static_cast<uint8_t>( specs_.size() );
+    specs_.emplace_back( std::move( support ), std::move( func ) ); // now actually moves
+    return lit;
   }
 
   [[nodiscard]] std::optional<uint8_t>
-  shannon_decompose_(std::vector<uint8_t>  support,
-                    std::vector<double>    times,
-                    incomplete_cut_func_t  func)
+  shannon_decompose_( std::vector<uint8_t> support,
+                      std::vector<double> times,
+                      incomplete_cut_func_t func )
   {
-      auto it = std::max_element(times.begin(), times.end());
-      if (it == times.end()) return std::nullopt;
-
-      size_t index = static_cast<size_t>(std::distance(times.begin(), it));
-      uint8_t litx = support[index];
-
-      incomplete_cut_func_t func0{ kitty::cofactor0(func._bits, litx), kitty::cofactor0(func._care, litx) };
-      incomplete_cut_func_t func1{ kitty::cofactor1(func._bits, litx), kitty::cofactor1(func._care, litx) };
-
-      // Remove the split variable once for both branches (O(1) with unordered erase)
-      auto erase_at_unordered = [](auto& v, size_t idx) {
-          v[idx] = v.back();
-          v.pop_back();
-      };
-      erase_at_unordered(support, index);
-      erase_at_unordered(times,   index);
-
-      auto res0 = decompose_(support, times, std::move(func0));
-      auto res1 = decompose_(support, times, std::move(func1));
-      if (res0 && res1) {
-          auto lit = static_cast<uint8_t>(specs_.size());
-          std::vector<uint8_t> supp{ litx, *res0, *res1 };
-          specs_.emplace_back(std::move(supp), func);
-          return lit;
-      }
+    auto it = std::max_element( times.begin(), times.end() );
+    if ( it == times.end() )
       return std::nullopt;
+
+    size_t index = static_cast<size_t>( std::distance( times.begin(), it ) );
+    uint8_t litx = support[index];
+
+    incomplete_cut_func_t func0{ kitty::cofactor0( func._bits, litx ), kitty::cofactor0( func._care, litx ) };
+    incomplete_cut_func_t func1{ kitty::cofactor1( func._bits, litx ), kitty::cofactor1( func._care, litx ) };
+
+    // Remove the split variable once for both branches (O(1) with unordered erase)
+    auto erase_at_unordered = []( auto& v, size_t idx ) {
+      v[idx] = v.back();
+      v.pop_back();
+    };
+    erase_at_unordered( support, index );
+    erase_at_unordered( times, index );
+
+    auto res0 = decompose_( support, times, std::move( func0 ) );
+    auto res1 = decompose_( support, times, std::move( func1 ) );
+    if ( res0 && res1 )
+    {
+      auto lit = static_cast<uint8_t>( specs_.size() );
+      std::vector<uint8_t> supp{ litx, *res0, *res1 };
+      specs_.emplace_back( std::move( supp ), func );
+      return lit;
+    }
+    return std::nullopt;
   }
 
 private:
   specs_t specs_;
+  boolean::support_minimizer<MaxCutSize> supp_minimizer_;
 };
 
 } // namespace synthesis
