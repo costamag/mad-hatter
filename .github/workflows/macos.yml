@@ -2,11 +2,9 @@ name: macOS CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-gcc12:
@@ -16,13 +14,24 @@ jobs:
     steps:
       - uses: actions/checkout@v1
         with:
-          submodules: true
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install GCC 12
+        run: |
+          brew update
+          brew install gcc@12
+
       - name: Build rinox
         run: |
-          mkdir build
-          cd build
-          cmake -DCMAKE_CXX_COMPILER=$(which g++-12) -DRINOX_ENABLE_TESTS=ON ..
+          GCC_PREFIX="$(brew --prefix gcc@12)"
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_C_COMPILER="${GCC_PREFIX}/bin/gcc-12" \
+            -DCMAKE_CXX_COMPILER="${GCC_PREFIX}/bin/g++-12" \
+            -DRINOX_ENABLE_TESTS=ON
           make run_unit_tests
+
       - name: Run tests
         run: |
           cd build
@@ -35,36 +44,48 @@ jobs:
     steps:
       - uses: actions/checkout@v1
         with:
-          submodules: true
+          submodules: recursive
+          fetch-depth: 0
+
       - name: Build rinox
         run: |
-          mkdir build
-          cd build
-          cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DRINOX_ENABLE_TESTS=ON ..
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_C_COMPILER=/usr/bin/clang \
+            -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+            -DRINOX_ENABLE_TESTS=ON
           make run_unit_tests
+
       - name: Run tests
         run: |
           cd build
           ./test/run_unit_tests
 
-  build-clang15:
-    name: Clang 15
+  build-clang17:
+    name: Clang 17
     runs-on: macOS-latest
 
     steps:
       - uses: actions/checkout@v1
         with:
-          submodules: true
-      - name: Install LLVM 15
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install LLVM 17
         run: |
           brew update
-          brew install llvm@15
+          brew install llvm@17
+
       - name: Build rinox
         run: |
-          mkdir build
-          cd build
-          cmake -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++ -DRINOX_ENABLE_TESTS=ON ..
+          LLVM_PREFIX=$(brew --prefix llvm@17)
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_C_COMPILER="${LLVM_PREFIX}/bin/clang" \
+            -DCMAKE_CXX_COMPILER="${LLVM_PREFIX}/bin/clang++" \
+            -DRINOX_ENABLE_TESTS=ON
           make run_unit_tests
+
       - name: Run tests
         run: |
           cd build

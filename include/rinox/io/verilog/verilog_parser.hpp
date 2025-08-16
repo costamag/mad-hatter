@@ -1390,8 +1390,8 @@ public:
         {
           if ( !assign_signals( lhs[l], name, is_compl ) )
           {
-            auto const arg1 = name.c_str();
-            auto const arg2 = lhs[l].c_str();
+            const char* arg1 = name.c_str();
+            const char* arg2 = lhs[l].c_str();
             REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
                          "failed assigning `{}` to `{}`", arg1, arg2 );
             return false;
@@ -1404,8 +1404,8 @@ public:
       {
         if ( !assign_signals( lhs[l], rhs[r], is_compl ) )
         {
-          auto const arg1 = rhs[r].c_str();
-          auto const arg2 = lhs[l].c_str();
+          const char* arg1 = rhs[r].c_str();
+          const char* arg2 = lhs[l].c_str();
           REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
                        "failed assigning `{}` to `{}`", arg1, arg2 );
           return false;
@@ -1416,10 +1416,12 @@ public:
     }
     if ( ( r != rhs.size() ) || ( l != lhs.size() ) )
     {
-      auto const rstr = std::to_string( r ).c_str();
-      auto const lstr = std::to_string( l ).c_str();
+      std::string rstr = std::to_string( r );
+      std::string lstr = std::to_string( l );
+      const char* arg1 = lstr.c_str();
+      const char* arg2 = rstr.c_str();
       REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
-                   "different number of entries in LHS and RHS of assign `{}` != `{}`", lstr, rstr );
+                   "different number of entries in LHS and RHS of assign `{}` != `{}`", arg1, arg2 );
       return false;
     }
     return true;

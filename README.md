@@ -6,7 +6,7 @@
   <br />
 
   <!-- Acronym wordmark with the wiggly X -->
-  <img src="assets/acronym.svg" alt="RINOX Acronym" width="200" style="max-width:100%; height:auto;" />
+  <img src="assets/acronym.svg" alt="RINOX Acronym" width="199" style="max-width:100%; height:auto;" />
 
   <!-- Subtitle / expansion -->
   <h3 style="margin: 8px 0 0;">
