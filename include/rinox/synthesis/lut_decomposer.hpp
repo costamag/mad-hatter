@@ -80,6 +80,7 @@ private:
     {
       return termine_decompose_( std::move( support ), std::move( func ) );
     }
+
     return shannon_decompose_( std::move( support ), std::move( times ), std::move( func ) );
   }
 
@@ -114,16 +115,33 @@ private:
     erase_at_unordered( support, index );
     erase_at_unordered( times, index );
 
+    std::vector<uint8_t> supp;
     auto res0 = decompose_( support, times, std::move( func0 ) );
     auto res1 = decompose_( support, times, std::move( func1 ) );
-    if ( res0 && res1 )
+    if ( kitty::is_const0( func0._bits & func0._care ) || kitty::equal( func0._bits & func0._care, func0._care ) )
     {
-      auto lit = static_cast<uint8_t>( specs_.size() );
-      std::vector<uint8_t> supp{ litx, *res0, *res1 };
-      specs_.emplace_back( std::move( supp ), func );
-      return lit;
+      if ( res1 )
+        supp = { litx, *res1 };
+      else
+        return std::nullopt;
     }
-    return std::nullopt;
+    else if ( kitty::is_const0( func1._bits & func1._care ) || kitty::equal( func1._bits & func1._care, func1._care ) )
+    {
+      if ( res0 )
+        supp = { litx, *res0 };
+      else
+        return std::nullopt;
+    }
+    else
+    {
+      if ( res0 && res1 )
+        supp = { litx, *res0, *res1 };
+      else
+        return std::nullopt;
+    }
+    auto lit = static_cast<uint8_t>( specs_.size() );
+    specs_.emplace_back( std::move( supp ), func );
+    return lit;
   }
 
 private:
