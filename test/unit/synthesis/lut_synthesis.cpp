@@ -73,13 +73,13 @@ TEST_CASE( "LUT decomposer for parity 5 3- shannon", "[lut_synthesis]" )
   std::vector<double> times{ 0, 0, 0, 0, 3 };
 
   std::vector<std::vector<uint8_t>> supps;
-  supps = { { 3, 1, 2 }, { 3, 1, 2 }, { 0, 5, 6 }, { 3, 1, 2 }, { 3, 1, 2 }, { 0, 8, 9 }, { 4, 7, 10 } };
+  supps = { { 0, 1, 2 }, { 0, 1, 2 }, { 3, 5, 6 }, { 0, 1, 2 }, { 0, 1, 2 }, { 3, 8, 9 }, { 4, 7, 10 } };
   std::vector<ctt_l> ctts_l( 7u );
-  kitty::create_from_binary_string( ctts_l[0], "11000011001111001100001100111100" );
-  kitty::create_from_binary_string( ctts_l[1], "00111100110000110011110011000011" );
+  kitty::create_from_binary_string( ctts_l[0], "10010110100101101001011010010110" );
+  kitty::create_from_binary_string( ctts_l[1], "01101001011010010110100101101001" );
   kitty::create_from_binary_string( ctts_l[2], "01101001100101100110100110010110" );
-  kitty::create_from_binary_string( ctts_l[3], "00111100110000110011110011000011" );
-  kitty::create_from_binary_string( ctts_l[4], "11000011001111001100001100111100" );
+  kitty::create_from_binary_string( ctts_l[3], "01101001011010010110100101101001" );
+  kitty::create_from_binary_string( ctts_l[4], "10010110100101101001011010010110" );
   kitty::create_from_binary_string( ctts_l[5], "10010110011010011001011001101001" );
   kitty::create_from_binary_string( ctts_l[6], "10010110011010010110100110010110" );
   std::vector<itt_l> funcs;

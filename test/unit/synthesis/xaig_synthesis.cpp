@@ -3,13 +3,13 @@
 
 #include <kitty/kitty.hpp>
 
+#include <mockturtle/algorithms/simulation.hpp>
+#include <mockturtle/networks/aig.hpp>
+#include <mockturtle/networks/xag.hpp>
 #include <rinox/dependency/dependency.hpp>
 #include <rinox/evaluation/evaluation.hpp>
 #include <rinox/synthesis/synthesis.hpp>
 #include <rinox/synthesis/xaig_decompose.hpp>
-#include <mockturtle/algorithms/simulation.hpp>
-#include <mockturtle/networks/aig.hpp>
-#include <mockturtle/networks/xag.hpp>
 
 using namespace rinox::synthesis;
 using namespace rinox::evaluation;
@@ -170,7 +170,7 @@ TEST_CASE( "Termination condition for LUT decomposition", "[xaig_synthesis]" )
   static constexpr uint32_t MaxCutSize = 3u;
   using CSTT = kitty::static_truth_table<MaxCutSize>;
   using ISTT = kitty::ternary_truth_table<CSTT>;
-  rinox::synthesis::lut_decomposer<MaxCutSize, MaxNumVars> decomposer;
+  rinox::synthesis::lut_decomposer<MaxCutSize, MaxNumVars, false> decomposer;
 
   CSTT care1, mask1;
   kitty::create_from_binary_string( care1, "10001100" );
@@ -180,7 +180,7 @@ TEST_CASE( "Termination condition for LUT decomposition", "[xaig_synthesis]" )
   CHECK( decomposer.run( func1, times ) );
   kitty::static_truth_table<2u> expected;
   kitty::create_from_binary_string( expected, "1000" );
-  bool const success =decomposer.foreach_spec( [&]( auto & specs, uint8_t lit ) {
+  bool const success = decomposer.foreach_spec( [&]( auto& specs, uint8_t lit ) {
     std::vector<CSTT const*> sim_ptrs;
     auto& spec = specs[lit];
     for ( auto i : spec.inputs )
@@ -191,5 +191,5 @@ TEST_CASE( "Termination condition for LUT decomposition", "[xaig_synthesis]" )
     CHECK( kitty::is_const0( ~itt._care ) );
     return true;
   } );
-  CHECK(success);
+  CHECK( success );
 }
