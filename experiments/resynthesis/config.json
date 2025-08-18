@@ -25,5 +25,8 @@
     "try_simula": false,
     "dynamic_database": false,
     "fanout_limit": 20
+  },
+  "database": {
+    "name" : 
   }
 }

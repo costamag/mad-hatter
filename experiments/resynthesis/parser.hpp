@@ -12,9 +12,6 @@ namespace rinox
 namespace experiments
 {
 
-// Alias your params type however you like:
-// using Params = rinox::opto::algorithms::default_resynthesis_params<>;
-
 template<class Params>
 inline void load_resynthesis_params( const std::string& json_path, Params& ps )
 {
