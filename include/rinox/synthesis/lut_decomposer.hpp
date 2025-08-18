@@ -30,11 +30,166 @@ struct spec_t
       : inputs( std::move( inputs_ ) ), sim( std::move( sim_ ) ) {}
 };
 
+template<uint32_t NumVars>
+struct func_graph
+{
+  using c_func_t = kitty::static_truth_table<NumVars>;
+  using i_func_t = kitty::ternary_truth_table<c_func_t>;
+  func_graph()
+  {
+    for ( int i = 0; i < 4u; ++i )
+    {
+      int j = 4u + i;
+      weights[i][i] = std::numeric_limits<uint32_t>::max();
+      weights[j][j] = std::numeric_limits<uint32_t>::max();
+      weights[i][j] = std::numeric_limits<uint32_t>::max();
+      weights[j][i] = std::numeric_limits<uint32_t>::max();
+    }
+  }
+
+  std::optional<std::vector<char>> run( std::vector<uint8_t> support, std::vector<uint8_t> alive, i_func_t const& func )
+  {
+    init_( support, alive, func );
+    auto num_covers = ( 1u << alive.size() );
+    std::vector<std::vector<uint32_t>> covers( num_covers );
+    uint32_t best_cost = std::numeric_limits<uint32_t>::max();
+    std::optional<std::vector<uint32_t>> best_supp;
+
+    uint32_t mstart = alive.size() == 4 ? 1 : 0;
+    uint32_t mend = alive.size() == 4 ? ( num_covers - 1 ) : num_covers;
+    for ( uint32_t m = mstart; m < mend; ++m )
+    {
+      covers[m].resize( alive.size() );
+      for ( uint32_t i = 0; i < alive.size(); ++i )
+      {
+        covers[m][i] = alive[i];
+        if ( ( ( m >> i ) & 0x1 ) > 0 )
+          covers[m][i] += 4u;
+      }
+      uint32_t cost = 0;
+      for ( auto i = 0u; i < covers[m].size() - 1; ++i )
+        for ( auto j = i + 1; j < covers[m].size(); ++j )
+          cost += weights[covers[m][i]][covers[m][j]];
+
+      if ( cost < best_cost )
+        best_supp = std::make_optional( covers[m] );
+    }
+    if ( best_supp )
+    {
+      std::vector<char> pols( alive.size() );
+      for ( auto c : *best_supp )
+        if ( c >= 4 )
+          pols.push_back( '-' );
+        else
+          pols.push_back( '+' );
+      return pols;
+    }
+    return std::nullopt;
+  }
+
+  bool is_complemented( uint8_t const c )
+  {
+    return c >= 4u;
+  }
+
+  uint8_t get_cube( uint8_t const c )
+  {
+    return c >= 4u ? c - 4 : c;
+  }
+
+  void init_( std::vector<uint8_t> support, std::vector<uint8_t> alive, i_func_t const& func )
+  {
+    auto index = support.size() - 1;
+    x0 = support[index];
+    x1 = support[index - 1];
+    std::vector<uint8_t> dead;
+    auto it = alive.begin();
+    uint8_t i = 0;
+    while ( ( i < 4u ) && ( it != alive.end() ) )
+    {
+      if ( i != *it )
+        dead.push_back( i );
+      else
+        it++;
+      i++;
+    }
+    while ( i < 4 )
+      dead.push_back( i++ );
+
+    for ( auto d : dead )
+    {
+      for ( uint8_t o = 0; o < 4; o++ )
+      {
+        weights[d][o] = std::numeric_limits<uint32_t>::max();
+        weights[d][o] = std::numeric_limits<uint32_t>::max();
+      }
+    }
+
+    for ( uint8_t const& c : alive )
+      compute_cofactor( c );
+
+    for ( auto i = 0u; i < alive.size() - 1; ++i )
+    {
+      for ( auto j = i + 1; j < alive.size(); ++j )
+      {
+        uint8_t Ap = alive[i];
+        uint8_t An = alive[i + 4];
+        uint8_t Bp = alive[j];
+        uint8_t Bn = alive[j + 4];
+        auto const diff_same = ( cofactors[Ap]._bits ^ cofactors[Bp]._bits );
+        auto const care_same = ( cofactors[Ap]._care & cofactors[Bp]._care );
+        uint32_t cost_same = kitty::count_ones( diff_same & care_same );
+        uint32_t cost_oppt = kitty::count_ones( ( ~diff_same ) & care_same );
+        weights[Ap][Bp] = cost_same;
+        weights[Bp][Ap] = cost_same;
+        weights[An][Bn] = cost_same;
+        weights[Bn][An] = cost_same;
+        weights[Ap][Bn] = cost_oppt;
+        weights[Bn][Ap] = cost_oppt;
+        weights[An][Bp] = cost_oppt;
+        weights[Bp][An] = cost_oppt;
+      }
+    }
+  }
+
+  void compute_cofactor( uint8_t const c )
+  {
+    switch ( c )
+    {
+    case 0:
+      cofactors[c]._bits = kitty::cofactor0( kitty::cofactor0( func._bits, x0 ), x1 );
+      cofactors[c]._care = kitty::cofactor0( kitty::cofactor0( func._care, x0 ), x1 );
+      break;
+    case 1:
+      cofactors[c]._bits = kitty::cofactor0( kitty::cofactor1( func._bits, x0 ), x1 );
+      cofactors[c]._care = kitty::cofactor0( kitty::cofactor1( func._care, x0 ), x1 );
+      break;
+    case 2:
+      cofactors[c]._bits = kitty::cofactor1( kitty::cofactor0( func._bits, x0 ), x1 );
+      cofactors[c]._care = kitty::cofactor1( kitty::cofactor0( func._care, x0 ), x1 );
+      break;
+    case 3:
+      cofactors[c]._bits = kitty::cofactor1( kitty::cofactor1( func._bits, x0 ), x1 );
+      cofactors[c]._care = kitty::cofactor1( kitty::cofactor1( func._care, x0 ), x1 );
+      break;
+    default:
+      break;
+    }
+  }
+
+  i_func_t func;
+  uint8_t x1;
+  uint8_t x0;
+  std::array<std::array<uint32_t, 8u>, 8u> weights;
+  std::array<i_func_t, 4u> cofactors;
+};
+
 struct lut_decomposer_params
 {
   lut_decomposer_params() = default;
 
   bool try_spfd_decompose = false;
+  bool exact_spfd = false;
 };
 
 template<uint32_t MaxCutSize = 6u, uint32_t MaxNumVars = 6u, bool ExacSuppMin = false>
@@ -129,22 +284,64 @@ private:
       if ( !spfd_.is_killed( i ) )
         alive.push_back( i );
     }
-
-    switch ( alive.size() )
+    if ( ps_.exact_spfd )
     {
-    case 0:
-      return 0;
-    case 1:
-      return spfd1_decompose_( support, alive, times, index, func );
-    case 2:
-      return spfd2_decompose_( support, alive, times, index, func );
-    case 3:
-      return spfd3_decompose_( support, alive, times, index, func );
-    case 4:
-      return spfd4_decompose_( support, alive, times, index, func );
-    default:
-      return std::nullopt;
+      switch ( alive.size() )
+      {
+      case 0:
+        return 0;
+      case 1:
+        return spfd1_decompose_( support, alive, times, index, func );
+      case 2:
+        return spfd2_decompose_( support, alive, times, index, func );
+      case 3:
+        return spfd3_decompose_( support, alive, times, index, func );
+      case 4:
+        return spfd4_decompose_( support, alive, times, index, func );
+      default:
+        return std::nullopt;
+      }
     }
+    else
+    {
+      return spfd_graph_decompose_( support, alive, times, index, func );
+    }
+  }
+
+  [[nodiscard]] std::optional<uint8_t>
+  spfd_graph_decompose_( std::vector<uint8_t> support, std::vector<uint8_t> alive, std::vector<double> const& times, uint32_t index, incomplete_cut_func_t const& func )
+  {
+    std::vector<uint8_t> supp{ support[index], support[index - 1] };
+    incomplete_cut_func_t fn = func;
+    while ( supp.size() < MaxNumVars )
+    {
+      if ( kitty::count_ones( fn._bits & fn._care ) == 0 )
+        break;
+      if ( kitty::count_ones( fn._bits & fn._care ) == kitty::count_ones( fn._care ) )
+        break;
+      auto pols = graph_.run( support, alive, fn );
+      if ( pols )
+      {
+        fn = spfd_.get_function( alive, *pols );
+        if ( kitty::count_ones( ( fn._bits ^ func._bits ) & fn._care & func._care ) == 0 )
+          return std::nullopt;
+        auto lit = decompose_( support, times, fn );
+        if ( lit )
+          supp.push_back( *lit );
+        else
+          return std::nullopt;
+      }
+      else
+      {
+        return std::nullopt;
+      }
+    }
+    if ( supp.size() <= MaxNumVars )
+    {
+      specs_.emplace_back( supp, func );
+      return static_cast<uint8_t>( specs_.size() - 1 );
+    }
+    return std::nullopt;
   }
 
   [[nodiscard]] std::optional<uint8_t>
@@ -530,6 +727,8 @@ private:
   std::array<cut_func_t, MaxCutSize> base_;
   boolean::support_minimizer<MaxCutSize> supp_minimizer_;
   boolean::spfd<cut_func_t, 1u << MaxCutSize> spfd_;
+
+  func_graph<MaxCutSize> graph_;
 };
 
 } // namespace synthesis
