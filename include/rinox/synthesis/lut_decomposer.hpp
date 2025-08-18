@@ -76,7 +76,7 @@ struct func_graph
     }
     if ( best_supp )
     {
-      std::vector<char> pols( alive.size() );
+      std::vector<char> pols;
       for ( auto c : *best_supp )
         if ( c >= 4 )
           pols.push_back( '-' );
@@ -327,7 +327,10 @@ private:
           return std::nullopt;
         auto lit = decompose_( support, times, fn );
         if ( lit )
+        {
+          spfd_.update( specs_[*lit].sim._bits );
           supp.push_back( *lit );
+        }
         else
           return std::nullopt;
       }
