@@ -582,3 +582,94 @@ TEST_CASE( "Yosys syntax - case 2", "[json_parsing]" )
   CHECK( ntk.size() == 10 );
   CHECK( ntk.num_gates() == 4 );
 }
+
+TEST_CASE( "Read json without port direction", "[json_parsing]" )
+{
+
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in_lib( test_library );
+  auto result_lib = lorina::read_genlib( in_lib, genlib_reader( gates ) );
+  CHECK( result_lib == lorina::return_code::success );
+
+  std::string file = R"({
+  "creator": "Yosys 0.30",
+  "modules": {
+    "top": {
+      "attributes": {},
+      "ports": {
+        "a":   { "direction": "input",  "bits": [ 2 ] },
+        "b":   { "direction": "input",  "bits": [ 3 ] },
+        "cin": { "direction": "input",  "bits": [ 4 ] },
+        "s":   { "direction": "output", "bits": [ 9 ] },
+        "cout":{ "direction": "output", "bits": [ 8 ] }
+      },
+      "cells": {
+        "buf_s": {
+          "hide_name": 0,
+          "type": "buf",
+          "parameters": {},
+          "attributes": {},
+          "connections": { "a": [ 7 ], "O": [ 9 ] }
+        },
+        "buf_c": {
+          "hide_name": 0,
+          "type": "buf",
+          "parameters": {},
+          "attributes": {},
+          "connections": { "a": [ 6 ], "O": [ 8 ] }
+        },
+        "fa0": {
+          "hide_name": 0,
+          "type": "fa",
+          "parameters": {},
+          "attributes": {},
+          "connections": {
+            "a": [ 2 ],
+            "b": [ 3 ],
+            "c": [ 4 ],
+            "S": [ 7 ],
+            "C": [ 6 ]
+          }
+        }
+      },
+      "netnames": {
+        "a":      { "hide_name": 0, "bits": [ 2 ] },
+        "b":      { "hide_name": 0, "bits": [ 3 ] },
+        "cin":    { "hide_name": 0, "bits": [ 4 ] },
+        "n_carry":{ "hide_name": 1, "bits": [ 6 ] },
+        "n_sum":  { "hide_name": 1, "bits": [ 7 ] },
+        "cout":   { "hide_name": 0, "bits": [ 8 ] },
+        "s":      { "hide_name": 0, "bits": [ 9 ] }
+      }
+    }
+  }
+})";
+
+  bound_network ntk( gates );
+  using signal = bound_network::signal;
+  std::istringstream in_ntk( file );
+  const auto result_ntk = rinox::io::json::read_json( in_ntk, rinox::io::reader( ntk ) );
+  /* structural checks */
+  CHECK( result_ntk == lorina::return_code::success );
+  CHECK( ntk.num_pis() == 3 );
+  CHECK( ntk.num_pos() == 2 );
+  CHECK( ntk.size() == 8 );
+  CHECK( ntk.num_gates() == 3 );
+
+  auto const a = ntk.make_signal( ntk.pi_at( 0 ) );
+  auto const b = ntk.make_signal( ntk.pi_at( 1 ) );
+  auto const c = ntk.make_signal( ntk.pi_at( 2 ) );
+  auto const f1 = ntk.create_node<true>( { a, b, c }, { 12u, 13u } );
+  CHECK( f1.index == 5u );
+  auto const f2 = ntk.create_node<true>( { signal{ f1.index, 0 } }, 7u );
+  CHECK( f2.index == 6u );
+  auto const f3 = ntk.create_node<true>( { signal{ f1.index, 1 } }, 7u );
+  CHECK( f3.index == 7u );
+
+  CHECK( ntk.num_pis() == 3 );
+  CHECK( ntk.num_pos() == 2 );
+  CHECK( ntk.size() == 8 );
+  CHECK( ntk.num_gates() == 3 );
+}
