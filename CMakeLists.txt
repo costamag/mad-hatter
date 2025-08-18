@@ -12,6 +12,7 @@ set(RINOX_MAX_CUBE_SPFD 12 CACHE STRING "Default maximum cube size exactly repre
 set(RINOX_MAX_NUM_LEAVES 12 CACHE STRING "Default maximum number of leaves in the window")
 set(RINOX_BENCHMARK_DIR "${CMAKE_SOURCE_DIR}/benchmarks" CACHE PATH "Directory containing benchmark suites")
 set(RINOX_EXPERIMENTS_DIR "${CMAKE_SOURCE_DIR}/experiments" CACHE PATH "Directory containing the experiments")
+set(RINOX_SOURCE_DIR "${CMAKE_SOURCE_DIR}" CACHE PATH "Source directory")
 
 
 # Sanitizer
@@ -108,6 +109,7 @@ add_library(rinox_build_options INTERFACE)
 target_compile_definitions(rinox_build_options INTERFACE
   RINOX_BENCHMARK_DIR="$<IF:$<BOOL:${RINOX_BENCHMARK_DIR}>,${RINOX_BENCHMARK_DIR},benchmarks>"
   RINOX_EXPERIMENTS_DIR="$<IF:$<BOOL:${RINOX_EXPERIMENTS_DIR}>,${RINOX_EXPERIMENTS_DIR},experiments>"
+  RINOX_SOURCE_DIR="$<IF:$<BOOL:${RINOX_SOURCE_DIR}>,${RINOX_SOURCE_DIR},experiments>"
 )
 
 # Make rho_cli consumers inherit headers/defines too

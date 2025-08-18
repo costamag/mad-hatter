@@ -2,7 +2,7 @@
   "benchmarks": {
     "type": "aig",
     "suite": ["iscas"],
-    "names": ["adder"],
+    "names": [],
     "exclude": ["c7552"]
   },
   "resynthesis-params": {

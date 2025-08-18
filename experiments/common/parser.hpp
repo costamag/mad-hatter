@@ -23,6 +23,13 @@ struct BenchSpec
   std::string root;                 // optional override; default = RINOX_BENCHMARK_DIR
 };
 
+// -------- Data structures --------
+struct TechSpec
+{
+  std::string type = "genlib";       // "genlib"/"liberty" ...
+  std::string name = "asap7";        // e.g., ["iscas", "epfl"]
+};
+
 // -------- Non-template helpers (defined in .cpp) --------
 bool read_text_list_file( const fs::path& path, std::vector<std::string>& out_lines );
 fs::path default_suite_list_file( const fs::path& suite_dir, const std::string& suite_name );
@@ -33,7 +40,7 @@ std::string normalize_ext( std::string type ); // returns ".aig", ".v", ".blif",
 void collect_from_suite( const fs::path& suite_dir,
                          const std::string& suite_name,
                          const std::string& ext,
-                         const std::set<std::string>& names_filter, // empty = all
+                         const std::set<std::string>& names, // empty = all
                          const std::set<std::string>& exclude_set,
                          std::vector<std::string>& out_files );
 
@@ -42,6 +49,7 @@ void collect_from_suite( const fs::path& suite_dir,
 // Note: experiment-specific parameter parsing happens elsewhere.
 void load_common_config( const std::string& json_path,
                          BenchSpec& spec_out,
+                         TechSpec& tech_spec_out,
                          std::vector<std::string>& files_out );
 
 } // namespace rinox::experiments

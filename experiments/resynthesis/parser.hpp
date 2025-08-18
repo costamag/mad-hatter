@@ -99,10 +99,11 @@ template<class Params>
 inline void load_config( const std::string& path,
                          Params& ps,
                          rinox::experiments::BenchSpec& spec,
+                         rinox::experiments::TechSpec& tech,
                          std::vector<std::string>& files )
 {
   // 1) benchmarks (common)
-  rinox::experiments::load_common_config( path, spec, files );
+  rinox::experiments::load_common_config( path, spec, tech, files );
 
   // 2) resynthesis-specific params
   load_resynthesis_params( path, ps );

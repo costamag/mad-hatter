@@ -1,5 +1,3 @@
-#pragma once
-
 #include "parser.hpp"
 #include <algorithm>
 #include <cctype>
@@ -9,6 +7,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 #include <stdexcept>
+#include <set>
 
 namespace rinox::experiments
 {
@@ -39,11 +38,13 @@ bool read_text_list_file( const fs::path& path, std::vector<std::string>& out_li
 
 fs::path default_suite_list_file( const fs::path& suite_dir, const std::string& suite_name )
 {
-  fs::path p = suite_dir / ( suite_name + ".list" );
+  fs::path p = suite_dir / ( suite_name + ".suite" );
   if ( exists( p ) )
     return p;
-  p = suite_dir / "list.txt";
-  return p;
+  else
+  {
+    throw std::runtime_error( "File not found" );
+  }
 }
 
 void normalize_unique( std::vector<std::string>& v )
@@ -55,7 +56,7 @@ void normalize_unique( std::vector<std::string>& v )
 void collect_from_suite( const fs::path& suite_dir,
                          const std::string& suite_name,
                          const std::string& ext,
-                         const std::set<std::string>& names_filter,
+                         std::vector<std::string>& bench_names,
                          const std::set<std::string>& exclude_set,
                          std::vector<std::string>& out_files )
 {
@@ -65,17 +66,20 @@ void collect_from_suite( const fs::path& suite_dir,
     return;
   }
 
+  std::string subdir;
+  if ( ext == ".aig" )
+    subdir = "aiger";
+
   std::vector<std::string> listed;
   const fs::path list_path = default_suite_list_file( suite_dir, suite_name );
   if ( read_text_list_file( list_path, listed ) )
   {
     for ( const auto& base : listed )
     {
-      if ( !names_filter.empty() && !names_filter.count( base ) )
-        continue;
+      bench_names.push_back( base );
       if ( exclude_set.count( base ) )
         continue;
-      const fs::path full = suite_dir / ( base + ext );
+      const fs::path full = suite_dir / subdir / ( base + ext );
       if ( exists( full ) )
         out_files.push_back( full.string() );
       else
@@ -91,8 +95,6 @@ void collect_from_suite( const fs::path& suite_dir,
       if ( e.path().extension() != ext )
         continue;
       const std::string base = e.path().stem().string();
-      if ( !names_filter.empty() && !names_filter.count( base ) )
-        continue;
       if ( exclude_set.count( base ) )
         continue;
       out_files.push_back( e.path().string() );
@@ -126,6 +128,7 @@ std::string normalize_ext( std::string type )
 
 void load_common_config( const std::string& json_path,
                          BenchSpec& spec_out,
+                         TechSpec& tech_spec_out,
                          std::vector<std::string>& files_out )
 {
   // --- parse json ---
@@ -177,7 +180,6 @@ void load_common_config( const std::string& json_path,
   normalize_unique( spec_out.exclude );
 
   const std::string ext = normalize_ext( spec_out.type );
-  const std::set<std::string> names_filter( spec_out.names.begin(), spec_out.names.end() );
   const std::set<std::string> exclude_set( spec_out.exclude.begin(), spec_out.exclude.end() );
 
   const fs::path root = spec_out.root.empty() ? default_root() : fs::path( spec_out.root );
@@ -185,12 +187,25 @@ void load_common_config( const std::string& json_path,
   for ( const auto& suite_name : spec_out.suites )
   {
     const fs::path suite_dir = root / suite_name;
-    collect_from_suite( suite_dir, suite_name, ext, names_filter, exclude_set, files_out );
+    std::cout << suite_dir << std::endl;
+    collect_from_suite( suite_dir, suite_name, ext, spec_out.names, exclude_set, files_out );
   }
 
   // Deterministic order + dedup
   std::sort( files_out.begin(), files_out.end() );
   files_out.erase( std::unique( files_out.begin(), files_out.end() ), files_out.end() );
+
+  if ( doc.HasMember( "techlib" ) && doc["techlib"].IsObject() )
+  {
+    const auto& jb = doc["techlib"];
+
+    if ( jb.HasMember( "type" ) && jb["type"].IsString() )
+      tech_spec_out.type = jb["type"].GetString();
+
+    if ( jb.HasMember( "name" ) && jb["name"].IsString() )
+      tech_spec_out.name = jb["name"].GetString();
+  }
+
 }
 
 } // namespace rinox::experiments
