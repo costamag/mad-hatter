@@ -29,15 +29,16 @@ using DefaultParams = rinox::opto::algorithms::default_resynthesis_params<NL>;
 
 int main()
 {
-  rinox::experiments::experiment<std::string, uint32_t, double, uint32_t, double, uint32_t, float, bool> exp(
-      "resynthesis", "benchmark", "size", "area_after", "depth", "delay_after", "multioutput", "runtime", "cec" );
+  std::string path_to_out = std::string( RINOX_SOURCE_DIR ) + "/experiments/resynthesis/";
 
+  rinox::experiments::experiment<std::string, uint32_t, double, uint32_t, double, uint32_t, float, bool> exp(
+      path_to_out, "resynthesis", "benchmark", "size", "area_after", "depth", "delay_after", "multioutput", "runtime", "cec" );
 
   DefaultParams<> ps;
   BenchSpec spec;
   TechSpec tech;
   std::vector<std::string> files;
-  std::string config_path = std::string(RINOX_EXPERIMENTS_DIR) + "/resynthesis/config.json";
+  std::string config_path = std::string( RINOX_EXPERIMENTS_DIR ) + "/resynthesis/config.json";
   try
   {
     rinox::experiments::load_config( config_path, ps, spec, tech, files );
@@ -53,7 +54,7 @@ int main()
   std::string library = tech.name;
   std::vector<mockturtle::gate> gates;
 
-  std::string genlib_path = std::string(RINOX_SOURCE_DIR) + "/techlib/" + tech.type + "/" + tech.name + "." + tech.type;
+  std::string genlib_path = std::string( RINOX_SOURCE_DIR ) + "/techlib/" + tech.type + "/" + tech.name + "." + tech.type;
 
   std::ifstream in( genlib_path );
 

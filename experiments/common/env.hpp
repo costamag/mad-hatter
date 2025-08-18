@@ -141,7 +141,7 @@ class experiment
 {
 public:
   template<typename... T>
-  explicit experiment( std::string_view name, T... column_names )
+  explicit experiment( std::string const& path, std::string_view name, T... column_names )
       : name_( name )
   {
     static_assert( ( sizeof...( ColumnTypes ) > 0 ), "at least one column must be specified" );
@@ -149,11 +149,7 @@ public:
     static_assert( ( std::is_constructible_v<std::string, T> && ... ), "all column names must be strings" );
     ( column_names_.push_back( column_names ), ... );
 
-#ifndef EXPERIMENTS_PATH
-    filename_ = fmt::format( "{}.json", name );
-#else
-    filename_ = fmt::format( "{}{}.json", EXPERIMENTS_PATH, name );
-#endif
+    filename_ = fmt::format( "{}{}.json", path, name );
 
     std::ifstream in( filename_, std::ifstream::in );
     if ( in.good() )
@@ -525,7 +521,6 @@ std::string cell_libraries_path( std::string const& cell_library_name )
 #endif
 }
 
-
 template<class Ntk>
 inline bool abc_cec_impl( Ntk const& ntk, std::string const& benchmark_fullpath )
 {
@@ -612,4 +607,4 @@ inline bool abc_cec_mapped_cell( Ntk const& ntk, std::string const& path, std::s
 
 } // namespace experiments
 
-}
+} // namespace rinox
