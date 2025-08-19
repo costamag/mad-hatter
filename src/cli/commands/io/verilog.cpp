@@ -64,6 +64,6 @@ std::map<std::string, CommandHandler> register_verilog_commands()
 {
   return {
       { "read_verilog", cmd_read_verilog },
-      { "write_verilog", cmd_write_verilog },
+      { "write_verilog", cmd_write_verilog }
   };
 }

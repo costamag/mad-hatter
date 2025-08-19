@@ -75,8 +75,13 @@ TEST_CASE( "Read structural verilog to mapped network", "[verilog_reader]" )
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected = "module top( x0 , x1 , x2 , y0 , y1 , y2 , y3 );\n"
-                         "  input x0 , x1 , x2 ;\n"
-                         "  output y0 , y1 , y2 , y3 ;\n"
+                         "  input x0 ;\n"
+                         "  input x1 ;\n"
+                         "  input x2 ;\n"
+                         "  output y0 ;\n"
+                         "  output y1 ;\n"
+                         "  output y2 ;\n"
+                         "  output y3 ;\n"
                          "  wire n5 , n6_0 , n6_1 ;\n"
                          "  inv1  g0( .a (x0), .O (n5) );\n"
                          "  inv1  g1( .a (n5), .O (y0) );\n"
@@ -128,8 +133,13 @@ TEST_CASE( "Read structural verilog to mapped network  with the inputs permutate
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected = "module top( x0 , x1 , x2 , y0 , y1 , y2 , y3 );\n"
-                         "  input x0 , x1 , x2 ;\n"
-                         "  output y0 , y1 , y2 , y3 ;\n"
+                         "  input x0 ;\n"
+                         "  input x1 ;\n"
+                         "  input x2 ;\n"
+                         "  output y0 ;\n"
+                         "  output y1 ;\n"
+                         "  output y2 ;\n"
+                         "  output y3 ;\n"
                          "  wire n5 , n6_0 , n6_1 ;\n"
                          "  inv1  g0( .a (x0), .O (n5) );\n"
                          "  inv1  g1( .a (n5), .O (y0) );\n"
@@ -156,7 +166,7 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
     output \f[0] , \f[1] , \f[2], \f[3] ;
     wire n4 , n5 , n6 ;
     inv1 g0( .a (\a[0]), .O (n4) );
-    fa   g1( .b (\a[1]), .C (n5), .a (n4), .c (\b[0]), .S (n6) );
+    fa   g1( .b (\a[1]), .S (n5), .a (n4), .c (\b[0]), .C (n6) );
     inv1 g2( .a (n4), .O (\f[0]) );
     xor2 g3( .a (n6), .O (\f[1]), .b (\b[0]) );
     buf g4( .a (n5), .O (\f[2]) );
@@ -180,14 +190,15 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( a[0] , a[1] , b[0] , f[0] , f[1] , f[2] , f[3] );\n"
-      "  input a[0] , a[1] , b[0] ;\n"
-      "  output f[0] , f[1] , f[2] , f[3] ;\n"
+      "module top( a , b , f );\n"
+      "  input [0:1] a ;\n"
+      "  input b ;\n"
+      "  output [0:3] f ;\n"
       "  wire n5 , n6_0 , n6_1 ;\n"
       "  inv1  g0( .a (a[0]), .O (n5) );\n"
       "  inv1  g1( .a (n5), .O (f[0]) );\n"
-      "  fa    g2( .a (n5), .b (a[1]), .c (b[0]), .C (n6_0), .S (n6_1) );\n"
-      "  xor2  g3( .a (n6_1), .b (b[0]), .O (f[1]) );\n"
+      "  fa    g2( .a (n5), .b (a[1]), .c (b), .S (n6_0), .C (n6_1) );\n"
+      "  xor2  g3( .a (n6_1), .b (b), .O (f[1]) );\n"
       "  buf   g4( .a (n6_0), .O (f[2]) );\n"
       "  buf   g5( .a (n6_1), .O (f[3]) );\n"
       "endmodule\n";
@@ -289,9 +300,9 @@ endmodule
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( xyz_inst.a[0] , xyz_inst.a[1] , xyz_inst.a[2] , xyz_inst.a[3] , xyz_inst.i0.a[0] , xyz_inst.i0.a[1] , xyz_inst.i0.a[2] , xyz_inst.i0.a[3] );\n"
-      "  input xyz_inst.a[0] , xyz_inst.a[1] , xyz_inst.a[2] , xyz_inst.a[3] ;\n"
-      "  output xyz_inst.i0.a[0] , xyz_inst.i0.a[1] , xyz_inst.i0.a[2] , xyz_inst.i0.a[3] ;\n"
+      "module top( xyz_inst.a , xyz_inst.i0.a );\n"
+      "  input [0:3] xyz_inst.a ;\n"
+      "  output [0:3] xyz_inst.i0.a ;\n"
       "  buf   g0( .a (xyz_inst.a[0]), .O (xyz_inst.i0.a[0]) );\n"
       "  assign xyz_inst.i0.a[1] = xyz_inst.a[1] ;\n"
       "  assign xyz_inst.i0.a[2] = xyz_inst.a[2] ;\n"
@@ -354,19 +365,26 @@ endmodule)";
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( xyz_inst.f00[0] , xyz_inst.f01[0] , xyz_inst.f02[0] , xyz_inst.f03[0] , xyz_inst.f04[0] , xyz_inst.f05[0] , xyz_inst.f06[0] , xyz_inst.f07[0] , xyz_inst.out0[0] , xyz_inst.out0[1] , xyz_inst.out0[2] , xyz_inst.out0[3] , xyz_inst.out0[4] , xyz_inst.out0[5] , xyz_inst.out0[6] , xyz_inst.out0[7] );\n"
-      "  input xyz_inst.f00[0] , xyz_inst.f01[0] , xyz_inst.f02[0] , xyz_inst.f03[0] , xyz_inst.f04[0] , xyz_inst.f05[0] , xyz_inst.f06[0] , xyz_inst.f07[0] ;\n"
-      "  output xyz_inst.out0[0] , xyz_inst.out0[1] , xyz_inst.out0[2] , xyz_inst.out0[3] , xyz_inst.out0[4] , xyz_inst.out0[5] , xyz_inst.out0[6] , xyz_inst.out0[7] ;\n"
+      "module top( xyz_inst.f00 , xyz_inst.f01 , xyz_inst.f02 , xyz_inst.f03 , xyz_inst.f04 , xyz_inst.f05 , xyz_inst.f06 , xyz_inst.f07 , xyz_inst.out0 );\n"
+      "  input xyz_inst.f00 ;\n"
+      "  input xyz_inst.f01 ;\n"
+      "  input xyz_inst.f02 ;\n"
+      "  input xyz_inst.f03 ;\n"
+      "  input xyz_inst.f04 ;\n"
+      "  input xyz_inst.f05 ;\n"
+      "  input xyz_inst.f06 ;\n"
+      "  input xyz_inst.f07 ;\n"
+      "  output [0:7] xyz_inst.out0 ;\n"
       "  wire n10 ;\n"
       "  and2  g0( .a (xyz_inst.out0[0]), .b (xyz_inst.out0[1]), .O (n10) );\n"
-      "  xor2  g1( .a (xyz_inst.f02[0]), .b (n10), .O (xyz_inst.out0[2]) );\n"
-      "  assign xyz_inst.out0[0] = xyz_inst.f00[0] ;\n"
-      "  assign xyz_inst.out0[1] = xyz_inst.f01[0] ;\n"
-      "  assign xyz_inst.out0[3] = xyz_inst.f03[0] ;\n"
-      "  assign xyz_inst.out0[4] = xyz_inst.f04[0] ;\n"
-      "  assign xyz_inst.out0[5] = xyz_inst.f05[0] ;\n"
-      "  assign xyz_inst.out0[6] = xyz_inst.f06[0] ;\n"
-      "  assign xyz_inst.out0[7] = xyz_inst.f07[0] ;\n"
+      "  xor2  g1( .a (xyz_inst.f02), .b (n10), .O (xyz_inst.out0[2]) );\n"
+      "  assign xyz_inst.out0[0] = xyz_inst.f00 ;\n"
+      "  assign xyz_inst.out0[1] = xyz_inst.f01 ;\n"
+      "  assign xyz_inst.out0[3] = xyz_inst.f03 ;\n"
+      "  assign xyz_inst.out0[4] = xyz_inst.f04 ;\n"
+      "  assign xyz_inst.out0[5] = xyz_inst.f05 ;\n"
+      "  assign xyz_inst.out0[6] = xyz_inst.f06 ;\n"
+      "  assign xyz_inst.out0[7] = xyz_inst.f07 ;\n"
       "endmodule\n";
 
   CHECK( out.str() == expected );
@@ -429,9 +447,10 @@ endmodule
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( a[0] , a[1] , b[0] , b[1] , xyz_inst.out1[0] , xyz_inst.out1[1] , xyz_inst.out1[2] , xyz_inst.out1[3] , xyz_inst.out1[4] , xyz_inst.out1[5] , xyz_inst.out1[6] , xyz_inst.out1[7] );\n"
-      "  input a[0] , a[1] , b[0] , b[1] ;\n"
-      "  output xyz_inst.out1[0] , xyz_inst.out1[1] , xyz_inst.out1[2] , xyz_inst.out1[3] , xyz_inst.out1[4] , xyz_inst.out1[5] , xyz_inst.out1[6] , xyz_inst.out1[7] ;\n"
+      "module top( a , b , xyz_inst.out1 );\n"
+      "  input [0:1] a ;\n"
+      "  input [0:1] b ;\n"
+      "  output [0:7] xyz_inst.out1 ;\n"
       "  wire n6 , n7 , n8 , n9 , n10 , n11 ;\n"
       "  inv2  g00( .a (0), .O (xyz_inst.out1[0]) );\n"
       "  inv2  g01( .a (0), .O (xyz_inst.out1[1]) );\n"
@@ -504,9 +523,9 @@ endmodule)";
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( ripple_inst.a[0] , ripple_inst.a[1] , ripple_inst.o[0] , ripple_inst.o[1] );\n"
-      "  input ripple_inst.a[0] , ripple_inst.a[1] ;\n"
-      "  output ripple_inst.o[0] , ripple_inst.o[1] ;\n"
+      "module top( ripple_inst.a , ripple_inst.o );\n"
+      "  input [0:1] ripple_inst.a ;\n"
+      "  output [0:1] ripple_inst.o ;\n"
       "  buf   g0( .a (ripple_inst.a[0]), .O (ripple_inst.o[0]) );\n"
       "  and2  g1( .a (ripple_inst.a[0]), .b (ripple_inst.a[1]), .O (ripple_inst.o[1]) );\n"
       "endmodule\n";

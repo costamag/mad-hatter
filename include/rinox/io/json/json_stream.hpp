@@ -107,8 +107,8 @@ enum class instance_return_code
 class json_stream
 {
 public:
-  explicit json_stream( std::istream& in, std::string_view module_to_read = "top", lorina::diagnostic_engine* diag = nullptr )
-      : module_name_( module_to_read ), diag_( diag )
+  explicit json_stream( std::istream& in, lorina::diagnostic_engine* diag = nullptr )
+      : diag_( diag )
   {
     rapidjson::IStreamWrapper isw( in );
     doc_.ParseStream( isw );
@@ -123,10 +123,10 @@ public:
       return;
     }
 
-    if ( !module_name_.empty() )
-    {
-      set_module( module_name_ );
-    }
+    std::vector<std::string> mnames = module_names();
+    assert( ( mnames.size() == 1 ) && "only stable for one module" );
+    module_name_ = mnames[0];
+    set_module( module_name_ );
   }
 
   std::vector<std::string> module_names() const

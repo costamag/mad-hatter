@@ -1078,7 +1078,7 @@ public:
     return _storage->get_output_name( po_index );
   }
 
-  bool get_input_name( uint32_t const& pi_index ) const
+  std::string get_input_name( uint32_t const& pi_index ) const
   {
     return _storage->get_input_name( pi_index );
   }
@@ -1177,6 +1177,11 @@ public:
   uint32_t get_binding_index( signal_t const& f ) const
   {
     return _storage->get_binding_ids( f.index )[f.output];
+  }
+
+  unsigned int get_pin_id( std::string const& gate_name, std::string const& pin_name ) const
+  {
+    return _storage->get_pin_id( gate_name, pin_name );
   }
 
   auto const& get_binding( signal_t const& f ) const

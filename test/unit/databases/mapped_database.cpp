@@ -6,13 +6,13 @@
 #include <vector>
 
 #include <lorina/genlib.hpp>
+#include <mockturtle/io/genlib_reader.hpp>
+#include <mockturtle/io/super_reader.hpp>
+#include <mockturtle/utils/tech_library.hpp>
 #include <rinox/analyzers/trackers/arrival_times_tracker.hpp>
 #include <rinox/databases/mapped_database.hpp>
 #include <rinox/evaluation/chains/bound_chain.hpp>
 #include <rinox/network/network.hpp>
-#include <mockturtle/io/genlib_reader.hpp>
-#include <mockturtle/io/super_reader.hpp>
-#include <mockturtle/utils/tech_library.hpp>
 
 using namespace mockturtle;
 
@@ -472,8 +472,14 @@ TEST_CASE( "Saving a mapped database", "[mapped_database]" )
   db.commit( out );
   std::string const expected =
       "module top( x0 , x1 , x2 , x3 , x4 , x5 , y0 , y1 );\n"
-      "  input x0 , x1 , x2 , x3 , x4 , x5 ;\n"
-      "  output y0 , y1 ;\n"
+      "  input x0 ;\n"
+      "  input x1 ;\n"
+      "  input x2 ;\n"
+      "  input x3 ;\n"
+      "  input x4 ;\n"
+      "  input x5 ;\n"
+      "  output y0 ;\n"
+      "  output y1 ;\n"
       "  wire n14 , n15 ;\n"
       "  XOR2   g0( .A (x4), .B (x5), .Y (y0) );\n"
       "  AND4   g1( .A (x3), .B (x4), .C (x5), .D (x2), .Y (n14) );\n"
