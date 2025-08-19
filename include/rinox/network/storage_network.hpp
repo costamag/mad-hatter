@@ -1018,6 +1018,11 @@ public:
     return trav_id;
   }
 
+  unsigned int get_pin_id( std::string const& gate_name, std::string const& pin_name ) const
+  {
+    return library.get_pin_id( gate_name, pin_name );
+  }
+
   void incr_trav_id()
   {
     if ( trav_id > ( std::numeric_limits<uint32_t>::max() - 10 ) )

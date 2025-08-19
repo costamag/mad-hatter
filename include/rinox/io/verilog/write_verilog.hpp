@@ -49,6 +49,11 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <vector>
+#include <unordered_map>
+#include <regex>
+#include <algorithm>
+#include <limits>
 
 namespace rinox
 {
@@ -62,6 +67,48 @@ using namespace std::string_literals;
 
 namespace detail
 {
+
+struct BusInfo {
+  std::string name;  // base name, e.g. "A"
+  int         width; // number of bits
+  bool        descending; // true if bits appear MSB->LSB in the input order
+};
+
+
+  class rinox_verilog_writer : lorina::verilog_writer writer( os )
+  {
+    virtual void on_input( std::vector<BusInfo> const& inputs ) const
+    {
+      for ( auto const& bus : inputs )
+      {
+        if ( bus.width <= 1 )
+          _os << fmt::format( "  input {} ;\n", name );
+        else
+        {
+          if ( bus.descending )
+            _os << fmt::format( "  input [{}:0] {} ;\n", bus.width - 1, name );
+          else
+            _os << fmt::format( "  input [0:{}] {} ;\n", bus.width - 1, name );
+        }
+      }
+    }
+
+    virtual void on_output( std::vector<BusInfo> const& outputs) const
+    {
+      for ( auto const& bus : outputs )
+      {
+        if ( bus.width <= 1 )
+          _os << fmt::format( "  output {} ;\n", name );
+        else
+        {
+          if ( bus.descending )
+            _os << fmt::format( "  output [{}:0] {} ;\n", bus.width - 1, name );
+          else
+            _os << fmt::format( "  output [0:{}] {} ;\n", bus.width - 1, name );
+        }
+      }
+    }
+  }
 
 template<class Ntk>
 std::vector<std::pair<bool, std::string>>
@@ -112,6 +159,77 @@ struct verilog_writer_signal_hash
   }
 };
 
+
+inline std::vector<BusInfo> infer_buses(const std::vector<std::string>& nets)
+{
+  // Parse "Base[idx]" and group indices by base name
+  static const std::regex re(R"(([^[]+)\[(\d+)\])");
+  struct Item { int idx; size_t pos; }; // idx and first occurrence position
+
+  std::unordered_map<std::string, std::vector<Item>> groups;
+  groups.reserve(nets.size());
+
+  for (size_t pos = 0; pos < nets.size(); ++pos) {
+    const auto& s = nets[pos];
+    std::smatch m;
+    if (std::regex_match(s, m, re)) {
+      std::string base = m[1].str();
+      int idx = std::stoi(m[2].str());
+      // record only the first occurrence position for each index
+      auto& vec = groups[base];
+      auto it = std::find_if(vec.begin(), vec.end(), [&](const Item& it){ return it.idx == idx; });
+      if (it == vec.end()) vec.push_back({ idx, pos });
+    }
+    // else: ignore non-matching entries quietly
+  }
+
+  // Preserve stable order by first appearance of the base name
+  std::vector<std::pair<std::string, std::vector<Item>>> ordered;
+  ordered.reserve(groups.size());
+  for (auto& kv : groups) ordered.emplace_back(kv.first, std::move(kv.second));
+  std::stable_sort(ordered.begin(), ordered.end(), [&](auto const& a, auto const& b){
+    // find earliest position of any bit of each base
+    auto minpos = [](auto const& items){
+      size_t p = std::numeric_limits<size_t>::max();
+      for (auto const& it : items) p = std::min(p, it.pos);
+      return p;
+    };
+    return minpos(a.second) < minpos(b.second);
+  });
+
+  // Build results
+  std::vector<BusInfo> result;
+  result.reserve(ordered.size());
+
+  for (auto& [name, items] : ordered) {
+    if (items.empty()) continue;
+
+    // Sort by position to see the order they appear in the input vector
+    std::sort(items.begin(), items.end(), [](const Item& a, const Item& b){ return a.pos < b.pos; });
+
+    // Extract the indices as they appear
+    std::vector<int> seq; seq.reserve(items.size());
+    for (auto const& it : items) seq.push_back(it.idx);
+
+    // Determine direction:
+    // descending if strictly non-increasing and has at least two distinct values
+    bool nondecreasing = true, nonincreasing = true;
+    for (size_t i = 1; i < seq.size(); ++i) {
+      if (seq[i] < seq[i-1]) nondecreasing = false;
+      if (seq[i] > seq[i-1]) nonincreasing = false;
+    }
+    // If both monotone flags hold (all equal), treat as ascending (false).
+    bool descending = (!nondecreasing && nonincreasing);
+
+    // Width is the number of distinct indices we collected
+    int width = static_cast<int>(items.size());
+
+    result.push_back(BusInfo{ name, width, descending });
+  }
+
+  return result;
+}
+
 } // namespace detail
 
 /*! \brief Writes mapped network in structural Verilog format into output stream
@@ -154,7 +272,7 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
 
   assert( ntk.is_combinational() && "Network has to be combinational" );
 
-  lorina::verilog_writer writer( os );
+  rinox_verilog_writer writer( os );
 
   std::vector<std::string> xs, inputs;
   if ( ps.input_names.empty() )
@@ -307,7 +425,8 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
   writer.on_module_begin( module_name, inputs, outputs );
   if ( ps.input_names.empty() )
   {
-    writer.on_input( xs );
+    auto const info = detail::infer_buses(xs);
+    writer.on_input( info );
   }
   else
   {
@@ -318,7 +437,8 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
   }
   if ( ps.output_names.empty() )
   {
-    writer.on_output( ys );
+    auto const info = detail::infer_buses(ys);
+    writer.on_output( info );
   }
   else
   {

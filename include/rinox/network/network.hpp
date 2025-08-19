@@ -1134,6 +1134,11 @@ public:
     return _storage->get_binding_ids( f.index )[f.output];
   }
 
+  unsigned int get_pin_id( std::string const& gate_name, std::string const& pin_name ) const
+  {
+    return _storage->get_pin_id( gate_name, pin_name );
+  }
+
   auto const& get_binding( signal_t const& f ) const
   {
     return _storage->get_binding( f );

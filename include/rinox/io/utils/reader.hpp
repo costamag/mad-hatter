@@ -136,7 +136,7 @@ public:
         const auto length = parse_size( size );
         for ( auto i = 0u; i < length; ++i )
         {
-          const auto sname = fmt::format( "{}[{}]", name, i );
+          const auto sname = length > 1 ? fmt::format( "{}[{}]", name, i ) : fmt::format( "{}", name );
           word.push_back( ntk_.create_pi() );
           signals_[sname] = word.back();
           if constexpr ( mockturtle::has_set_name_v<Ntk> )
@@ -351,6 +351,11 @@ public:
   bool is_output_pin( std::string const& gate_name, std::string const& pin_name ) const
   {
     return ntk_.is_output_pin( gate_name, pin_name );
+  }
+
+  unsigned int get_pin_id( std::string const& gate_name, std::string const& pin_name ) const
+  {
+    return ntk_.get_pin_id( gate_name, pin_name );
   }
 
 private:

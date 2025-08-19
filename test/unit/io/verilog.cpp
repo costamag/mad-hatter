@@ -156,7 +156,7 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
     output \f[0] , \f[1] , \f[2], \f[3] ;
     wire n4 , n5 , n6 ;
     inv1 g0( .a (\a[0]), .O (n4) );
-    fa   g1( .b (\a[1]), .C (n5), .a (n4), .c (\b[0]), .S (n6) );
+    fa   g1( .b (\a[1]), .S (n5), .a (n4), .c (\b[0]), .C (n6) );
     inv1 g2( .a (n4), .O (\f[0]) );
     xor2 g3( .a (n6), .O (\f[1]), .b (\b[0]) );
     buf g4( .a (n5), .O (\f[2]) );

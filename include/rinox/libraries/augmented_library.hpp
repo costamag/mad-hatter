@@ -212,6 +212,18 @@ public:
     return it->second;
   }
 
+  unsigned int get_pin_id( std::string const& gate_name, std::string const& pin_name ) const
+  {
+    auto const ids = get_binding_ids( gate_name );
+    for ( auto id : ids )
+    {
+      if ( raw_gates_[id].output_name == pin_name )
+        return id;
+    }
+    std::cerr << "[e] pin name " << pin_name << " not found in " << gate_name << std::endl;
+  }
+
+
   std::optional<unsigned int> get_id( kitty::dynamic_truth_table const& tt ) const
   {
     auto it = tt_to_index_.find( tt );

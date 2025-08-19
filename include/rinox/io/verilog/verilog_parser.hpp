@@ -965,7 +965,7 @@ public:
 
     std::vector<std::pair<std::string, std::string>> input_assigns;
     std::vector<std::pair<std::string, std::string>> output_assigns;
-    auto const ids = reader.get_binding_ids( gate_name );
+    std::vector<unsigned int> ids;
 
     while ( token != ";" && token != "endmodule" )
     {
@@ -993,6 +993,7 @@ public:
         {
           state = pin_state::OUTPUT_PIN;
           output_assigns.emplace_back( pin_name, "" );
+          ids.emplace_back( reader.get_pin_id( gate_name, pin_name ) );
         }
         else
         {
@@ -1037,6 +1038,8 @@ public:
         return false;
       }
     }
+//HERE IS THE ISSUE
+
 
     on_action.call_deferred<CELL_FN>( /* dependencies */ inputs, outputs,
                                       /* gate-function params */ std::make_tuple( input_assigns, output_assigns, ids ) );
