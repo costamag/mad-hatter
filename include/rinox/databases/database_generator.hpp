@@ -54,7 +54,7 @@ struct database_gen_params
   bool multiple_candidates = false;
   bool verbose = false;
   std::string metric = "area";
-  std::string output_file;
+  std::string output_file = "";
 };
 
 /*! \brief Engine to initialize the database with simple structures
@@ -97,6 +97,11 @@ public:
     {
       area_oriented_generation( ps.output_file );
     }
+  }
+
+  database_t extract_db()
+  {
+    return db_;
   }
 
   void area_oriented_generation( std::string const& output_file )
@@ -216,8 +221,8 @@ private:
     ntk.foreach_po( [&]( auto f ) {
       db_.add( ntk, pis, f );
     } );
-
-    db_.commit( output_file );
+    if ( output_file != ".v" )
+      db_.commit( output_file );
   }
 
 private:

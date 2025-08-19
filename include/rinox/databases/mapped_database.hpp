@@ -158,6 +158,13 @@ public:
     }
   }
 
+  mapped_database() = default;
+  mapped_database( const mapped_database& ) = default;
+  mapped_database( mapped_database&& ) = default;
+  mapped_database& operator=( const mapped_database& ) = default;
+  mapped_database& operator=( mapped_database&& ) = default;
+  ~mapped_database() = default;
+
   library_t& get_library()
   {
     return lib_;
@@ -337,12 +344,12 @@ public:
       database_row_t const& row = database_[row_index];
       auto const perm = ( *match ).perm;
       auto const symm = row.symm;
-    
-    // Apply permutation to all vectors simultaneously
-    boolean::forward_permute_inplace( perm, times, others... );
-    
-    // Apply time-based symmetric sorting to all vectors simultaneously
-    boolean::sort_symmetric( symm, [&]( auto const& a, auto const& b ) { return a < b; }, times, others... );
+
+      // Apply permutation to all vectors simultaneously
+      boolean::forward_permute_inplace( perm, times, others... );
+
+      // Apply time-based symmetric sorting to all vectors simultaneously
+      boolean::sort_symmetric( symm, [&]( auto const& a, auto const& b ) { return a < b; }, times, others... );
 
       return row_index;
     }
