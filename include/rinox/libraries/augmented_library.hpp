@@ -221,8 +221,8 @@ public:
         return id;
     }
     std::cerr << "[e] pin name " << pin_name << " not found in " << gate_name << std::endl;
+    return std::numeric_limits<unsigned int>::max();
   }
-
 
   std::optional<unsigned int> get_id( kitty::dynamic_truth_table const& tt ) const
   {

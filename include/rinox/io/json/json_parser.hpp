@@ -97,18 +97,18 @@ public:
                const reader_t& rdr,
                lorina::diagnostic_engine* de = nullptr,
                std::string_view module = "top" )
-      : jstream_( in, module ), reader_( rdr ), diag_( de ), on_action_( PackedFns(
-                                                                 ModuleInstFn( [&]( const std::string mn,
-                                                                                    const std::vector<std::string>& params,
-                                                                                    const std::string inst,
-                                                                                    const std::vector<std::pair<std::string, std::string>>& pin2pin ) {
-                                                                   reader_.on_module_instantiation( mn, params, inst, pin2pin );
-                                                                 } ),
-                                                                 CellFn( [&]( const std::vector<std::pair<std::string, std::string>>& in_map,
-                                                                              const std::vector<std::pair<std::string, std::string>>& out_map,
-                                                                              const std::vector<unsigned int>& ids ) {
-                                                                   reader_.on_cell( in_map, out_map, ids );
-                                                                 } ) ) )
+      : jstream_( in, de ), reader_( rdr ), diag_( de ), on_action_( PackedFns(
+                                                             ModuleInstFn( [&]( const std::string mn,
+                                                                                const std::vector<std::string>& params,
+                                                                                const std::string inst,
+                                                                                const std::vector<std::pair<std::string, std::string>>& pin2pin ) {
+                                                               reader_.on_module_instantiation( mn, params, inst, pin2pin );
+                                                             } ),
+                                                             CellFn( [&]( const std::vector<std::pair<std::string, std::string>>& in_map,
+                                                                          const std::vector<std::pair<std::string, std::string>>& out_map,
+                                                                          const std::vector<unsigned int>& ids ) {
+                                                               reader_.on_cell( in_map, out_map, ids );
+                                                             } ) ) )
   {
     on_action_.declare_known( "0" );
     on_action_.declare_known( "1" );

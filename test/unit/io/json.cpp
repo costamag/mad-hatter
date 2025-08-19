@@ -434,7 +434,7 @@ TEST_CASE( "Yosys syntax - case 1", "[json_parsing]" )
   std::string file = R"({
   "creator": "Rinox",
   "modules": {
-    "top": {
+    "mod1": {
       "attributes": {},
       "ports": {
         "a": { "direction": "input",  "bits": [ 2 ] },
@@ -505,7 +505,7 @@ TEST_CASE( "Yosys syntax - case 2", "[json_parsing]" )
   std::string file = R"({
   "creator": "Rinox",
   "modules": {
-    "top": {
+    "mod2": {
       "attributes": {},
       "ports": {
         "din":  { "direction": "input",  "bits": [ 20, 21, 22, 23 ], "offset": 0, "upto": 1, "signed": 1 },
@@ -600,7 +600,7 @@ TEST_CASE( "Read json without port direction", "[json_parsing]" )
   std::string file = R"({
   "creator": "Rinox",
   "modules": {
-    "top": {
+    "noport": {
       "attributes": {},
       "ports": {
         "a":   { "direction": "input",  "bits": [ 2 ] },

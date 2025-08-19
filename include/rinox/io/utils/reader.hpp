@@ -115,8 +115,8 @@ public:
 
   void on_inputs( const std::vector<std::string>& names, std::string const& size = "" ) const override
   {
-    if ( name_ != top_module_name_ )
-      return;
+    // if ( name_ != top_module_name_ )
+    //   return;
 
     for ( const auto& name : names )
     {
@@ -151,8 +151,8 @@ public:
 
   void on_input( std::string const& name, std::vector<std::string> const& ids, bool is_msb_first = false ) const
   {
-    if ( name_ != top_module_name_ )
-      return;
+    // if ( name_ != top_module_name_ )
+    //   return;
 
     int first = is_msb_first ? ids.size() - 1 : 0;
     int last = is_msb_first ? 0 : ids.size() - 1;
@@ -161,7 +161,7 @@ public:
     std::vector<typename Ntk::signal> word;
     for ( const auto& id : ids )
     {
-      const auto sname = fmt::format( "{}[{}]", name, i );
+      const auto sname = ids.size() > 1 ? fmt::format( "{}[{}]", name, i ) : fmt::format( "{}", name );
       word.push_back( ntk_.create_pi() );
       signals_[id] = word.back();
       if constexpr ( mockturtle::has_set_name_v<Ntk> )
@@ -177,8 +177,8 @@ public:
   void on_outputs( const std::vector<std::string>& names, std::string const& size = "" ) const override
   {
     (void)size;
-    if ( name_ != top_module_name_ )
-      return;
+    // if ( name_ != top_module_name_ )
+    //   return;
 
     for ( const auto& name : names )
     {
@@ -201,8 +201,8 @@ public:
 
   void on_output( const std::string name, const std::vector<std::string>& ids, const bool is_msb_first = false ) const
   {
-    if ( name_ != top_module_name_ )
-      return;
+    // if ( name_ != top_module_name_ )
+    //   return;
 
     int first = is_msb_first ? ids.size() - 1 : 0;
     int last = is_msb_first ? 0 : ids.size() - 1;
@@ -210,7 +210,7 @@ public:
     int di = is_msb_first ? -1 : +1;
     for ( const auto& id : ids )
     {
-      const auto sname = fmt::format( "{}[{}]", name, i );
+      const auto sname = ids.size() > 1 ? fmt::format( "{}[{}]", name, i ) : fmt::format( "{}", name );
       output_names_.emplace_back( sname );
       outputs_.emplace_back( id );
       i += di;
@@ -223,8 +223,8 @@ public:
 
   void on_assign( const std::string& lhs, const std::pair<std::string, bool>& rhs ) const override
   {
-    if ( name_ != top_module_name_ )
-      return;
+    // if ( name_ != top_module_name_ )
+    //   return;
 
     if ( signals_.find( rhs.first ) == signals_.end() )
       fmt::print( stderr, "[w] undefined signal {} assigned 0\n", rhs.first );
@@ -239,10 +239,8 @@ public:
   {
     if constexpr ( traits::is_bound_network_type_v<Ntk> )
     {
-      if ( name_ != top_module_name_ )
-      {
-        return;
-      }
+      // if ( name_ != top_module_name_ )
+      //   return;
 
       if ( signals_.find( output_assign[0].second ) != signals_.end() )
       {
@@ -273,8 +271,8 @@ public:
                                 std::vector<std::pair<std::string, std::string>> const& args ) const override
   {
     (void)inst_name;
-    if ( name_ != top_module_name_ )
-      return;
+    // if ( name_ != top_module_name_ )
+    //   return;
 
     /* check routines */
     const auto num_args_equals = [&]( uint32_t expected_count ) {
@@ -326,8 +324,8 @@ public:
 
   void on_endmodule() const override
   {
-    if ( name_ != top_module_name_ )
-      return;
+    // if ( name_ != top_module_name_ )
+    //   return;
 
     for ( auto const& o : outputs_ )
     {
@@ -388,6 +386,101 @@ public:
   unsigned int get_pin_id( std::string const& gate_name, std::string const& pin_name ) const
   {
     return ntk_.get_pin_id( gate_name, pin_name );
+  }
+
+  bool ends_with_index_zero( const std::string& s ) const
+  {
+    return s.size() >= 3 && s.substr( s.size() - 3 ) == "[0]";
+  }
+
+  bool ends_with_index( const std::string& s ) const
+  {
+    if ( s.empty() || s.back() != ']' )
+      return false;
+
+    size_t open_bracket = s.rfind( '[' );
+    if ( open_bracket == std::string::npos || open_bracket > s.size() - 2 )
+      return false;
+
+    // Check if all characters between [ and ] are digits
+    for ( size_t i = open_bracket + 1; i < s.size() - 1; ++i )
+    {
+      if ( !std::isdigit( s[i] ) )
+        return false;
+    }
+
+    return true;
+  }
+
+  std::string remove_index( const std::string& s ) const
+  {
+    size_t open_bracket = s.rfind( '[' );
+    if ( open_bracket != std::string::npos && s.back() == ']' )
+    {
+      return s.substr( 0, open_bracket );
+    }
+    return s;
+  }
+
+  void sanitize_input_names() const
+  {
+    std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> map;
+    ntk_.foreach_pi( [&]( auto const& f, auto i ) {
+      std::string name = ntk_.get_input_name( i );
+      if ( ends_with_index( name ) )
+      {
+        std::string trimmed = remove_index( name );
+        auto it = map.find( trimmed );
+        if ( it != map.end() )
+        {
+          map[trimmed].second++;
+        }
+        else
+        {
+          map[trimmed] = std::make_pair( i, 1 );
+        }
+      }
+    } );
+    ntk_.foreach_pi( [&]( auto const& f, auto i ) {
+      std::string name = ntk_.get_input_name( i );
+      std::string trimmed = remove_index( name );
+      if ( map[trimmed].second == 1 )
+      {
+        if ( ends_with_index_zero( name ) )
+        {
+          std::string trimmed = name.substr( 0, name.size() - 3 );
+          ntk_.set_input_name( i, trimmed );
+        }
+      }
+    } );
+  }
+
+  void sanitize_output_names() const
+  {
+    std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> map;
+    ntk_.foreach_po( [&]( auto const& f, auto i ) {
+      std::string name = ntk_.get_output_name( i );
+      auto it = map.find( name );
+      if ( it != map.end() )
+      {
+        map[name].second++;
+      }
+      else
+      {
+        map[name] = std::make_pair( i, 1 );
+      }
+    } );
+    ntk_.foreach_po( [&]( auto const& f, auto i ) {
+      std::string name = ntk_.get_output_name( i );
+      if ( map[name].second == 1 )
+      {
+        if ( ends_with_index_zero( name ) )
+        {
+          std::string trimmed = name.substr( 0, name.size() - 3 );
+          ntk_.set_output_name( i, trimmed );
+        }
+      }
+    } );
   }
 
 private:

@@ -459,6 +459,9 @@ public:
       }
     } while ( token != "assign" && token != "endmodule" );
 
+    reader.sanitize_input_names();
+    reader.sanitize_output_names();
+
     while ( token != "endmodule" )
     {
       if ( token == "assign" )
@@ -1038,8 +1041,7 @@ public:
         return false;
       }
     }
-//HERE IS THE ISSUE
-
+    // HERE IS THE ISSUE
 
     on_action.call_deferred<CELL_FN>( /* dependencies */ inputs, outputs,
                                       /* gate-function params */ std::make_tuple( input_assigns, output_assigns, ids ) );

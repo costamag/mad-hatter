@@ -44,16 +44,16 @@
 #include <kitty/print.hpp>
 #include <lorina/verilog.hpp>
 
+#include <algorithm>
 #include <array>
 #include <fstream>
 #include <iostream>
-#include <optional>
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <regex>
-#include <algorithm>
 #include <limits>
+#include <optional>
+#include <regex>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace rinox
 {
@@ -68,47 +68,52 @@ using namespace std::string_literals;
 namespace detail
 {
 
-struct BusInfo {
-  std::string name;  // base name, e.g. "A"
-  int         width; // number of bits
-  bool        descending; // true if bits appear MSB->LSB in the input order
+struct bus_info_t
+{
+  std::string name; // base name, e.g. "A"
+  int width;        // number of bits
+  bool descending;  // true if bits appear MSB->LSB in the input order
 };
 
+class rinox_verilog_writer : public lorina::verilog_writer
+{
+public:
+  rinox_verilog_writer( std::ostream& os )
+      : lorina::verilog_writer( os )
+  {}
 
-  class rinox_verilog_writer : lorina::verilog_writer writer( os )
+  virtual void on_input( std::vector<bus_info_t> const& inputs ) const
   {
-    virtual void on_input( std::vector<BusInfo> const& inputs ) const
+    for ( auto const& bus : inputs )
     {
-      for ( auto const& bus : inputs )
+      if ( bus.width <= 1 )
+        _os << fmt::format( "  input {} ;\n", bus.name );
+      else
       {
-        if ( bus.width <= 1 )
-          _os << fmt::format( "  input {} ;\n", name );
+        if ( bus.descending )
+          _os << fmt::format( "  input [{}:0] {} ;\n", bus.width - 1, bus.name );
         else
-        {
-          if ( bus.descending )
-            _os << fmt::format( "  input [{}:0] {} ;\n", bus.width - 1, name );
-          else
-            _os << fmt::format( "  input [0:{}] {} ;\n", bus.width - 1, name );
-        }
-      }
-    }
-
-    virtual void on_output( std::vector<BusInfo> const& outputs) const
-    {
-      for ( auto const& bus : outputs )
-      {
-        if ( bus.width <= 1 )
-          _os << fmt::format( "  output {} ;\n", name );
-        else
-        {
-          if ( bus.descending )
-            _os << fmt::format( "  output [{}:0] {} ;\n", bus.width - 1, name );
-          else
-            _os << fmt::format( "  output [0:{}] {} ;\n", bus.width - 1, name );
-        }
+          _os << fmt::format( "  input [0:{}] {} ;\n", bus.width - 1, bus.name );
       }
     }
   }
+
+  virtual void on_output( std::vector<bus_info_t> const& outputs ) const
+  {
+    for ( auto const& bus : outputs )
+    {
+      if ( bus.width <= 1 )
+        _os << fmt::format( "  output {} ;\n", bus.name );
+      else
+      {
+        if ( bus.descending )
+          _os << fmt::format( "  output [{}:0] {} ;\n", bus.width - 1, bus.name );
+        else
+          _os << fmt::format( "  output [0:{}] {} ;\n", bus.width - 1, bus.name );
+      }
+    }
+  }
+};
 
 template<class Ntk>
 std::vector<std::pair<bool, std::string>>
@@ -159,72 +164,93 @@ struct verilog_writer_signal_hash
   }
 };
 
-
-inline std::vector<BusInfo> infer_buses(const std::vector<std::string>& nets)
+inline std::vector<bus_info_t> infer_buses( const std::vector<std::string>& nets )
 {
-  // Parse "Base[idx]" and group indices by base name
-  static const std::regex re(R"(([^[]+)\[(\d+)\])");
-  struct Item { int idx; size_t pos; }; // idx and first occurrence position
+  // Match "Base[idx]"; if no match, we treat entry as scalar "Base[0]"
+  static const std::regex re( R"(([^[]+)\[(\d+)\])" );
+
+  struct Item
+  {
+    int idx;
+    size_t pos;
+  }; // bit index and first appearance
 
   std::unordered_map<std::string, std::vector<Item>> groups;
-  groups.reserve(nets.size());
+  groups.reserve( nets.size() );
 
-  for (size_t pos = 0; pos < nets.size(); ++pos) {
+  for ( size_t pos = 0; pos < nets.size(); ++pos )
+  {
     const auto& s = nets[pos];
     std::smatch m;
-    if (std::regex_match(s, m, re)) {
-      std::string base = m[1].str();
-      int idx = std::stoi(m[2].str());
-      // record only the first occurrence position for each index
-      auto& vec = groups[base];
-      auto it = std::find_if(vec.begin(), vec.end(), [&](const Item& it){ return it.idx == idx; });
-      if (it == vec.end()) vec.push_back({ idx, pos });
+    std::string base;
+    int idx = 0;
+
+    if ( std::regex_match( s, m, re ) )
+    {
+      base = m[1].str();
+      idx = std::stoi( m[2].str() );
     }
-    // else: ignore non-matching entries quietly
+    else
+    {
+      // Plain scalar name -> interpret as base[0]
+      base = s;
+      idx = 0;
+    }
+
+    auto& vec = groups[base];
+    // record only the first occurrence position per index
+    auto it = std::find_if( vec.begin(), vec.end(), [&]( const Item& it ) { return it.idx == idx; } );
+    if ( it == vec.end() )
+      vec.push_back( { idx, pos } );
   }
 
   // Preserve stable order by first appearance of the base name
+  auto earliest_pos = []( const std::vector<Item>& items ) {
+    size_t p = std::numeric_limits<size_t>::max();
+    for ( auto const& it : items )
+      p = std::min( p, it.pos );
+    return p;
+  };
+
   std::vector<std::pair<std::string, std::vector<Item>>> ordered;
-  ordered.reserve(groups.size());
-  for (auto& kv : groups) ordered.emplace_back(kv.first, std::move(kv.second));
-  std::stable_sort(ordered.begin(), ordered.end(), [&](auto const& a, auto const& b){
-    // find earliest position of any bit of each base
-    auto minpos = [](auto const& items){
-      size_t p = std::numeric_limits<size_t>::max();
-      for (auto const& it : items) p = std::min(p, it.pos);
-      return p;
-    };
-    return minpos(a.second) < minpos(b.second);
-  });
+  ordered.reserve( groups.size() );
+  for ( auto& kv : groups )
+    ordered.emplace_back( kv.first, std::move( kv.second ) );
+  std::stable_sort( ordered.begin(), ordered.end(),
+                    [&]( auto const& a, auto const& b ) { return earliest_pos( a.second ) < earliest_pos( b.second ); } );
 
   // Build results
-  std::vector<BusInfo> result;
-  result.reserve(ordered.size());
+  std::vector<bus_info_t> result;
+  result.reserve( ordered.size() );
 
-  for (auto& [name, items] : ordered) {
-    if (items.empty()) continue;
+  for ( auto& [name, items] : ordered )
+  {
+    if ( items.empty() )
+      continue;
 
-    // Sort by position to see the order they appear in the input vector
-    std::sort(items.begin(), items.end(), [](const Item& a, const Item& b){ return a.pos < b.pos; });
+    // Sort by first appearance to infer direction from input order
+    std::sort( items.begin(), items.end(), []( const Item& a, const Item& b ) { return a.pos < b.pos; } );
 
-    // Extract the indices as they appear
-    std::vector<int> seq; seq.reserve(items.size());
-    for (auto const& it : items) seq.push_back(it.idx);
+    // Extract the seen indices in order of appearance
+    std::vector<int> seq;
+    seq.reserve( items.size() );
+    for ( auto const& it : items )
+      seq.push_back( it.idx );
 
-    // Determine direction:
-    // descending if strictly non-increasing and has at least two distinct values
+    // Direction: descending if strictly non-increasing and not non-decreasing
     bool nondecreasing = true, nonincreasing = true;
-    for (size_t i = 1; i < seq.size(); ++i) {
-      if (seq[i] < seq[i-1]) nondecreasing = false;
-      if (seq[i] > seq[i-1]) nonincreasing = false;
+    for ( size_t i = 1; i < seq.size(); ++i )
+    {
+      if ( seq[i] < seq[i - 1] )
+        nondecreasing = false;
+      if ( seq[i] > seq[i - 1] )
+        nonincreasing = false;
     }
-    // If both monotone flags hold (all equal), treat as ascending (false).
-    bool descending = (!nondecreasing && nonincreasing);
+    bool descending = ( !nondecreasing && nonincreasing );
 
-    // Width is the number of distinct indices we collected
-    int width = static_cast<int>(items.size());
+    int width = static_cast<int>( items.size() );
 
-    result.push_back(BusInfo{ name, width, descending });
+    result.push_back( bus_info_t{ name, width, descending } );
   }
 
   return result;
@@ -272,91 +298,49 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
 
   assert( ntk.is_combinational() && "Network has to be combinational" );
 
-  rinox_verilog_writer writer( os );
+  rinox::io::verilog::detail::rinox_verilog_writer writer( os );
 
-  std::vector<std::string> xs, inputs;
-  if ( ps.input_names.empty() )
+  std::vector<std::string> inputs;
+  if constexpr ( mockturtle::has_has_name_v<Ntk> && mockturtle::has_get_name_v<Ntk> )
   {
-    if constexpr ( mockturtle::has_has_name_v<Ntk> && mockturtle::has_get_name_v<Ntk> )
-    {
-      ntk.foreach_pi( [&]( auto const& i, uint32_t index ) {
-        if ( ntk.has_name( ntk.make_signal( i ) ) )
-        {
-          xs.emplace_back( ntk.get_name( ntk.make_signal( i ) ) );
-        }
-        else
-        {
-          xs.emplace_back( fmt::format( "x{}", index ) );
-        }
-      } );
-    }
-    else
-    {
-      for ( auto i = 0u; i < ntk.num_pis(); ++i )
+    ntk.foreach_pi( [&]( auto const& i, uint32_t index ) {
+      if ( ntk.has_name( ntk.make_signal( i ) ) )
       {
-        xs.emplace_back( fmt::format( "x{}", i ) );
+        inputs.emplace_back( ntk.get_name( ntk.make_signal( i ) ) );
       }
-    }
-    inputs = xs;
+      else
+      {
+        inputs.emplace_back( fmt::format( "x{}", index ) );
+      }
+    } );
   }
   else
   {
-    uint32_t ctr{ 0u };
-    for ( auto const& [name, width] : ps.input_names )
+    for ( auto i = 0u; i < ntk.num_pis(); ++i )
     {
-      inputs.emplace_back( name );
-      ctr += width;
-      for ( auto i = 0u; i < width; ++i )
-      {
-        xs.emplace_back( fmt::format( "{}[{}]", name, i ) );
-      }
-    }
-    if ( ctr != ntk.num_pis() )
-    {
-      std::cerr << "[e] input names do not partition all inputs\n";
+      inputs.emplace_back( fmt::format( "x{}", i ) );
     }
   }
 
-  std::vector<std::string> ys, outputs;
-  if ( ps.output_names.empty() )
+  std::vector<std::string> outputs;
+  if constexpr ( mockturtle::has_has_output_name_v<Ntk> && mockturtle::has_get_output_name_v<Ntk> )
   {
-    if constexpr ( mockturtle::has_has_output_name_v<Ntk> && mockturtle::has_get_output_name_v<Ntk> )
-    {
-      ntk.foreach_po( [&]( auto const& o, uint32_t index ) {
-        if ( ntk.has_output_name( index ) )
-        {
-          ys.emplace_back( ntk.get_output_name( index ) );
-        }
-        else
-        {
-          ys.emplace_back( fmt::format( "y{}", index ) );
-        }
-      } );
-    }
-    else
-    {
-      for ( auto i = 0u; i < ntk.num_pos(); ++i )
+    ntk.foreach_po( [&]( auto const& o, uint32_t index ) {
+      if ( ntk.has_output_name( index ) )
       {
-        ys.emplace_back( fmt::format( "y{}", i ) );
+        outputs.emplace_back( ntk.get_output_name( index ) );
       }
-    }
-    outputs = ys;
+      else
+      {
+        outputs.emplace_back( fmt::format( "y{}", index ) );
+      }
+    } );
   }
   else
   {
-    uint32_t ctr{ 0u };
-    for ( auto const& [name, width] : ps.output_names )
+    for ( auto i = 0u; i < ntk.num_pos(); ++i )
     {
-      outputs.emplace_back( name );
-      ctr += width;
-      for ( auto i = 0u; i < width; ++i )
-      {
-        ys.emplace_back( fmt::format( "{}[{}]", name, i ) );
-      }
-    }
-    if ( ctr != ntk.num_pos() )
-    {
-      std::cerr << "[e] output names do not partition all outputs\n";
+      outputs.emplace_back( fmt::format( "y{}", i ) );
     }
   }
 
@@ -422,38 +406,27 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
       }
     }
   }
-  writer.on_module_begin( module_name, inputs, outputs );
-  if ( ps.input_names.empty() )
-  {
-    auto const info = detail::infer_buses(xs);
-    writer.on_input( info );
-  }
-  else
-  {
-    for ( auto const& [name, width] : ps.input_names )
-    {
-      writer.on_input( width, name );
-    }
-  }
-  if ( ps.output_names.empty() )
-  {
-    auto const info = detail::infer_buses(ys);
-    writer.on_output( info );
-  }
-  else
-  {
-    for ( auto const& [name, width] : ps.output_names )
-    {
-      writer.on_output( width, name );
-    }
-  }
+  auto const info_input = detail::infer_buses( inputs );
+  auto const info_output = detail::infer_buses( outputs );
+  std::vector<std::string> input_names;
+  for ( auto s : info_input )
+    input_names.push_back( s.name );
+  std::vector<std::string> output_names;
+  for ( auto s : info_output )
+    output_names.push_back( s.name );
+
+  writer.on_module_begin( module_name, input_names, output_names );
+
+  writer.on_input( info_input );
+  writer.on_output( info_output );
+
   if ( !ws.empty() )
   {
     writer.on_wire( ws );
   }
 
   ntk.foreach_pi( [&]( auto const& n, auto i ) {
-    signal_names[ntk.make_signal( n )] = xs[i];
+    signal_names[ntk.make_signal( n )] = inputs[i];
   } );
 
   auto const& gates = ntk.get_library();
@@ -474,7 +447,7 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
     ntk_topo.foreach_output( n, [&]( auto const& f ) {
       if ( po_signals.has( f ) )
       {
-        signal_names[f] = ys[po_signals[f][0]];
+        signal_names[f] = outputs[po_signals[f][0]];
         if ( ntk.has_name( f ) && ( ntk.get_name( f ) != signal_names[f] ) )
         {
           assignments.emplace_back( std::make_pair( signal_names[f], ntk.get_name( f ) ) );
@@ -525,7 +498,7 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
           for ( auto i = 1u; i < po_list.size(); ++i )
           {
             digits = counter == 0 ? 0 : (int)std::floor( std::log10( counter ) );
-            args[args.size() - 1] = std::make_pair( gates[ntk.get_binding_index( f )].output_name, ys[po_list[i]] );
+            args[args.size() - 1] = std::make_pair( gates[ntk.get_binding_index( f )].output_name, outputs[po_list[i]] );
 
             writer.on_module_instantiation( name.append( std::string( length - name.length(), ' ' ) ),
                                             {},

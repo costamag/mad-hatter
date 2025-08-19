@@ -1018,7 +1018,7 @@ public:
 
   std::string get_input_name( uint32_t pi_index )
   {
-    auto const f = make_signal( pi_at( pi_index ) );
+    signal_t const f{ pi_at( pi_index ), 0 };
     return get_name( f );
   }
 
@@ -1030,7 +1030,7 @@ public:
 
   void set_input_name( uint32_t pi_index, std::string const& name )
   {
-    auto const f = make_signal( pi_at( pi_index ) );
+    signal_t const f{ pi_at( pi_index ), 0 };
     names_map[f.data] = name;
   }
 

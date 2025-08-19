@@ -1078,7 +1078,7 @@ public:
     return _storage->get_output_name( po_index );
   }
 
-  bool get_input_name( uint32_t const& pi_index ) const
+  std::string get_input_name( uint32_t const& pi_index ) const
   {
     return _storage->get_input_name( pi_index );
   }
