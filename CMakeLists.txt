@@ -4,11 +4,16 @@ project(rinox)
 # Options
 option(RINOX_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(RINOX_ENABLE_TESTS "Build unit tests" ON)
+option(RINOX_ENABLE_EXPERIMENTS "Build experiments" OFF)
 option(RINOX_VERBOSE_COMPILE "Print compilation-time parameters" ON)
 set(RINOX_NUM_VARS_SIGN 6 CACHE STRING "Default cube size for signatures")
 set(RINOX_MAX_CUTS_SIZE 6 CACHE STRING "Default maximum number of leaves in cuts")
 set(RINOX_MAX_CUBE_SPFD 12 CACHE STRING "Default maximum cube size exactly represented")
 set(RINOX_MAX_NUM_LEAVES 12 CACHE STRING "Default maximum number of leaves in the window")
+set(RINOX_BENCHMARK_DIR "${CMAKE_SOURCE_DIR}/benchmarks" CACHE PATH "Directory containing benchmark suites")
+set(RINOX_EXPERIMENTS_DIR "${CMAKE_SOURCE_DIR}/experiments" CACHE PATH "Directory containing the experiments")
+set(RINOX_SOURCE_DIR "${CMAKE_SOURCE_DIR}" CACHE PATH "Source directory")
+
 
 # Sanitizer
 if (RINOX_ENABLE_ASAN)
@@ -99,11 +104,22 @@ target_compile_definitions(rinox_headers INTERFACE
   RINOX_MAX_NUM_LEAVES=${RINOX_MAX_NUM_LEAVES}
 )
 
-# Make rho_cli consumers inherit headers/defines too
-target_link_libraries(rho_cli PUBLIC rinox_headers)
+# Expose to all targets that need it
+add_library(rinox_build_options INTERFACE)
+target_compile_definitions(rinox_build_options INTERFACE
+  RINOX_BENCHMARK_DIR="$<IF:$<BOOL:${RINOX_BENCHMARK_DIR}>,${RINOX_BENCHMARK_DIR},benchmarks>"
+  RINOX_EXPERIMENTS_DIR="$<IF:$<BOOL:${RINOX_EXPERIMENTS_DIR}>,${RINOX_EXPERIMENTS_DIR},experiments>"
+  RINOX_SOURCE_DIR="$<IF:$<BOOL:${RINOX_SOURCE_DIR}>,${RINOX_SOURCE_DIR},experiments>"
+)
 
+# Make rho_cli consumers inherit headers/defines too
+target_link_libraries(rho_cli PUBLIC rinox_build_options rinox_headers)
 # Tests
 if (RINOX_ENABLE_TESTS)
   enable_testing()
   add_subdirectory(test)
+endif()
+
+if (RINOX_ENABLE_EXPERIMENTS)
+  add_subdirectory(experiments)
 endif()

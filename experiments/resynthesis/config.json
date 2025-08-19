@@ -1,0 +1,32 @@
+{
+  "benchmarks": {
+    "type": "aig",
+    "suite": ["iscas"],
+    "names": [],
+    "exclude": ["c7552"]
+  },
+  "resynthesis-params": {
+    "profiler_ps": {
+      "max_num_roots": 1000000,
+      "input_arrivals": 0,
+      "output_required": 10000000,
+      "eps": 0.001
+    },
+    "window_manager_ps": {
+      "preserve_depth": true,
+      "odc_levels": 0,
+      "skip_fanout_limit_for_divisors": 200,
+      "max_num_divisors": 64
+    },
+    "use_dont_cares": true,
+    "try_rewire": true,
+    "try_struct": false,
+    "try_window": false,
+    "try_simula": false,
+    "dynamic_database": false,
+    "fanout_limit": 20
+  },
+  "database": {
+    "name" : 
+  }
+}

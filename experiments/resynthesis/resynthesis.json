@@ -1,0 +1,107 @@
+[
+  {
+    "entries": [
+      {
+        "area_after": 44.27,
+        "benchmark": "c17",
+        "cec": true,
+        "delay_after": 252.88,
+        "depth": 25,
+        "multioutput": 0,
+        "runtime": 0.2158275693655014,
+        "size": 502
+      },
+      {
+        "area_after": 0.53,
+        "benchmark": "c432",
+        "cec": true,
+        "delay_after": 42.66,
+        "depth": 3,
+        "multioutput": 0,
+        "runtime": 0.0010528609855100513,
+        "size": 6
+      },
+      {
+        "area_after": 32.76000000000002,
+        "benchmark": "c499",
+        "cec": true,
+        "delay_after": 296.88,
+        "depth": 26,
+        "multioutput": 0,
+        "runtime": 0.1222069039940834,
+        "size": 337
+      },
+      {
+        "area_after": 37.45999999999995,
+        "benchmark": "c880",
+        "cec": true,
+        "delay_after": 210.59,
+        "depth": 17,
+        "multioutput": 0,
+        "runtime": 0.259043425321579,
+        "size": 713
+      },
+      {
+        "area_after": 69.15000000000013,
+        "benchmark": "c1355",
+        "cec": true,
+        "delay_after": 392.80999999999995,
+        "depth": 36,
+        "multioutput": 0,
+        "runtime": 0.3087424337863922,
+        "size": 1018
+      },
+      {
+        "area_after": 18.619999999999973,
+        "benchmark": "c1908",
+        "cec": true,
+        "delay_after": 295.87,
+        "depth": 25,
+        "multioutput": 0,
+        "runtime": 0.05434241145849228,
+        "size": 208
+      },
+      {
+        "area_after": 50.64999999999973,
+        "benchmark": "c2670",
+        "cec": true,
+        "delay_after": 239.75,
+        "depth": 19,
+        "multioutput": 0,
+        "runtime": 0.09997319430112839,
+        "size": 398
+      },
+      {
+        "area_after": 96.19000000000051,
+        "benchmark": "c3540",
+        "cec": true,
+        "delay_after": 392.03999999999996,
+        "depth": 35,
+        "multioutput": 0,
+        "runtime": 0.3051947355270386,
+        "size": 1650
+      },
+      {
+        "area_after": 259.8399999999997,
+        "benchmark": "c5315",
+        "cec": true,
+        "delay_after": 984.8899999999995,
+        "depth": 120,
+        "multioutput": 0,
+        "runtime": 0.566521406173706,
+        "size": 2337
+      },
+      {
+        "area_after": 20.66,
+        "benchmark": "c6288",
+        "cec": true,
+        "delay_after": 227.39,
+        "depth": 22,
+        "multioutput": 0,
+        "runtime": 0.07011093199253082,
+        "size": 322
+      }
+    ],
+    "version": "##GITHUB##"
+  }
+]

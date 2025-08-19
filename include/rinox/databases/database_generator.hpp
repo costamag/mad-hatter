@@ -34,11 +34,11 @@
 #include "../boolean/boolean.hpp"
 #include "../evaluation/chains.hpp"
 #include "../network/network.hpp"
-#include <mockturtle/emap.hpp>
+#include <mockturtle/algorithms/emap.hpp>
+#include <mockturtle/algorithms/klut_to_graph.hpp>
+#include <mockturtle/algorithms/rewrite.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
-#include <mockturtle/klut_to_graph.hpp>
 #include <mockturtle/networks/block.hpp>
-#include <mockturtle/rewrite.hpp>
 #include <mockturtle/views/cell_view.hpp>
 
 namespace rinox
@@ -46,6 +46,16 @@ namespace rinox
 
 namespace databases
 {
+
+struct database_gen_params
+{
+  std::string method = "mapp";
+  uint32_t num_vars = 4;
+  bool multiple_candidates = false;
+  bool verbose = false;
+  std::string metric = "area";
+  std::string output_file = "";
+};
 
 /*! \brief Engine to initialize the database with simple structures
  *
@@ -63,7 +73,7 @@ namespace databases
       gen.area_oriented_generation( "asap7_database" );
    \endverbatim
  */
-template<design_type_t DesignType = libraries::design_type_t::CELL_BASED, uint32_t MaxNumVars = 6, uint32_t MaxNumOuts = 2>
+template<network::design_type_t DesignType = network::design_type_t::CELL_BASED, uint32_t MaxNumVars = 6, uint32_t MaxNumOuts = 2>
 class database_generator
 {
   using library_t = libraries::augmented_library<DesignType>;
@@ -79,6 +89,19 @@ public:
       : library_( gates ), gates_( gates ), db_( library_ )
   {
     init();
+  }
+
+  void run( database_gen_params ps )
+  {
+    if ( ps.method == "mapp" )
+    {
+      area_oriented_generation( ps.output_file );
+    }
+  }
+
+  database_t extract_db()
+  {
+    return db_;
   }
 
   void area_oriented_generation( std::string const& output_file )
@@ -103,7 +126,7 @@ private:
     auto const klut = classes_to_klut( classes );
 
     // Transform the kLUT network into an AIG
-    aig_ = convert_klut_to_graph<aig_network, klut_network>( klut );
+    aig_ = mockturtle::convert_klut_to_graph<mockturtle::aig_network, mockturtle::klut_network>( klut );
   }
 
   /*! \brief Load the P representatives in a truth-table set
@@ -147,10 +170,10 @@ private:
    */
   void aig_preprocessing()
   {
-    const mockturtle::xag_npn_resynthesis<aig_network> resyn;
+    const mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
     mockturtle::exact_library_params eps;
     eps.np_classification = false;
-    const mockturtle::exact_library<aig_network> exact_lib{ resyn, eps };
+    const mockturtle::exact_library<mockturtle::aig_network> exact_lib{ resyn, eps };
     mockturtle::rewrite_params ps;
     ps.preserve_depth = true;
 
@@ -193,13 +216,13 @@ private:
     ntk.foreach_pi( [&]( Signal_t const& f, uint32_t const& i ) {
       pis[i] = f;
     } );
-    bound::augmented_library<libraries::design_type_t::CELL_BASED> lib( gates_ );
+    libraries::augmented_library<network::design_type_t::CELL_BASED> lib( gates_ );
     int i = 0;
     ntk.foreach_po( [&]( auto f ) {
       db_.add( ntk, pis, f );
     } );
-
-    db_.commit( output_file );
+    if ( output_file != ".v" )
+      db_.commit( output_file );
   }
 
 private:

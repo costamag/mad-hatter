@@ -1,0 +1,13 @@
+{
+  "techlib": {
+    "type": "genlib",
+    "names": ["asap7"]
+  },
+  "parameters": {
+    "method" : "map-p-classes",
+    "num_vars" : 4,
+    "multiple_candidates" : false,
+    "verbose" : false,
+    "metric" : "area"
+  }
+}
