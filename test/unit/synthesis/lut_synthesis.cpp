@@ -23,13 +23,8 @@ void test_lut_dec( Func const& func, std::vector<double> const& times, std::vect
   int j = 0;
   bool res = decomposer.foreach_spec( [&]( auto const specs, auto i ) {
     {
-      for ( auto x : specs[i].inputs )
-        std::cout << static_cast<uint32_t>( x ) << " ";
-      std::cout << std::endl;
-      kitty::print_binary( specs[i].sim );
-      std::cout << " " << i << std::endl;
-      // CHECK( specs[i].inputs == supps[j] );
-      // CHECK( kitty::equal( specs[i].sim, funcs[j++] ) );
+      CHECK( specs[i].inputs == supps[j] );
+      CHECK( kitty::equal( specs[i].sim, funcs[j++] ) );
       return true;
     }
   } );

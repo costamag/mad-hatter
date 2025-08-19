@@ -1052,6 +1052,51 @@ public:
   {
     _storage->incr_trav_id();
   }
+
+  void set_output_name( uint32_t po_index, std::string const& name )
+  {
+    _storage->set_output_name( po_index, name );
+  }
+
+  void set_input_name( uint32_t pi_index, std::string const& name )
+  {
+    _storage->set_input_name( pi_index, name );
+  }
+
+  bool has_output_name( uint32_t const& po_index ) const
+  {
+    return _storage->has_output_name( po_index );
+  }
+
+  bool has_input_name( uint32_t const& pi_index ) const
+  {
+    return _storage->has_input_name( pi_index );
+  }
+
+  std::string get_output_name( uint32_t const& po_index ) const
+  {
+    return _storage->get_output_name( po_index );
+  }
+
+  bool get_input_name( uint32_t const& pi_index ) const
+  {
+    return _storage->get_input_name( pi_index );
+  }
+
+  bool has_name( signal_t const& f ) const
+  {
+    return _storage->has_name( f );
+  }
+
+  std::string get_name( signal_t const& f ) const
+  {
+    return _storage->get_name( f );
+  }
+
+  void set_name( signal_t const& f, std::string const& name )
+  {
+    _storage->set_name( f, name );
+  }
 #pragma endregion
 
 #pragma region Getters

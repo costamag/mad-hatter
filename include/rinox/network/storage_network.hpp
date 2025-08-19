@@ -986,6 +986,11 @@ public:
     nodes[n].user_data = v;
   }
 
+  void set_name( signal_t const& f, std::string const& name )
+  {
+    names_map[f] = name;
+  }
+
   uint32_t incr_value( node_index_t const& n )
   {
     return static_cast<uint32_t>( nodes[n].user_data++ );
@@ -995,6 +1000,70 @@ public:
   {
     return static_cast<uint32_t>( --nodes[n].user_data );
   }
+
+  bool has_output_name( uint32_t po_index )
+  {
+    return output_names.size() > po_index;
+  }
+
+  std::string get_output_name( uint32_t po_index )
+  {
+    return output_names[po_index];
+  }
+
+  bool has_input_name( uint32_t pi_index )
+  {
+    return names_map.find( make_signal( pi_at( pi_index ) ) ) != names_map.end();
+  }
+
+  std::string get_input_name( uint32_t pi_index )
+  {
+    auto const f = make_signal( pi_at( pi_index ) );
+    return get_name( f );
+  }
+
+  void set_output_name( uint32_t po_index, std::string const& name )
+  {
+    output_names.resize( outputs.size() );
+    output_names[po_index] = name;
+  }
+
+  void set_input_name( uint32_t pi_index, std::string const& name )
+  {
+    auto const f = make_signal( pi_at( pi_index ) );
+    names_map[f.data] = name;
+  }
+
+  bool has_name( signal_t const& f )
+  {
+    if ( names_map.find( f.data ) != names_map.end() )
+      return true;
+    if ( is_po( f ) )
+      return output_names.size() == num_pos();
+    return false;
+  }
+
+  std::string get_name( signal_t const& f )
+  {
+    std::string name = "";
+    if ( names_map.find( f.data ) != names_map.end() )
+      name = names_map[f];
+    else if ( is_po( f ) )
+    {
+      for ( auto io = 0u; io < num_pos(); ++io )
+      {
+        if ( outputs[io] == f )
+        {
+          if ( name.empty() )
+            name = output_names[io];
+          else
+            assert( name == output_names[io] );
+        }
+      }
+    }
+    return name;
+  }
+
 #pragma endregion
 
 #pragma region Visited flags
@@ -1218,6 +1287,8 @@ public:
    * of logic operations in the network.
    */
   std::vector<signal_t> outputs;
+  std::vector<std::string> output_names;
+  std::unordered_map<uint64_t, std::string> names_map;
 
   /*! \brief The library of gates used in the network network.
    *

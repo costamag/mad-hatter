@@ -14,6 +14,7 @@
 #include <rinox/io/json/json.hpp>
 #include <rinox/io/json/json_parser.hpp>
 #include <rinox/io/json/json_stream.hpp>
+#include <rinox/io/json/json_writer.hpp>
 #include <rinox/io/utils/reader.hpp>
 #include <rinox/network/network.hpp>
 
@@ -48,7 +49,7 @@ TEST_CASE( "Read structural json to mapped network", "[json_parsing]" )
 
   std::string file =
       R"({
-"creator": "Yosys 0.30",
+"creator": "Rinox",
   "modules": {
     "top": {
       "attributes": {},
@@ -213,6 +214,9 @@ TEST_CASE( "Read structural json to mapped network", "[json_parsing]" )
   CHECK( ntk.num_pos() == 1 );
   CHECK( ntk.size() == 6 );
   CHECK( ntk.num_gates() == 2 );
+
+  std::ostringstream out;
+  rinox::io::json::write_json( ntk, out );
 }
 
 TEST_CASE( "Read json to mapped network with multiple output gates", "[json_parsing]" )
@@ -226,7 +230,7 @@ TEST_CASE( "Read json to mapped network with multiple output gates", "[json_pars
   CHECK( result_lib == lorina::return_code::success );
 
   std::string file = R"({
-  "creator": "Yosys 0.30",
+  "creator": "Rinox",
   "modules": {
     "top": {
       "attributes": {},
@@ -323,7 +327,7 @@ TEST_CASE( "Read json to mapped network with multiple output gates and constants
   CHECK( result_lib == lorina::return_code::success );
 
   std::string file = R"({
-  "creator": "Yosys 0.30",
+  "creator": "Rinox",
   "modules": {
     "top": {
       "attributes": {},
@@ -428,7 +432,7 @@ TEST_CASE( "Yosys syntax - case 1", "[json_parsing]" )
   CHECK( result_lib == lorina::return_code::success );
 
   std::string file = R"({
-  "creator": "Yosys 0.30",
+  "creator": "Rinox",
   "modules": {
     "top": {
       "attributes": {},
@@ -499,7 +503,7 @@ TEST_CASE( "Yosys syntax - case 2", "[json_parsing]" )
   CHECK( result_lib == lorina::return_code::success );
 
   std::string file = R"({
-  "creator": "Yosys 0.30",
+  "creator": "Rinox",
   "modules": {
     "top": {
       "attributes": {},
@@ -594,7 +598,7 @@ TEST_CASE( "Read json without port direction", "[json_parsing]" )
   CHECK( result_lib == lorina::return_code::success );
 
   std::string file = R"({
-  "creator": "Yosys 0.30",
+  "creator": "Rinox",
   "modules": {
     "top": {
       "attributes": {},

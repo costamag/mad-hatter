@@ -468,16 +468,24 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
   }
 
   mockturtle::topo_view ntk_topo{ ntk };
+  std::vector<std::pair<std::string, std::string>> assignments;
 
   ntk_topo.foreach_node( [&]( auto const& n ) {
     ntk_topo.foreach_output( n, [&]( auto const& f ) {
       if ( po_signals.has( f ) )
       {
         signal_names[f] = ys[po_signals[f][0]];
+        if ( ntk.has_name( f ) && ( ntk.get_name( f ) != signal_names[f] ) )
+        {
+          assignments.emplace_back( std::make_pair( signal_names[f], ntk.get_name( f ) ) );
+        }
       }
       else if ( !ntk.is_constant( n ) && !ntk.is_pi( n ) )
       {
-        signal_names[f] = ntk.is_multioutput( n ) ? fmt::format( "n{}_{}", f.index, f.output ) : fmt::format( "n{}", f.index );
+        if ( ntk.has_name( f ) )
+          signal_names[f] = ntk.get_name( f );
+        else
+          signal_names[f] = ntk.is_multioutput( n ) ? fmt::format( "n{}_{}", f.index, f.output ) : fmt::format( "n{}", f.index );
       }
     } );
 
@@ -535,6 +543,16 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
 
     return true;
   } );
+
+  std::string lhs;
+  std::vector<std::pair<bool, std::string>> rhs;
+  std::string const op = "";
+  for ( auto a : assignments )
+  {
+    lhs = a.first;
+    rhs = { std::make_pair( false, a.second ) };
+    writer.on_assign( lhs, rhs, op );
+  }
 
   writer.on_module_end();
 }

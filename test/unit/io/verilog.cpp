@@ -161,8 +161,7 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
     xor2 g3( .a (n6), .O (\f[1]), .b (\b[0]) );
     buf g4( .a (n5), .O (\f[2]) );
     buf g5( .O (\f[3]), .a (n6) );
-    endmodule
-    )";
+    endmodule)";
 
   std::istringstream in_ntk( file );
 
@@ -180,17 +179,19 @@ TEST_CASE( "Read structural verilog to mapped network in the format used by abc"
   std::ostringstream out;
   rinox::io::verilog::write_verilog( ntk, out );
 
-  std::string expected = "module top( x0 , x1 , x2 , y0 , y1 , y2 , y3 );\n"
-                         "  input x0 , x1 , x2 ;\n"
-                         "  output y0 , y1 , y2 , y3 ;\n"
-                         "  wire n5 , n6_0 , n6_1 ;\n"
-                         "  inv1  g0( .a (x0), .O (n5) );\n"
-                         "  inv1  g1( .a (n5), .O (y0) );\n"
-                         "  fa    g2( .a (n5), .b (x1), .c (x2), .C (n6_0), .S (n6_1) );\n"
-                         "  xor2  g3( .a (n6_1), .b (x2), .O (y1) );\n"
-                         "  buf   g4( .a (n6_0), .O (y2) );\n"
-                         "  buf   g5( .a (n6_1), .O (y3) );\n"
-                         "endmodule\n";
+  std::string expected =
+      "module top( a[0] , a[1] , b[0] , f[0] , f[1] , f[2] , f[3] );\n"
+      "  input a[0] , a[1] , b[0] ;\n"
+      "  output f[0] , f[1] , f[2] , f[3] ;\n"
+      "  wire n5 , n6_0 , n6_1 ;\n"
+      "  inv1  g0( .a (a[0]), .O (n5) );\n"
+      "  inv1  g1( .a (n5), .O (f[0]) );\n"
+      "  fa    g2( .a (n5), .b (a[1]), .c (b[0]), .C (n6_0), .S (n6_1) );\n"
+      "  xor2  g3( .a (n6_1), .b (b[0]), .O (f[1]) );\n"
+      "  buf   g4( .a (n6_0), .O (f[2]) );\n"
+      "  buf   g5( .a (n6_1), .O (f[3]) );\n"
+      "endmodule\n";
+
   CHECK( out.str() == expected );
 }
 
@@ -233,10 +234,10 @@ TEST_CASE( "Corner case 1 - assign constant", "[verilog_reader]" )
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( x0 , y0 );\n"
-      "  input x0 ;\n"
-      "  output y0 ;\n"
-      "  buf   g0( .a (0), .O (y0) );\n"
+      "module top( a , y );\n"
+      "  input a ;\n"
+      "  output y ;\n"
+      "  buf   g0( .a (0), .O (y) );\n"
       "endmodule\n";
 
   CHECK( out.str() == expected );
@@ -288,10 +289,13 @@ endmodule
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( x0 , x1 , x2 , x3 , y0 , y1 , y2 , y3 );\n"
-      "  input x0 , x1 , x2 , x3 ;\n"
-      "  output y0 , y1 , y2 , y3 ;\n"
-      "  buf   g0( .a (x0), .O (y0) );\n"
+      "module top( xyz_inst.a[0] , xyz_inst.a[1] , xyz_inst.a[2] , xyz_inst.a[3] , xyz_inst.i0.a[0] , xyz_inst.i0.a[1] , xyz_inst.i0.a[2] , xyz_inst.i0.a[3] );\n"
+      "  input xyz_inst.a[0] , xyz_inst.a[1] , xyz_inst.a[2] , xyz_inst.a[3] ;\n"
+      "  output xyz_inst.i0.a[0] , xyz_inst.i0.a[1] , xyz_inst.i0.a[2] , xyz_inst.i0.a[3] ;\n"
+      "  buf   g0( .a (xyz_inst.a[0]), .O (xyz_inst.i0.a[0]) );\n"
+      "  assign xyz_inst.i0.a[1] = xyz_inst.a[1] ;\n"
+      "  assign xyz_inst.i0.a[2] = xyz_inst.a[2] ;\n"
+      "  assign xyz_inst.i0.a[3] = xyz_inst.a[3] ;\n"
       "endmodule\n";
 
   CHECK( out.str() == expected );
@@ -332,8 +336,7 @@ TEST_CASE( "Corner case 3 - vector assignment with explicit positive polarity", 
          = + { \xyz_inst.f07[0], \xyz_inst.f06[0], \xyz_inst.f05[0], \xyz_inst.f04[0],
                 \xyz_inst.f03[0], n2, \xyz_inst.f01[0], \xyz_inst.f00[0] };
 
-endmodule
-  )";
+endmodule)";
 
   std::istringstream in_ntk( file );
 
@@ -351,12 +354,19 @@ endmodule
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( x0 , x1 , x2 , x3 , x4 , x5 , x6 , x7 , y0 , y1 , y2 , y3 , y4 , y5 , y6 , y7 );\n"
-      "  input x0 , x1 , x2 , x3 , x4 , x5 , x6 , x7 ;\n"
-      "  output y0 , y1 , y2 , y3 , y4 , y5 , y6 , y7 ;\n"
+      "module top( xyz_inst.f00[0] , xyz_inst.f01[0] , xyz_inst.f02[0] , xyz_inst.f03[0] , xyz_inst.f04[0] , xyz_inst.f05[0] , xyz_inst.f06[0] , xyz_inst.f07[0] , xyz_inst.out0[0] , xyz_inst.out0[1] , xyz_inst.out0[2] , xyz_inst.out0[3] , xyz_inst.out0[4] , xyz_inst.out0[5] , xyz_inst.out0[6] , xyz_inst.out0[7] );\n"
+      "  input xyz_inst.f00[0] , xyz_inst.f01[0] , xyz_inst.f02[0] , xyz_inst.f03[0] , xyz_inst.f04[0] , xyz_inst.f05[0] , xyz_inst.f06[0] , xyz_inst.f07[0] ;\n"
+      "  output xyz_inst.out0[0] , xyz_inst.out0[1] , xyz_inst.out0[2] , xyz_inst.out0[3] , xyz_inst.out0[4] , xyz_inst.out0[5] , xyz_inst.out0[6] , xyz_inst.out0[7] ;\n"
       "  wire n10 ;\n"
-      "  and2  g0( .a (y0), .b (y1), .O (n10) );\n"
-      "  xor2  g1( .a (x2), .b (n10), .O (y2) );\n"
+      "  and2  g0( .a (xyz_inst.out0[0]), .b (xyz_inst.out0[1]), .O (n10) );\n"
+      "  xor2  g1( .a (xyz_inst.f02[0]), .b (n10), .O (xyz_inst.out0[2]) );\n"
+      "  assign xyz_inst.out0[0] = xyz_inst.f00[0] ;\n"
+      "  assign xyz_inst.out0[1] = xyz_inst.f01[0] ;\n"
+      "  assign xyz_inst.out0[3] = xyz_inst.f03[0] ;\n"
+      "  assign xyz_inst.out0[4] = xyz_inst.f04[0] ;\n"
+      "  assign xyz_inst.out0[5] = xyz_inst.f05[0] ;\n"
+      "  assign xyz_inst.out0[6] = xyz_inst.f06[0] ;\n"
+      "  assign xyz_inst.out0[7] = xyz_inst.f07[0] ;\n"
       "endmodule\n";
 
   CHECK( out.str() == expected );
@@ -419,24 +429,24 @@ endmodule
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( x0 , x1 , x2 , x3 , y0 , y1 , y2 , y3 , y4 , y5 , y6 , y7 );\n"
-      "  input x0 , x1 , x2 , x3 ;\n"
-      "  output y0 , y1 , y2 , y3 , y4 , y5 , y6 , y7 ;\n"
+      "module top( a[0] , a[1] , b[0] , b[1] , xyz_inst.out1[0] , xyz_inst.out1[1] , xyz_inst.out1[2] , xyz_inst.out1[3] , xyz_inst.out1[4] , xyz_inst.out1[5] , xyz_inst.out1[6] , xyz_inst.out1[7] );\n"
+      "  input a[0] , a[1] , b[0] , b[1] ;\n"
+      "  output xyz_inst.out1[0] , xyz_inst.out1[1] , xyz_inst.out1[2] , xyz_inst.out1[3] , xyz_inst.out1[4] , xyz_inst.out1[5] , xyz_inst.out1[6] , xyz_inst.out1[7] ;\n"
       "  wire n6 , n7 , n8 , n9 , n10 , n11 ;\n"
-      "  inv2  g00( .a (0), .O (y0) );\n"
-      "  inv2  g01( .a (0), .O (y1) );\n"
-      "  inv2  g02( .a (0), .O (y2) );\n"
-      "  buf   g03( .a (x2), .O (n11) );\n"
-      "  inv2  g04( .a (n11), .O (y3) );\n"
-      "  buf   g05( .a (x1), .O (n10) );\n"
-      "  inv2  g06( .a (n10), .O (y4) );\n"
-      "  inv1  g07( .a (x0), .O (n8) );\n"
-      "  xor2  g08( .a (n8), .b (x3), .O (n9) );\n"
-      "  inv2  g09( .a (n9), .O (y5) );\n"
-      "  xor2  g10( .a (x1), .b (x3), .O (n7) );\n"
-      "  inv2  g11( .a (n7), .O (y6) );\n"
-      "  and2  g12( .a (x0), .b (x2), .O (n6) );\n"
-      "  inv2  g13( .a (n6), .O (y7) );\n"
+      "  inv2  g00( .a (0), .O (xyz_inst.out1[0]) );\n"
+      "  inv2  g01( .a (0), .O (xyz_inst.out1[1]) );\n"
+      "  inv2  g02( .a (0), .O (xyz_inst.out1[2]) );\n"
+      "  buf   g03( .a (b[0]), .O (n11) );\n"
+      "  inv2  g04( .a (n11), .O (xyz_inst.out1[3]) );\n"
+      "  buf   g05( .a (a[1]), .O (n10) );\n"
+      "  inv2  g06( .a (n10), .O (xyz_inst.out1[4]) );\n"
+      "  inv1  g07( .a (a[0]), .O (n8) );\n"
+      "  xor2  g08( .a (n8), .b (b[1]), .O (n9) );\n"
+      "  inv2  g09( .a (n9), .O (xyz_inst.out1[5]) );\n"
+      "  xor2  g10( .a (a[1]), .b (b[1]), .O (n7) );\n"
+      "  inv2  g11( .a (n7), .O (xyz_inst.out1[6]) );\n"
+      "  and2  g12( .a (a[0]), .b (b[0]), .O (n6) );\n"
+      "  inv2  g13( .a (n6), .O (xyz_inst.out1[7]) );\n"
       "endmodule\n";
 
   CHECK( out.str() == expected );
@@ -476,8 +486,7 @@ TEST_CASE( "Corner case 5 - signal names with erroneous spaces and vector instan
     // Drive the other output bit directly (also with spaces)
     buf  g1 (.a(\ripple_inst.a [0]), .O(\ripple_inst.o [0]));
 
-endmodule
-  )";
+endmodule)";
 
   std::istringstream in_ntk( file );
 
@@ -495,11 +504,11 @@ endmodule
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( x0 , x1 , y0 , y1 );\n"
-      "  input x0 , x1 ;\n"
-      "  output y0 , y1 ;\n"
-      "  buf   g0( .a (x0), .O (y0) );\n"
-      "  and2  g1( .a (x0), .b (x1), .O (y1) );\n"
+      "module top( ripple_inst.a[0] , ripple_inst.a[1] , ripple_inst.o[0] , ripple_inst.o[1] );\n"
+      "  input ripple_inst.a[0] , ripple_inst.a[1] ;\n"
+      "  output ripple_inst.o[0] , ripple_inst.o[1] ;\n"
+      "  buf   g0( .a (ripple_inst.a[0]), .O (ripple_inst.o[0]) );\n"
+      "  and2  g1( .a (ripple_inst.a[0]), .b (ripple_inst.a[1]), .O (ripple_inst.o[1]) );\n"
       "endmodule\n";
 
   CHECK( out.str() == expected );
