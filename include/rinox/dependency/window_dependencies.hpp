@@ -361,6 +361,10 @@ private:
         erase.push_back( i );
       }
     }
+
+    int ialive = cuts_.size() - 1;
+    for ( int i = erase.size() - 1; i >= 0; i-- )
+      cuts_.erase( cuts_.begin() + erase[i] );
   }
 
   template<typename WinMng, typename WinSim>
