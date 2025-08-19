@@ -243,7 +243,7 @@ private:
           auto it = cell.port_dirs.find( pin );
           if ( it != cell.port_dirs.end() )
             return it->second == "output";
-          return ( pin == "Y" || pin == "O" || pin == "Q" || pin == "ZN" );
+          return reader_.is_output_pin( cell.type, pin );
         };
 
         for ( auto const& kv : cell.connections )
