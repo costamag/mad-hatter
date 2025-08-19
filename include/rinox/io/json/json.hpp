@@ -35,6 +35,7 @@
 #include "../utils/diagnostics.hpp"
 #include "../utils/reader.hpp"
 #include "json_parser.hpp"
+#include "json_writer.hpp"
 
 namespace rinox
 {

@@ -24,8 +24,8 @@
  */
 
 /*!
-  \file verilog.hpp
-  \brief Implements simplistic Verilog parser
+  \file json_parser.hpp
+  \brief Implements simplistic Json parser
 
   \author Andrea Costamagna
 */
