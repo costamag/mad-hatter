@@ -115,7 +115,6 @@ public:
 
   void on_inputs( const std::vector<std::string>& names, std::string const& size = "" ) const override
   {
-    (void)size;
     if ( name_ != top_module_name_ )
       return;
 
@@ -124,7 +123,7 @@ public:
       if ( size.empty() )
       {
         signals_[name] = ntk_.create_pi();
-        input_names_.emplace_back( name, 1u );
+        input_names_.emplace_back( name );
         if constexpr ( mockturtle::has_set_name_v<Ntk> )
         {
           ntk_.set_name( signals_[name], name );
@@ -143,10 +142,35 @@ public:
           {
             ntk_.set_name( signals_[sname], sname );
           }
+          input_names_.emplace_back( sname );
         }
         registers_[name] = word;
-        input_names_.emplace_back( name, length );
       }
+    }
+  }
+
+  void on_input( std::string const& name, std::vector<std::string> const& ids, bool is_msb_first = false ) const
+  {
+    if ( name_ != top_module_name_ )
+      return;
+
+    int first = is_msb_first ? ids.size() - 1 : 0;
+    int last = is_msb_first ? 0 : ids.size() - 1;
+    int i = first;
+    int di = is_msb_first ? -1 : +1;
+    std::vector<typename Ntk::signal> word;
+    for ( const auto& id : ids )
+    {
+      const auto sname = fmt::format( "{}[{}]", name, i );
+      word.push_back( ntk_.create_pi() );
+      signals_[id] = word.back();
+      if constexpr ( mockturtle::has_set_name_v<Ntk> )
+      {
+        ntk_.set_name( signals_[id], sname );
+      }
+      registers_[name] = word;
+      input_names_.emplace_back( sname );
+      i += di;
     }
   }
 
@@ -161,7 +185,7 @@ public:
       if ( size.empty() )
       {
         outputs_.emplace_back( name );
-        output_names_.emplace_back( name, 1u );
+        output_names_.emplace_back( name );
       }
       else
       {
@@ -170,8 +194,26 @@ public:
         {
           outputs_.emplace_back( fmt::format( "{}[{}]", name, i ) );
         }
-        output_names_.emplace_back( name, length );
+        output_names_.emplace_back( outputs_.back() );
       }
+    }
+  }
+
+  void on_output( const std::string name, const std::vector<std::string>& ids, const bool is_msb_first = false ) const
+  {
+    if ( name_ != top_module_name_ )
+      return;
+
+    int first = is_msb_first ? ids.size() - 1 : 0;
+    int last = is_msb_first ? 0 : ids.size() - 1;
+    int i = first;
+    int di = is_msb_first ? -1 : +1;
+    for ( const auto& id : ids )
+    {
+      const auto sname = fmt::format( "{}[{}]", name, i );
+      output_names_.emplace_back( sname );
+      outputs_.emplace_back( id );
+      i += di;
     }
   }
 
@@ -297,17 +339,7 @@ public:
       uint32_t ctr{ 0u };
       for ( auto const& output_name : output_names_ )
       {
-        if ( output_name.second == 1u )
-        {
-          ntk_.set_output_name( ctr++, output_name.first );
-        }
-        else
-        {
-          for ( auto i = 0u; i < output_name.second; ++i )
-          {
-            ntk_.set_output_name( ctr++, fmt::format( "{}[{}]", output_name.first, i ) );
-          }
-        }
+        ntk_.set_output_name( ctr++, output_name );
       }
       assert( ctr == ntk_.num_pos() );
     }
@@ -318,12 +350,12 @@ public:
     return name_;
   }
 
-  const std::vector<std::pair<std::string, uint32_t>> input_names()
+  const std::vector<std::string> input_names()
   {
     return input_names_;
   }
 
-  const std::vector<std::pair<std::string, uint32_t>> output_names()
+  const std::vector<std::string> output_names()
   {
     return output_names_;
   }
@@ -408,8 +440,8 @@ private:
   mutable std::map<std::string, std::vector<typename Ntk::signal>> registers_;
   mutable std::vector<std::string> outputs_;
   mutable std::string name_;
-  mutable std::vector<std::pair<std::string, uint32_t>> input_names_;
-  mutable std::vector<std::pair<std::string, uint32_t>> output_names_;
+  mutable std::vector<std::string> input_names_;
+  mutable std::vector<std::string> output_names_;
 
   std::regex hex_string{ "(\\d+)'h([0-9a-fA-F]+)" };
 };
