@@ -316,7 +316,7 @@ struct custom_area_window_params1 : rinox::opto::algorithms::default_resynthesis
   bool try_window = true;
   bool try_simula = false;
   bool dynamic_database = false;
-  static constexpr uint32_t max_cuts_size = 6u;
+  static constexpr uint32_t max_cuts_size = 3u;
 };
 
 TEST_CASE( "Area resynthesis via window rewriting - single-output gate without don't cares", "[area_resynthesis]" )

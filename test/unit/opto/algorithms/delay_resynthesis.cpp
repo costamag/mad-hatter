@@ -4,11 +4,11 @@
 #include <kitty/kitty.hpp>
 #include <kitty/static_truth_table.hpp>
 
-#include <rinox/network/network.hpp>
-#include <rinox/opto/algorithms/resynthesize.hpp>
 #include <mockturtle/io/genlib_reader.hpp>
 #include <mockturtle/utils/tech_library.hpp>
 #include <mockturtle/views/depth_view.hpp>
+#include <rinox/network/network.hpp>
+#include <rinox/opto/algorithms/resynthesize.hpp>
 
 std::string const test_library = "GATE   and2    1.0 O=a*b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 0
                                  "GATE   or2     1.0 O=a+b;                 PIN * INV 1   999 1.0 0.0 1.0 0.0\n" // 1
@@ -342,7 +342,7 @@ struct custom_delay_window_params1 : rinox::opto::algorithms::default_resynthesi
   bool try_window = true;
   bool try_simula = false;
   bool dynamic_database = false;
-  static constexpr uint32_t max_cuts_size = 6u;
+  static constexpr uint32_t max_cuts_size = 3u;
 };
 
 TEST_CASE( "Delay resynthesis via window rewriting - single-output gate without don't cares", "[delay_resynthesis]" )
@@ -357,7 +357,7 @@ TEST_CASE( "Delay resynthesis via window rewriting - single-output gate without 
 
   rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
 
-  static constexpr uint32_t MaxNumVars = 6u;
+  static constexpr uint32_t MaxNumVars = 3u;
   using Db = rinox::databases::mapped_database<Ntk, MaxNumVars>;
   Db db( lib );
 

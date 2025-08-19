@@ -3,13 +3,13 @@
 
 #include <kitty/kitty.hpp>
 
+#include <mockturtle/algorithms/simulation.hpp>
+#include <mockturtle/networks/aig.hpp>
+#include <mockturtle/networks/xag.hpp>
 #include <rinox/dependency/dependency.hpp>
 #include <rinox/evaluation/evaluation.hpp>
 #include <rinox/synthesis/synthesis.hpp>
 #include <rinox/synthesis/xaig_decompose.hpp>
-#include <mockturtle/algorithms/simulation.hpp>
-#include <mockturtle/networks/aig.hpp>
-#include <mockturtle/networks/xag.hpp>
 
 using namespace rinox::synthesis;
 using namespace rinox::evaluation;
@@ -20,7 +20,7 @@ using namespace mockturtle;
 bool constexpr xaig_decompose_tests_with_dcs = false;
 
 #if xaig_decompose_tests_with_dcs
-TEST_CASE( "XAIG synththesizer - constants", "[synthesis]" )
+TEST_CASE( "XAIG synththesizer - constants", "[xaig_synthesis]" )
 {
   xaig_decompose_stats st;
   constexpr uint32_t NumVars = 5u;
@@ -47,7 +47,7 @@ TEST_CASE( "XAIG synththesizer - constants", "[synthesis]" )
   CHECK( raw == chain.raw() );
 }
 
-TEST_CASE( "XAIG synththesizer - projections", "[synthesis]" )
+TEST_CASE( "XAIG synththesizer - projections", "[xaig_synthesis]" )
 {
   xaig_decompose_stats st;
   constexpr uint32_t NumVars = 7u;
@@ -117,7 +117,7 @@ void test_xag_n_input_functions()
   } while ( !kitty::is_const0( onset ) );
 }
 
-TEST_CASE( "XAIG synththesizer - 3 input functions", "[synthesis]" )
+TEST_CASE( "XAIG synththesizer - 3 input functions", "[xaig_synthesis]" )
 {
   test_xag_n_input_functions<3>();
 }
@@ -159,18 +159,18 @@ void test_xag_n_input_functions_random()
   } while ( i < 1000 );
 }
 
-TEST_CASE( "XAIG synththesizer - random 10 input functions", "[synthesis]" )
+TEST_CASE( "XAIG synththesizer - random 10 input functions", "[xaig_synthesis]" )
 {
   test_xag_n_input_functions_random<10>();
 }
 
-TEST_CASE( "Termination condition for LUT decomposition", "[synthesis]" )
+TEST_CASE( "Termination condition for LUT decomposition", "[xaig_synthesis]" )
 {
   static constexpr uint32_t MaxNumVars = 2u;
   static constexpr uint32_t MaxCutSize = 3u;
   using CSTT = kitty::static_truth_table<MaxCutSize>;
   using ISTT = kitty::ternary_truth_table<CSTT>;
-  rinox::synthesis::lut_decomposer<MaxCutSize, MaxNumVars> decomposer;
+  rinox::synthesis::lut_decomposer<MaxCutSize, MaxNumVars, false> decomposer;
 
   CSTT care1, mask1;
   kitty::create_from_binary_string( care1, "10001100" );
@@ -180,7 +180,7 @@ TEST_CASE( "Termination condition for LUT decomposition", "[synthesis]" )
   CHECK( decomposer.run( func1, times ) );
   kitty::static_truth_table<2u> expected;
   kitty::create_from_binary_string( expected, "1000" );
-  bool const success =decomposer.foreach_spec( [&]( auto & specs, uint8_t lit ) {
+  bool const success = decomposer.foreach_spec( [&]( auto& specs, uint8_t lit ) {
     std::vector<CSTT const*> sim_ptrs;
     auto& spec = specs[lit];
     for ( auto i : spec.inputs )
@@ -191,5 +191,5 @@ TEST_CASE( "Termination condition for LUT decomposition", "[synthesis]" )
     CHECK( kitty::is_const0( ~itt._care ) );
     return true;
   } );
-  CHECK(success);
+  CHECK( success );
 }

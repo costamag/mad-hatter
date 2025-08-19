@@ -45,6 +45,8 @@ template<typename Tt_t, uint32_t MaxNumMasks>
 class spfd
 {
 public:
+  spfd() = default;
+
   spfd( Tt_t const& func, Tt_t const& care )
   {
     init( func, care );
@@ -53,7 +55,7 @@ public:
   void init( Tt_t const& func, Tt_t const& care )
   {
     care_ = care;
-    func_[0] = boolean::binary_and( care, func );
+    func_[1] = boolean::binary_and( care, func );
     func_[0] = boolean::binary_and( care, boolean::unary_not( func ) );
     masks_[0] = care;
     num_masks_ = 1;
@@ -150,18 +152,41 @@ public:
     return num_edges_;
   }
 
-private:
+  uint32_t get_num_masks() const
+  {
+    return num_masks_;
+  }
+
   bool is_killed( uint32_t i ) const
   {
-    bool const only_onset = ( kitty::count_ones( boolean::binary_and( masks_[i], func_[0] ) ) == 0 );
-    bool const only_ofset = ( kitty::count_ones( boolean::binary_and( masks_[i], func_[1] ) ) == 0 );
+    bool const only_onset = ( kitty::count_ones( boolean::binary_and( masks_[i], func_[1] ) ) == 0 );
+    bool const only_ofset = ( kitty::count_ones( boolean::binary_and( masks_[i], func_[0] ) ) == 0 );
     return only_onset || only_ofset;
   }
 
+  kitty::ternary_truth_table<Tt_t> get_function( std::vector<uint8_t> indices, std::vector<char> polarities )
+  {
+    Tt_t bits;
+    Tt_t care = bits ^ bits;
+    assert( indices.size() == polarities.size() );
+    for ( auto i = 0; i < indices.size(); ++i )
+    {
+      care |= masks_[indices[i]];
+      if ( polarities[indices[i]] == '+' )
+        bits |= func_[1] & ( masks_[indices[i]] );
+      else if ( polarities[indices[i]] == '-' )
+        bits |= func_[0] & ( masks_[indices[i]] );
+      else
+        assert( false && "[e] invalid polarity" );
+    }
+    return kitty::ternary_truth_table( bits, care );
+  }
+
+private:
   uint32_t count_edges( uint32_t i ) const
   {
-    Tt_t const onset = boolean::binary_and( masks_[i], func_[0] );
-    Tt_t const ofset = boolean::binary_and( masks_[i], func_[1] );
+    Tt_t const onset = boolean::binary_and( masks_[i], func_[1] );
+    Tt_t const ofset = boolean::binary_and( masks_[i], func_[0] );
     return kitty::count_ones( onset ) * kitty::count_ones( ofset );
   }
 
@@ -206,6 +231,7 @@ public:
 
   void init( std::vector<Tt_t const*> const& targets, Tt_t const& care )
   {
+    spfds_.clear();
     spfds_.reserve( targets.size() );
     for ( Tt_t const* ptt : targets )
       spfds_.emplace_back( *ptt, care );
