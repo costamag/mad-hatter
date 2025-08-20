@@ -154,10 +154,10 @@ public:
     // if ( name_ != top_module_name_ )
     //   return;
 
-    int first = upto ? ids.size() - 1 : 0;
-    int last = upto ? 0 : ids.size() - 1;
+    int first = upto ? 0 : ids.size() - 1;
+    int last = upto ? ids.size() - 1 : 0;
     int i = first;
-    int di = upto ? -1 : +1;
+    int di = upto ? +1 : -1;
     std::vector<typename Ntk::signal> word;
     while ( i != ( last + di ) )
     {
@@ -205,10 +205,10 @@ public:
     // if ( name_ != top_module_name_ )
     //   return;
 
-    int first = upto ? ids.size() - 1 : 0;
-    int last = upto ? 0 : ids.size() - 1;
+    int first = upto ? 0 : ids.size() - 1;
+    int last = upto ? ids.size() - 1 : 0;
     int i = first;
-    int di = upto ? -1 : +1;
+    int di = upto ? +1 : -1;
     while ( i != ( last + di ) )
     {
       const auto& id = ids[i];

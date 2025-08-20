@@ -335,8 +335,8 @@ TEST_CASE( "Read json to mapped network with multiple output gates and constants
       "ports": {
         "a":   { "direction": "input",  "bits": [ 2 ] },
         "b":   { "direction": "input",  "bits": [ 3 ] },
-        "din": { "direction": "input",  "bits": [ 20, "1", 22, "0" ], "upto": 1 },
-        "dout":{ "direction": "output", "bits": [ "1", 30, 31, "0" ], "upto": 0 }
+        "din": { "direction": "input",  "bits": [ 20, "1", 22, "0" ], "upto": 0 },
+        "dout":{ "direction": "output", "bits": [ "1", 30, 31, "0" ], "upto": 1 }
       },
 
       "cells": {
@@ -381,8 +381,8 @@ TEST_CASE( "Read json to mapped network with multiple output gates and constants
         "a":     { "hide_name": 0, "bits": [ 2 ] },
         "b":     { "hide_name": 0, "bits": [ 3 ] },
 
-        "din":   { "hide_name": 0, "bits": [ 20, "1", 22, "0" ], "upto": 1 },
-        "dout":  { "hide_name": 0, "bits": [ "1", 30, 31, "0" ], "upto": 0 },
+        "din":   { "hide_name": 0, "bits": [ 20, "1", 22, "0" ], "upto": 0 },
+        "dout":  { "hide_name": 0, "bits": [ "1", 30, 31, "0" ], "upto": 1 },
 
         "n_and00": { "hide_name": 1, "bits": [ 14 ] },
         "n_xor":   { "hide_name": 1, "bits": [ 15 ] }
@@ -509,8 +509,8 @@ TEST_CASE( "Yosys syntax - case 2", "[json_parsing]" )
     "mod2": {
       "attributes": {},
       "ports": {
-        "din":  { "direction": "input",  "bits": [ 20, 21, 22, 23 ], "offset": 0, "upto": 1, "signed": 1 },
-        "dout": { "direction": "output", "bits": [ 30, 31, 32, 33 ], "offset": 0, "upto": 0, "signed": 0 }
+        "din":  { "direction": "input",  "bits": [ 20, 21, 22, 23 ], "offset": 0, "upto": 0, "signed": 1 },
+        "dout": { "direction": "output", "bits": [ 30, 31, 32, 33 ], "offset": 0, "upto": 1, "signed": 0 }
       },
       "cells": {
         "mix0": {
@@ -547,8 +547,8 @@ TEST_CASE( "Yosys syntax - case 2", "[json_parsing]" )
         }
       },
       "netnames": {
-        "din":  { "hide_name": 0, "bits": [ 20, 21, 22, 23 ], "offset": 0, "upto": 1, "signed": 1 },
-        "dout": { "hide_name": 0, "bits": [ 30, 31, 32, 33 ], "offset": 0, "upto": 0, "signed": 0 },
+        "din":  { "hide_name": 0, "bits": [ 20, 21, 22, 23 ], "offset": 0, "upto": 0, "signed": 1 },
+        "dout": { "hide_name": 0, "bits": [ 30, 31, 32, 33 ], "offset": 0, "upto": 1, "signed": 0 },
         "n31":  { "hide_name": 1, "bits": [ 31 ] },
         "n33":  { "hide_name": 1, "bits": [ 33 ] }
       }
@@ -694,9 +694,9 @@ TEST_CASE( "Ripple carry Adder", "[json_parsing]" )
   "modules": {
     "rca3": {
       "ports": {
-        "a":   { "direction": "input",  "bits": [1, 2, 3], "upto": 1 },
-        "b":   { "direction": "input",  "bits": [4, 5, 6], "upto": 1 },
-        "sum": { "direction": "output", "bits": [7, 8, 9, 10], "upto": 1 }
+        "a":   { "direction": "input",  "bits": [1, 2, 3] },
+        "b":   { "direction": "input",  "bits": [4, 5, 6] },
+        "sum": { "direction": "output", "bits": [7, 8, 9, 10] }
       },
       "cells": {
         "fa0": { "type": "fa",
@@ -715,8 +715,7 @@ TEST_CASE( "Ripple carry Adder", "[json_parsing]" )
         "sum": { "bits": [7, 8, 9, 10] }
       }
     }
-  },
-  "top": "rca3"
+  }
 })";
 
   bound_network ntk( gates );
@@ -734,7 +733,7 @@ TEST_CASE( "Ripple carry Adder", "[json_parsing]" )
   rinox::io::verilog::write_verilog( ntk, out );
 
   std::string expected =
-      "module top( a , b , sum );\n"
+      "module rca3( a , b , sum );\n"
       "  input [2:0] a ;\n"
       "  input [2:0] b ;\n"
       "  output [3:0] sum ;\n"
