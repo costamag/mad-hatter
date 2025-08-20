@@ -149,18 +149,19 @@ public:
     }
   }
 
-  void on_input( std::string const& name, std::vector<std::string> const& ids, bool is_msb_first = false ) const
+  void on_input( std::string const& name, std::vector<std::string> const& ids, bool upto = false ) const
   {
     // if ( name_ != top_module_name_ )
     //   return;
 
-    int first = is_msb_first ? ids.size() - 1 : 0;
-    int last = is_msb_first ? 0 : ids.size() - 1;
+    int first = upto ? ids.size() - 1 : 0;
+    int last = upto ? 0 : ids.size() - 1;
     int i = first;
-    int di = is_msb_first ? -1 : +1;
+    int di = upto ? -1 : +1;
     std::vector<typename Ntk::signal> word;
-    for ( const auto& id : ids )
+    while ( i != ( last + di ) )
     {
+      const auto& id = ids[i];
       const auto sname = ids.size() > 1 ? fmt::format( "{}[{}]", name, i ) : fmt::format( "{}", name );
       word.push_back( ntk_.create_pi() );
       signals_[id] = word.back();
@@ -199,17 +200,18 @@ public:
     }
   }
 
-  void on_output( const std::string name, const std::vector<std::string>& ids, const bool is_msb_first = false ) const
+  void on_output( const std::string name, const std::vector<std::string>& ids, const bool upto = false ) const
   {
     // if ( name_ != top_module_name_ )
     //   return;
 
-    int first = is_msb_first ? ids.size() - 1 : 0;
-    int last = is_msb_first ? 0 : ids.size() - 1;
+    int first = upto ? ids.size() - 1 : 0;
+    int last = upto ? 0 : ids.size() - 1;
     int i = first;
-    int di = is_msb_first ? -1 : +1;
-    for ( const auto& id : ids )
+    int di = upto ? -1 : +1;
+    while ( i != ( last + di ) )
     {
+      const auto& id = ids[i];
       const auto sname = ids.size() > 1 ? fmt::format( "{}[{}]", name, i ) : fmt::format( "{}", name );
       output_names_.emplace_back( sname );
       outputs_.emplace_back( id );
