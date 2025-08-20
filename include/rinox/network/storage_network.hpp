@@ -1064,6 +1064,16 @@ public:
     return name;
   }
 
+  std::string get_network_name() const
+  {
+    return module_name;
+  }
+
+  void set_network_name( std::string const& name )
+  {
+    module_name = name;
+  }
+
 #pragma endregion
 
 #pragma region Visited flags
@@ -1297,6 +1307,7 @@ public:
    * manipulating the gates, as well as an AIG list representation for simulation.
    */
   augmented_library_t library;
+  std::string module_name;
 
   /*! \brief Hash map for fast node lookups.
    *

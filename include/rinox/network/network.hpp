@@ -1093,6 +1093,16 @@ public:
     return _storage->get_name( f );
   }
 
+  std::string get_network_name() const
+  {
+    return _storage->get_network_name();
+  }
+
+  void set_network_name( std::string const& name )
+  {
+    _storage->set_network_name( name );
+  }
+
   void set_name( signal_t const& f, std::string const& name )
   {
     _storage->set_name( f, name );
