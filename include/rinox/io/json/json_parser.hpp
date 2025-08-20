@@ -287,7 +287,9 @@ private:
         else
         {
           // Primitive / tech cell
-          auto ids = reader_.get_binding_ids( cell.type ); // ok if empty
+          std::vector<unsigned int> ids;
+          for ( auto dep : outmap )
+            ids.push_back( reader_.get_pin_id( cell.type, dep.first ) );
 
           on_action_.call_deferred<CELL_FN>(
               /* deps in  */ dep_inputs,
