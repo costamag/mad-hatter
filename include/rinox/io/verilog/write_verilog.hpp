@@ -447,11 +447,25 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
     ntk_topo.foreach_output( n, [&]( auto const& f ) {
       if ( po_signals.has( f ) )
       {
-        signal_names[f] = outputs[po_signals[f][0]];
-        if ( ntk.has_name( f ) && ( ntk.get_name( f ) != signal_names[f] ) )
+        if ( ntk.has_name( f ) )
         {
-          assignments.emplace_back( std::make_pair( signal_names[f], ntk.get_name( f ) ) );
+          auto const sname = ntk.get_name( f );
+          if ( !sname.empty() )
+            signal_names[f] = sname;
+          else
+            signal_names[f] = outputs[po_signals[f][0]];
+          auto const nout = po_signals[f].size();
+          for ( auto i = 0u; i < nout; ++i )
+          {
+            auto const oname = ntk.get_output_name( po_signals[f][i] );
+            if ( oname != signal_names[f] )
+            {
+              assignments.emplace_back( std::make_pair( oname, signal_names[f] ) );
+            }
+          }
         }
+        else
+          signal_names[f] = outputs[po_signals[f][0]];
       }
       else if ( !ntk.is_constant( n ) && !ntk.is_pi( n ) )
       {

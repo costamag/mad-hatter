@@ -100,6 +100,12 @@ public:
       signals_["1'" + base + "0"] = ntk_.get_constant( false );
       signals_["1'" + base + "1"] = ntk_.get_constant( true );
     }
+
+    if constexpr ( mockturtle::has_set_name_v<Ntk> )
+    {
+      ntk_.set_name( signals_["0"], "0" );
+      ntk_.set_name( signals_["1"], "1" );
+    }
   }
 
   void on_module_header( const std::string& module_name, const std::vector<std::string>& inouts ) const override

@@ -1045,29 +1045,7 @@ public:
 
   std::string get_name( signal_t const& f )
   {
-    if ( f.index == 0 )
-    {
-      return "0";
-    }
-    if ( f.index == 1 )
-    {
-      return "1";
-    }
-    std::string name = "";
-    if ( names_map.find( f.data ) != names_map.end() )
-      name = names_map[f];
-    else if ( is_po( f ) )
-    {
-      for ( auto io = 0u; io < num_pos(); ++io )
-      {
-        if ( outputs[io] == f )
-        {
-          if ( name.empty() )
-            name = output_names[io];
-        }
-      }
-    }
-    return name;
+    return names_map[f];
   }
 
   std::string get_network_name() const

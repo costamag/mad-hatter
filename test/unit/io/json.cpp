@@ -745,3 +745,73 @@ TEST_CASE( "Ripple carry Adder", "[json_parsing]" )
 
   CHECK( out.str() == expected );
 }
+
+TEST_CASE( "Ripple carry Adder with constants", "[json_parsing]" )
+{
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
+  std::vector<mockturtle::gate> gates;
+
+  std::istringstream in_lib( test_library );
+  auto result_lib = lorina::read_genlib( in_lib, genlib_reader( gates ) );
+  CHECK( result_lib == lorina::return_code::success );
+
+  std::string file = R"({
+  "creator": "rca3-using-fa",
+  "modules": {
+    "rca3": {
+      "ports": {
+        "a":   { "direction": "input",  "bits": [20, 2, 3] },
+        "b":   { "direction": "input",  "bits": [4, 5, 6] },
+        "sum": { "direction": "output", "bits": [7, 8, 9, "0", 10, "0", "0", "1"] }
+      },
+      "cells": {
+        "fa0": { "type": "fa",
+          "connections": { "b": [4], "S": [7], "a": [20], "c": ["0"], "C": [11] }
+        },
+        "fa1": { "type": "fa",
+          "connections": { "a": [2], "C": [12], "b": [5], "c": [11], "S": [8] }
+        },
+        "fa2": { "type": "fa",
+          "connections": { "C": [10], "a": [3], "S": [9], "b": [6], "c": [12] }
+        }
+      },
+      "netnames": {
+        "a":   { "bits": [20, 2, 3] },
+        "b":   { "bits": [4, 5, 6] },
+        "sum": { "bits": [7, 8, 9, 10] }
+      }
+    }
+  }
+})";
+
+  bound_network ntk( gates );
+  using signal = bound_network::signal;
+  std::istringstream in_ntk( file );
+  const auto result_ntk = rinox::io::json::read_json( in_ntk, rinox::io::reader( ntk ) );
+  /* structural checks */
+  CHECK( result_ntk == lorina::return_code::success );
+  CHECK( ntk.num_pis() == 6 );
+  CHECK( ntk.num_pos() == 8 );
+  CHECK( ntk.size() == 11 );
+  CHECK( ntk.num_gates() == 3 );
+
+  std::ostringstream out;
+  rinox::io::verilog::write_verilog( ntk, out );
+
+  std::string expected =
+      "module rca3( a , b , sum );\n"
+      "  input [2:0] a ;\n"
+      "  input [2:0] b ;\n"
+      "  output [7:0] sum ;\n"
+      "  wire n8_0 , n9_1 ;\n"
+      "  fa    g0( .a (a[0]), .b (b[0]), .c (0), .C (n8_0), .S (sum[0]) );\n"
+      "  fa    g1( .a (a[1]), .b (b[1]), .c (n8_0), .S (sum[1]), .C (n9_1) );\n"
+      "  fa    g2( .a (a[2]), .b (b[2]), .c (n9_1), .S (sum[2]), .C (sum[4]) );\n"
+      "  assign sum[6] = 0 ;\n"
+      "  assign sum[5] = 0 ;\n"
+      "  assign sum[3] = 0 ;\n"
+      "  assign sum[7] = 1 ;\n"
+      "endmodule\n";
+
+  CHECK( out.str() == expected );
+}

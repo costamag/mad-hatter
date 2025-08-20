@@ -376,7 +376,7 @@ endmodule)";
       "  input xyz_inst.f07 ;\n"
       "  output [0:7] xyz_inst.out0 ;\n"
       "  wire n10 ;\n"
-      "  and2  g0( .a (xyz_inst.out0[0]), .b (xyz_inst.out0[1]), .O (n10) );\n"
+      "  and2  g0( .a (xyz_inst.f00), .b (xyz_inst.f01), .O (n10) );\n"
       "  xor2  g1( .a (xyz_inst.f02), .b (n10), .O (xyz_inst.out0[2]) );\n"
       "  assign xyz_inst.out0[0] = xyz_inst.f00 ;\n"
       "  assign xyz_inst.out0[1] = xyz_inst.f01 ;\n"
