@@ -78,6 +78,7 @@ void write_json( network::bound_network<DesignStyle, MaxNumOutputs> const& ntk, 
   } );
   ntk.foreach_po( [&]( auto const& f, uint32_t i ) {
     std::string name = ntk.has_output_name( i ) ? ntk.get_output_name( i ) : fmt::format( "y{}", i );
+
     uint32_t idx = ntk.node_to_index( ntk.get_node( f ) );
     json bits = json::array();
     bits.push_back( idx );

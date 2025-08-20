@@ -41,8 +41,8 @@ inline void load_resynthesis_params( const std::string& json_path, Params& ps )
       ps.profiler_ps.max_num_roots = p["max_num_roots"].GetUint();
 
     // Adjust these to your real types (scalar vs vector/optional).
-    if ( p.HasMember( "input_arrivals" ) && p["input_arrivals"].IsUint() )
-      ps.profiler_ps.input_arrivals = { p["input_arrivals"].GetUint() };
+    if ( p.HasMember( "input_arrivals" ) && p["input_arrivals"].IsDouble() )
+      ps.profiler_ps.input_arrivals = { p["input_arrivals"].GetDouble() };
 
     if ( p.HasMember( "output_required" ) )
     {
@@ -51,9 +51,9 @@ inline void load_resynthesis_params( const std::string& json_path, Params& ps )
         // choose a sentinel appropriate for your type
         ps.profiler_ps.output_required = { -1 };
       }
-      else if ( p["output_required"].IsInt() )
+      else if ( p["output_required"].IsDouble() )
       {
-        ps.profiler_ps.output_required = { p["output_required"].GetInt() };
+        ps.profiler_ps.output_required = { p["output_required"].GetDouble() };
       }
     }
 

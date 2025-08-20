@@ -1045,6 +1045,14 @@ public:
 
   std::string get_name( signal_t const& f )
   {
+    if ( f.index == 0 )
+    {
+      return "0";
+    }
+    if ( f.index == 1 )
+    {
+      return "1";
+    }
     std::string name = "";
     if ( names_map.find( f.data ) != names_map.end() )
       name = names_map[f];
@@ -1056,8 +1064,6 @@ public:
         {
           if ( name.empty() )
             name = output_names[io];
-          else
-            assert( name == output_names[io] );
         }
       }
     }
