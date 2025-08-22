@@ -738,7 +738,7 @@ TEST_CASE( "Ripple carry Adder", "[json_parsing]" )
       "  input [2:0] b ;\n"
       "  output [3:0] sum ;\n"
       "  wire n8_0 , n9_1 ;\n"
-      "  fa    g0( .a (a[0]), .b (b[0]), .c (0), .C (n8_0), .S (sum[0]) );\n"
+      "  fa    g0( .a (a[0]), .b (b[0]), .c (1'b0), .C (n8_0), .S (sum[0]) );\n"
       "  fa    g1( .a (a[1]), .b (b[1]), .c (n8_0), .S (sum[1]), .C (n9_1) );\n"
       "  fa    g2( .a (a[2]), .b (b[2]), .c (n9_1), .S (sum[2]), .C (sum[3]) );\n"
       "endmodule\n";
@@ -804,13 +804,13 @@ TEST_CASE( "Ripple carry Adder with constants", "[json_parsing]" )
       "  input [2:0] b ;\n"
       "  output [7:0] sum ;\n"
       "  wire n8_0 , n9_1 ;\n"
-      "  fa    g0( .a (a[0]), .b (b[0]), .c (0), .C (n8_0), .S (sum[0]) );\n"
+      "  fa    g0( .a (a[0]), .b (b[0]), .c (1'b0), .C (n8_0), .S (sum[0]) );\n"
       "  fa    g1( .a (a[1]), .b (b[1]), .c (n8_0), .S (sum[1]), .C (n9_1) );\n"
       "  fa    g2( .a (a[2]), .b (b[2]), .c (n9_1), .S (sum[2]), .C (sum[4]) );\n"
-      "  assign sum[6] = 0 ;\n"
-      "  assign sum[5] = 0 ;\n"
-      "  assign sum[3] = 0 ;\n"
-      "  assign sum[7] = 1 ;\n"
+      "  assign sum[6] = 1'b0 ;\n"
+      "  assign sum[5] = 1'b0 ;\n"
+      "  assign sum[3] = 1'b0 ;\n"
+      "  assign sum[7] = 1'b1 ;\n"
       "endmodule\n";
 
   CHECK( out.str() == expected );
