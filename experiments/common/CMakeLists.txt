@@ -1,11 +1,17 @@
-# builds a small static lib for common experiment utilities
-add_library(rinox_exp_common STATIC
-  parser.cpp
+file(GLOB_RECURSE RINOX_COMMON_SOURCES CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
 )
+
+add_library(rinox_exp_common STATIC ${RINOX_COMMON_SOURCES})
+
 target_include_directories(rinox_exp_common PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}        # so consumers can include "parser.hpp"
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/lib/mockturtle  # <-- ensure mockturtle/ is found
 )
+
 target_link_libraries(rinox_exp_common PUBLIC
-  rinox_build_options    # provides RINOX_BENCHMARK_DIR define
-  rinox_headers          # your public headers / RapidJSON include
+  rinox_diagnostics
+  mockturtle
+  rinox_headers
+  rinox_build_options
 )

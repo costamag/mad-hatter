@@ -44,7 +44,7 @@
 #include <lorina/detail/utils.hpp>
 #include <lorina/diagnostics.hpp>
 
-#include "../utils/diagnostics.hpp"
+#include <rinox/diagnostics.hpp>
 #include "rinox/io/json/json_stream.hpp"
 
 namespace rinox
@@ -125,7 +125,7 @@ public:
     {
       if ( !parse_module( name ) )
       {
-        REPORT_DIAG( -1, diag_, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag_, lorina::diagnostic_level::fatal,
                      "failed to parse module `{}`", name.c_str() );
         return false;
       }
@@ -150,7 +150,7 @@ private:
   {
     if ( !jstream_.set_module( name ) )
     {
-      REPORT_DIAG( -1, diag_, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag_, lorina::diagnostic_level::fatal,
                    "module `{}` not found in JSON", name.c_str() );
       return false;
     }
@@ -164,7 +164,7 @@ private:
       auto rc = jstream_.get_instance( inst );
       if ( rc == rinox::io::json::instance_return_code::invalid )
       {
-        REPORT_DIAG( -1, diag_, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag_, lorina::diagnostic_level::fatal,
                      "failed to parse a new instance" );
         return false;
       }
@@ -222,7 +222,7 @@ private:
       }
       else
       {
-        REPORT_DIAG( -1, diag_, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag_, lorina::diagnostic_level::fatal,
                      "port direction `{}` not supported", p.direction.c_str() );
         return false;
       }
@@ -316,7 +316,7 @@ private:
 
     if ( !ok )
     {
-      REPORT_DIAG( -1, diag_, lorina::diagnostic_level::note,
+      rinox::diagnostics::REPORT_DIAG( diag_, lorina::diagnostic_level::note,
                    "dangling objects not parsed" );
       return false;
     }

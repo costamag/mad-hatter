@@ -1,0 +1,117 @@
+{
+  "meta":
+  {
+    "experiment": "High-effort Area optimization with ASAP7",
+    "author": "Andrea Costamagna",
+    "date": "08-21-2025",
+    "version": "0.0"
+  },
+  "context":
+  {
+    "input":
+    {
+      "extension": "aiger",
+      "benchmarks": ["iscas"],
+      "excluded": ["c7552"]
+    },
+    "output":
+    {
+      "extension": "verilog"
+    },
+    "technology":
+    {
+      "extension" : "genlib",
+      "name" : "asap7"
+    }
+  },
+  "aig-opto":
+  {
+    "balancing":
+    {
+      "algorithm" : "balance",
+      "iterations" : 2,
+      "params" :
+      {
+        "minimize_levels" : false,
+        "fast_mode" : true
+      }
+    },
+    "cut-rewriting":
+    {
+      "algorithm" : "rewrite",
+      "iterations" : 1,
+      "params" :
+      {
+        "cut_limit" : 8,
+        "minimize_truth_table" : true,
+        "preserve_depth" : false,
+        "allow_multiple_structures" : true,
+        "allow_zero_gain" : false,
+        "use_dont_cares" : false,
+        "window_size" : 8,
+        "verbose" : false
+      }
+    }
+  },
+  "tech-map":
+  {
+    "algorithm": "emap",
+    "lib-params":
+    {
+      "ignore_symmetries" : false,
+      "verbose" : true
+    },
+    "map-params":
+    {
+      "cut_limit" : 8,
+      "minimize_truth_table" : true,
+      "matching_mode": "hybrid",
+      "area_oriented_mapping" : false,
+      "map_multioutput" : true,
+      "relax_required" : 0,
+      "required_time" : 0,
+      "area_flow_rounds" : 3,
+      "ela_rounds" : 2,
+      "eswp_rounds" : 0,
+      "switching_activity_patterns" : 2048,
+      "use_match_alternatives" : true,
+      "remove_dominated_cuts" : false,
+      "remove_overlapping_multicuts" : false,
+      "verbose" : false
+    }
+  },
+  "resynthesis":
+  {
+    "algorithm": "area_resynthesize",
+    "input" : "mapped",
+    "database":
+    {
+      "todo": ["load"],
+      "type": "verilog",
+      "name": "asap7_area_4"
+    },
+    "params":
+    {
+      "profiler_ps":
+      {
+        "max_num_roots": 1000000,
+        "input_arrivals": 0,
+        "output_required": 10000000,
+        "eps": 0.001
+      },
+      "window_manager_ps":
+      {
+        "preserve_depth": false,
+        "odc_levels": 0,
+        "skip_fanout_limit_for_divisors": 200,
+        "max_num_divisors": 64
+      },
+      "try_rewire": true,
+      "try_struct": false,
+      "try_window": false,
+      "try_simula": false,
+      "dynamic_database": false,
+      "fanout_limit": 20
+    }
+  }
+}
