@@ -35,6 +35,7 @@
 #pragma once
 
 #include "evaluation/chains.hpp"
+#include <optional>
 
 namespace rinox
 {
@@ -130,6 +131,29 @@ struct is_bound_network_type<Ntk, std::enable_if_t<Ntk::is_bound_network_type, s
 
 template<class Ntk>
 inline constexpr bool is_bound_network_type_v = is_bound_network_type<Ntk>::value;
+#pragma endregion
+
+#pragma region is_optional
+template<typename T>
+struct is_optional : std::false_type {};
+
+template<typename T>
+struct is_optional<std::optional<T>> : std::true_type {};
+
+template<typename T>
+constexpr bool is_optional_v = is_optional<T>::value;
+#pragma endregion
+
+#pragma region is_container
+template<typename T, typename = void>
+struct is_container : std::false_type {};
+
+template<typename T>
+struct is_container<T, std::void_t<decltype(std::declval<T>().begin()),
+                                   decltype(std::declval<T>().end())>> : std::true_type {};
+
+template<typename T>
+constexpr bool is_container_v = is_container<T>::value;
 #pragma endregion
 
 } /* namespace traits */

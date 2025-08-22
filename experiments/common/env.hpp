@@ -27,8 +27,7 @@
   \file experiments.hpp
   \brief Framework for simple experimental evaluation
 
-  \author Alessandro Tempia Calvino
-  \author Mathias Soeken
+  \author Andrea Costamagna
 */
 
 #pragma once
@@ -36,6 +35,7 @@
 #include <array>
 #include <cstdio>
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -48,6 +48,9 @@
 #include <fmt/format.h>
 #include <mockturtle/io/write_bench.hpp>
 #include <mockturtle/io/write_verilog.hpp>
+#include <rinox/diagnostics.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
 #include <nlohmann/json.hpp>
 
 namespace rinox
@@ -55,6 +58,33 @@ namespace rinox
 
 namespace experiments
 {
+
+
+std::string get_experiments_root()
+{
+  if ( const char* env = std::getenv( "RINOX_EXPERIMENTS_DIR" ) )
+  {
+    return env;
+  }
+  return RINOX_EXPERIMENTS_DIR;
+}
+
+inline std::vector<std::string> collect_suite_files( const std::string& suite,
+                                                     const std::string& ext /* e.g. ".aig" */ )
+{
+  std::vector<std::string> out;
+  std::filesystem::path base = std::filesystem::path( RINOX_BENCHMARK_DIR ) / suite;
+  if ( !std::filesystem::exists( base ) )
+    return out;
+  for ( const auto& e : std::filesystem::directory_iterator( base ) )
+  {
+    if ( e.is_regular_file() && e.path().extension() == ext )
+    {
+      out.push_back( e.path().string() );
+    }
+  }
+  return out;
+}
 
 struct json_table
 {
@@ -367,159 +397,6 @@ private:
   nlohmann::json data_;
 };
 
-// clang-format off
-/* EPFL benchmarks */
-static constexpr uint64_t adder           = 0b0000000000000000000000000000000000000000000000000000000000000001;
-static constexpr uint64_t bar             = 0b0000000000000000000000000000000000000000000000000000000000000010;
-static constexpr uint64_t div             = 0b0000000000000000000000000000000000000000000000000000000000000100;
-static constexpr uint64_t hyp             = 0b0000000000000000000000000000000000000000000000000000000000001000;
-static constexpr uint64_t log2            = 0b0000000000000000000000000000000000000000000000000000000000010000;
-static constexpr uint64_t max             = 0b0000000000000000000000000000000000000000000000000000000000100000;
-static constexpr uint64_t multiplier      = 0b0000000000000000000000000000000000000000000000000000000001000000;
-static constexpr uint64_t sin             = 0b0000000000000000000000000000000000000000000000000000000010000000;
-static constexpr uint64_t sqrt            = 0b0000000000000000000000000000000000000000000000000000000100000000;
-static constexpr uint64_t square          = 0b0000000000000000000000000000000000000000000000000000001000000000;
-static constexpr uint64_t arbiter         = 0b0000000000000000000000000000000000000000000000000000010000000000;
-static constexpr uint64_t cavlc           = 0b0000000000000000000000000000000000000000000000000000100000000000;
-static constexpr uint64_t ctrl            = 0b0000000000000000000000000000000000000000000000000001000000000000;
-static constexpr uint64_t dec             = 0b0000000000000000000000000000000000000000000000000010000000000000;
-static constexpr uint64_t i2c             = 0b0000000000000000000000000000000000000000000000000100000000000000;
-static constexpr uint64_t int2float       = 0b0000000000000000000000000000000000000000000000001000000000000000;
-static constexpr uint64_t mem_ctrl        = 0b0000000000000000000000000000000000000000000000010000000000000000;
-static constexpr uint64_t priority        = 0b0000000000000000000000000000000000000000000000100000000000000000;
-static constexpr uint64_t router          = 0b0000000000000000000000000000000000000000000001000000000000000000;
-static constexpr uint64_t voter           = 0b0000000000000000000000000000000000000000000010000000000000000000;
-static constexpr uint64_t arithmetic      = 0b0000000000000000000000000000000000000000000000000000001111111111;
-static constexpr uint64_t random          = 0b0000000000000000000000000000000000000000000011111111110000000000;
-static constexpr uint64_t epfl            = 0b0000000000000000000000000000000000000000000011111111111111111111;
-
-/* IWLS 2005 benchmarks */
-static constexpr uint64_t ac97_ctrl       = 0b0000000000000000000000000000000000000000000100000000000000000000;
-static constexpr uint64_t aes_core        = 0b0000000000000000000000000000000000000000001000000000000000000000;
-static constexpr uint64_t des_area        = 0b0000000000000000000000000000000000000000010000000000000000000000;
-static constexpr uint64_t des_perf        = 0b0000000000000000000000000000000000000000100000000000000000000000;
-static constexpr uint64_t DMA             = 0b0000000000000000000000000000000000000001000000000000000000000000;
-static constexpr uint64_t DSP             = 0b0000000000000000000000000000000000000010000000000000000000000000;
-static constexpr uint64_t ethernet        = 0b0000000000000000000000000000000000000100000000000000000000000000;
-static constexpr uint64_t iwls05_i2c      = 0b0000000000000000000000000000000000001000000000000000000000000000;
-static constexpr uint64_t leon2           = 0b0000000000000000000000000000000000010000000000000000000000000000;
-static constexpr uint64_t leon3_opt       = 0b0000000000000000000000000000000000100000000000000000000000000000;
-static constexpr uint64_t leon3           = 0b0000000000000000000000000000000001000000000000000000000000000000;
-static constexpr uint64_t leon3mp         = 0b0000000000000000000000000000000010000000000000000000000000000000;
-static constexpr uint64_t iwls05_mem_ctrl = 0b0000000000000000000000000000000100000000000000000000000000000000;
-static constexpr uint64_t netcard         = 0b0000000000000000000000000000001000000000000000000000000000000000;
-static constexpr uint64_t pci_bridge32    = 0b0000000000000000000000000000010000000000000000000000000000000000;
-static constexpr uint64_t RISC            = 0b0000000000000000000000000000100000000000000000000000000000000000;
-static constexpr uint64_t sasc            = 0b0000000000000000000000000001000000000000000000000000000000000000;
-static constexpr uint64_t simple_spi      = 0b0000000000000000000000000010000000000000000000000000000000000000;
-static constexpr uint64_t spi             = 0b0000000000000000000000000100000000000000000000000000000000000000;
-static constexpr uint64_t ss_pcm          = 0b0000000000000000000000001000000000000000000000000000000000000000;
-static constexpr uint64_t systemcaes      = 0b0000000000000000000000010000000000000000000000000000000000000000;
-static constexpr uint64_t systemcdes      = 0b0000000000000000000000100000000000000000000000000000000000000000;
-static constexpr uint64_t tv80            = 0b0000000000000000000001000000000000000000000000000000000000000000;
-static constexpr uint64_t usb_funct       = 0b0000000000000000000010000000000000000000000000000000000000000000;
-static constexpr uint64_t usb_phy         = 0b0000000000000000000100000000000000000000000000000000000000000000;
-static constexpr uint64_t vga_lcd         = 0b0000000000000000001000000000000000000000000000000000000000000000;
-static constexpr uint64_t wb_conmax       = 0b0000000000000000010000000000000000000000000000000000000000000000;
-static constexpr uint64_t iwls            = 0b0000000000000000011111111111111111111111111100000000000000000000;
-
-/* ISCAS benchmarks */
-static constexpr uint64_t c17             = 0b0000000000000000100000000000000000000000000000000000000000000000;
-static constexpr uint64_t c432            = 0b0000000000000001000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c499            = 0b0000000000000010000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c880            = 0b0000000000000100000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c1355           = 0b0000000000001000000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c1908           = 0b0000000000010000000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c2670           = 0b0000000000100000000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c3540           = 0b0000000001000000000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c5315           = 0b0000000010000000000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c6288           = 0b0000000100000000000000000000000000000000000000000000000000000000;
-static constexpr uint64_t c7552           = 0b0000001000000000000000000000000000000000000000000000000000000000;
-static constexpr uint64_t iscas           = 0b0000001111111111100000000000000000000000000000000000000000000000;
-
-static constexpr uint64_t all             = 0b0000001111111111111111111111111111111111111111111111111111111111;
-// clang-format on
-
-static const char* benchmarks[] = {
-    "adder", "bar", "div", "hyp", "log2", "max", "multiplier", "sin", "sqrt", "square",
-    "arbiter", "cavlc", "ctrl", "dec", "i2c", "int2float", "mem_ctrl", "priority", "router", "voter",
-
-    "ac97_ctrl", "aes_core", "des_area", "des_perf", "DMA", "DSP", "ethernet", "iwls05_i2c", "leon2",
-    "leon3_opt", "leon3", "leon3mp", "iwls05_mem_ctrl", "netcard", "pci_bridge32", "RISC", "sasc",
-    "simple_spi", "spi", "ss_pcm", "systemcaes", "systemcdes", "tv80", "usb_funct", "usb_phy",
-    "vga_lcd", "wb_conmax",
-
-    "c17", "c432", "c499", "c880", "c1355", "c1908", "c2670", "c3540", "c5315", "c6288", "c7552" };
-
-std::vector<std::string> epfl_benchmarks( uint64_t selection = epfl )
-{
-  std::vector<std::string> result;
-  for ( uint32_t i = 0u; i < 20u; ++i )
-  {
-    if ( ( selection >> i ) & 1 )
-    {
-      result.push_back( benchmarks[i] );
-    }
-  }
-  return result;
-}
-
-std::vector<std::string> iwls_benchmarks( uint64_t selection = iwls )
-{
-  std::vector<std::string> result;
-  for ( uint32_t i = 20u; i < 47u; ++i )
-  {
-    if ( ( selection >> i ) & 1 )
-    {
-      result.push_back( benchmarks[i] );
-    }
-  }
-  return result;
-}
-
-std::vector<std::string> iscas_benchmarks( uint64_t selection = iscas )
-{
-  std::vector<std::string> result;
-  for ( uint32_t i = 47u; i < 58u; ++i )
-  {
-    if ( ( selection >> i ) & 1 )
-    {
-      result.push_back( benchmarks[i] );
-    }
-  }
-  return result;
-}
-
-std::vector<std::string> all_benchmarks( uint64_t selection = all )
-{
-  std::vector<std::string> result;
-  for ( uint32_t i = 0u; i < 58u; ++i )
-  {
-    if ( ( selection >> i ) & 1 )
-    {
-      result.push_back( benchmarks[i] );
-    }
-  }
-  return result;
-}
-
-std::string benchmark_path( std::string const& benchmark_name )
-{
-#ifndef EXPERIMENTS_PATH
-  return fmt::format( "{}.aig", benchmark_name );
-#else
-  return fmt::format( "{}benchmarks/{}.aig", EXPERIMENTS_PATH, benchmark_name );
-#endif
-}
-
-std::string cell_libraries_path( std::string const& cell_library_name )
-{
-#ifndef EXPERIMENTS_PATH
-  return fmt::format( "{}.genlib", cell_library_name );
-#else
-  return fmt::format( "{}cell_libraries/{}.genlib", EXPERIMENTS_PATH, cell_library_name );
-#endif
-}
 
 template<class Ntk>
 inline bool abc_cec_impl( Ntk const& ntk, std::string const& benchmark_fullpath )
@@ -560,9 +437,9 @@ inline bool abc_cec_impl( Ntk const& ntk, std::string const& benchmark_fullpath 
 }
 
 template<class Ntk>
-inline bool abc_cec( Ntk const& ntk, std::string const& benchmark )
+inline bool abc_cec( Ntk const& ntk, std::string const& path )
 {
-  return abc_cec_impl( ntk, benchmark_path( benchmark ) );
+  return abc_cec_impl( ntk, path );
 }
 
 template<class Ntk>
@@ -606,6 +483,25 @@ template<class Ntk>
 inline bool abc_cec_mapped_cell( Ntk const& ntk, std::string const& path, std::string const& library )
 {
   return abc_cec_mapped_cell_impl( ntk, path, library );
+}
+
+std::optional<rapidjson::Document> load_json_doc( std::string const& path, lorina::diagnostic_engine * diag )
+{
+  FILE* fp = std::fopen(path.c_str(), "rb");
+  if (!fp)
+    throw std::runtime_error("Cannot open config: " + path);
+
+  char buf[1 << 16];
+  rapidjson::FileReadStream is(fp, buf, sizeof(buf));
+  rapidjson::Document doc;
+  doc.ParseStream(is);
+  std::fclose(fp);
+
+  if (!doc.IsObject()) {
+    rinox::diagnostics::REPORT_DIAG(diag, lorina::diagnostic_level::fatal, "`{}` is not a valid JSON object", path.c_str());
+    return std::nullopt;
+  }
+  return doc;
 }
 
 } // namespace experiments

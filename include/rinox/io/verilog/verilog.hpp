@@ -36,7 +36,7 @@
 
 #pragma once
 
-#include "../utils/diagnostics.hpp"
+#include <rinox/diagnostics.hpp>
 #include "../utils/reader.hpp"
 #include "verilog_parser.hpp"
 #include "write_verilog.hpp"
@@ -99,7 +99,7 @@ template<typename Ntk>
   std::ifstream in( lorina::detail::word_exp_filename( filename ), std::ifstream::in );
   if ( !in.is_open() )
   {
-    REPORT_DIAG( -1, diag, lorina::diagnostic_level::fatal, "failed to open file `{}`", filename.c_str() );
+    rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal, "failed to open file `{}`", filename.c_str() );
     return lorina::return_code::parse_error;
   }
   else
@@ -107,7 +107,7 @@ template<typename Ntk>
     auto const ret = read_verilog( in, reader, diag );
     in.close();
     if ( ret != lorina::return_code::success )
-      REPORT_DIAG( -1, diag, lorina::diagnostic_level::fatal, "failed to read the verilog file `{}`", filename.c_str() );
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal, "failed to read the verilog file `{}`", filename.c_str() );
 
     return ret;
   }

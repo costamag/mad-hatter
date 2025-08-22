@@ -1,5 +1,4 @@
 #include "verilog.hpp"
-#include "../../../../include/rinox/io/utils/diagnostics.hpp"
 #include "../../../../include/rinox/io/verilog/verilog.hpp"
 #include "../../../../include/rinox/network/network.hpp"
 #include "../../context.hpp"
@@ -27,7 +26,7 @@ static void cmd_read_verilog( CLIContext& ctx, const std::vector<std::string>& a
   }
   ctx.ntk.emplace( ctx.gates );
 
-  rinox::io::text_diagnostics consumer;
+  rinox::diagnostics::text_diagnostics consumer;
   lorina::diagnostic_engine diag( &consumer );
 
   auto result_ntk = rinox::io::verilog::read_verilog(

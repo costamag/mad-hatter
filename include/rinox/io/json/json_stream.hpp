@@ -31,7 +31,7 @@
 */
 
 #pragma once
-#include "../utils/diagnostics.hpp"
+#include <rinox/diagnostics.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/stringbuffer.h>

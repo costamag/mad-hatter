@@ -44,6 +44,7 @@ endif()
 add_subdirectory(lib/mockturtle)
 add_subdirectory(lib/replxx)
 add_subdirectory(lib/cli11)
+add_subdirectory(diagnostics)
 
 # RapidJSON (header-only) — submodule at lib/rapidjson
 set(RAPIDJSON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/lib/rapidjson/include)
@@ -57,7 +58,7 @@ file(GLOB_RECURSE MAD_CLI_SOURCES CONFIGURE_DEPENDS src/cli/*.cpp)
 list(FILTER MAD_CLI_SOURCES EXCLUDE REGEX "src/cli/main.cpp$")
 add_library(rho_cli ${MAD_CLI_SOURCES})
 
-target_link_libraries(rho_cli PUBLIC mockturtle replxx CLI11::CLI11)
+target_link_libraries(rho_cli PUBLIC mockturtle replxx CLI11::CLI11 rinox_diagnostics)
 
 # Include paths
 target_include_directories(rho_cli
@@ -84,7 +85,7 @@ endif()
 
 # CLI executable
 add_executable(rinox src/cli/main.cpp)
-target_link_libraries(rinox PRIVATE rho_cli)
+target_link_libraries(rinox PRIVATE rho_cli rinox_diagnostics)
 
 # Public header-only interface library
 add_library(rinox_headers INTERFACE)
@@ -107,13 +108,13 @@ target_compile_definitions(rinox_headers INTERFACE
 # Expose to all targets that need it
 add_library(rinox_build_options INTERFACE)
 target_compile_definitions(rinox_build_options INTERFACE
-  RINOX_BENCHMARK_DIR="$<IF:$<BOOL:${RINOX_BENCHMARK_DIR}>,${RINOX_BENCHMARK_DIR},benchmarks>"
-  RINOX_EXPERIMENTS_DIR="$<IF:$<BOOL:${RINOX_EXPERIMENTS_DIR}>,${RINOX_EXPERIMENTS_DIR},experiments>"
-  RINOX_SOURCE_DIR="$<IF:$<BOOL:${RINOX_SOURCE_DIR}>,${RINOX_SOURCE_DIR},experiments>"
+  RINOX_BENCHMARK_DIR="$<IF:$<BOOL:${RINOX_BENCHMARK_DIR}>,${RINOX_BENCHMARK_DIR},${CMAKE_SOURCE_DIR}/benchmarks>"
+  RINOX_EXPERIMENTS_DIR="$<IF:$<BOOL:${RINOX_EXPERIMENTS_DIR}>,${RINOX_EXPERIMENTS_DIR},${CMAKE_SOURCE_DIR}/experiments>"
+  RINOX_SOURCE_DIR="$<IF:$<BOOL:${RINOX_SOURCE_DIR}>,${RINOX_SOURCE_DIR},${CMAKE_SOURCE_DIR}>"
 )
 
 # Make rho_cli consumers inherit headers/defines too
-target_link_libraries(rho_cli PUBLIC rinox_build_options rinox_headers)
+target_link_libraries(rho_cli PUBLIC rinox_build_options rinox_headers rinox_diagnostics )
 # Tests
 if (RINOX_ENABLE_TESTS)
   enable_testing()

@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "../utils/diagnostics.hpp"
+#include <rinox/diagnostics.hpp>
 #include "../utils/reader.hpp"
 #include <algorithm>
 #include <cctype>
@@ -380,13 +380,13 @@ public:
     {
       if ( token != "module" )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "token `{}` should be `module`", token.c_str() );
         return false;
       }
       if ( !parse_module() )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "failed to parse module" );
         return false;
       }
@@ -399,7 +399,7 @@ public:
     bool success = parse_module_header();
     if ( !success )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "failed to parse module header" );
       return false;
     }
@@ -409,7 +409,7 @@ public:
       valid = get_token( token, true );
       if ( !valid )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -418,7 +418,7 @@ public:
         success = parse_inputs();
         if ( !success )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "failed to parse input" );
           return false;
         }
@@ -428,7 +428,7 @@ public:
         success = parse_outputs();
         if ( !success )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "failed to parse output" );
           return false;
         }
@@ -438,7 +438,7 @@ public:
         success = parse_wires();
         if ( !success )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "failed to parse wire" );
           return false;
         }
@@ -448,7 +448,7 @@ public:
         success = parse_parameter();
         if ( !success )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "failed to parse parameter" );
           return false;
         }
@@ -469,7 +469,7 @@ public:
         success = parse_assign();
         if ( !success )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "failed to parse assign" );
           return false;
         }
@@ -477,7 +477,7 @@ public:
         valid = get_token( token, true );
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
@@ -488,7 +488,7 @@ public:
         success = parse_bound_gate();
         if ( !success )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "failed to parse an instance of gate `{}` ", gate_name.c_str() );
           return false;
         }
@@ -496,21 +496,21 @@ public:
         valid = get_token( token, true );
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
       }
       else
       {
-        REPORT_DIAG_RAW( tok.file_line, diag, lorina::diagnostic_level::warning,
+        rinox::diagnostics::REPORT_DIAG_RAW( diag, lorina::diagnostic_level::warning,
                          "token `{}` not recognized as a keywork or valid gate name", token.c_str() );
-        REPORT_DIAG_RAW( tok.file_line, diag, lorina::diagnostic_level::remark,
+        rinox::diagnostics::REPORT_DIAG_RAW( diag, lorina::diagnostic_level::remark,
                          "token `{}` assumed to be a new module name", token.c_str() );
         success = parse_module_instantiation();
         if ( !success )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "unsuccessful module instantiation" );
           return false;
         }
@@ -518,7 +518,7 @@ public:
         valid = get_token( token, true );
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
@@ -543,7 +543,7 @@ public:
 
     if ( !result )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::note,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::note,
                    "dangling objects not parsed" );
       return false;
     }
@@ -552,13 +552,13 @@ public:
     {
       /* callback */
       reader.on_endmodule();
-      REPORT_DIAG_RAW( tok.file_line, diag, lorina::diagnostic_level::note,
+      rinox::diagnostics::REPORT_DIAG_RAW( diag, lorina::diagnostic_level::note,
                        "successful parsing" );
       return true;
     }
     else
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "expected `endmodule`, got `{}`", token.c_str() );
       return false;
     }
@@ -568,14 +568,14 @@ public:
   {
     if ( token != "module" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `module`", token.c_str() );
       return false;
     }
     valid = get_token( token );
     if ( !valid )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -584,7 +584,7 @@ public:
     valid = get_token( token );
     if ( !valid || token != "(" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -593,7 +593,7 @@ public:
     {
       if ( !parse_signal_name() )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "failed to parse sigal name" );
         return false;
       }
@@ -602,7 +602,7 @@ public:
       valid = get_token( token ); // , or )
       if ( !valid || ( token != "," && token != ")" ) )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -623,7 +623,7 @@ public:
     std::vector<std::string> inputs;
     if ( token != "input" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `input`", token.c_str() );
       return false;
     }
@@ -635,7 +635,7 @@ public:
         valid = get_token( token );
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
@@ -646,7 +646,7 @@ public:
 
       if ( !parse_signal_name() )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "failed to parse signal name" );
         return false;
       }
@@ -659,7 +659,7 @@ public:
 
       if ( !valid || ( token != "," && token != ";" ) )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -669,7 +669,7 @@ public:
 
       if ( !parse_signal_name() )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "failed to parse signal name" );
         return false;
       }
@@ -707,7 +707,7 @@ public:
     std::vector<std::string> outputs;
     if ( token != "output" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `output`", token.c_str() );
       return false;
     }
@@ -720,7 +720,7 @@ public:
         valid = get_token( token );
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
@@ -731,7 +731,7 @@ public:
 
       if ( !parse_signal_name() )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "failed to parse signal name" );
         return false;
       }
@@ -744,7 +744,7 @@ public:
 
       if ( !valid || ( token != "," && token != ";" ) )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -754,7 +754,7 @@ public:
 
       if ( !parse_signal_name() )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "failed to parse signal name" );
         return false;
       }
@@ -774,7 +774,7 @@ public:
     std::vector<std::string> wires;
     if ( token != "wire" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be wire", token.c_str() );
       return false;
     }
@@ -787,7 +787,7 @@ public:
         valid = get_token( token );
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
@@ -798,7 +798,7 @@ public:
 
       if ( !parse_signal_name() )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "failed to parse signal name" );
         return false;
       }
@@ -811,7 +811,7 @@ public:
 
       if ( !valid || ( token != "," && token != ";" ) )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -821,7 +821,7 @@ public:
 
       if ( !parse_signal_name() )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "failed to parse signal name" );
         return false;
       }
@@ -839,7 +839,7 @@ public:
   {
     if ( token != "parameter" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `parameter`", token.c_str() );
       return false;
     }
@@ -847,7 +847,7 @@ public:
     valid = get_token( token );
     if ( !valid )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -856,7 +856,7 @@ public:
     valid = get_token( token );
     if ( !valid || ( token != "=" ) )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -864,7 +864,7 @@ public:
     valid = get_token( token );
     if ( !valid )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -873,7 +873,7 @@ public:
     valid = get_token( token );
     if ( !valid || ( token != ";" ) )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -888,7 +888,7 @@ public:
   {
     if ( token != "assign" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `assign`", token.c_str() );
       return false;
     }
@@ -896,14 +896,14 @@ public:
     auto lhs = parse_lhs_assign();
     if ( !lhs )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "failed parsing the LHS of an assignment" );
       return false;
     }
 
     if ( token != "=" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `=` in assign", token.c_str() );
       return false;
     }
@@ -912,14 +912,14 @@ public:
     bool success = parse_rhs_assign( *lhs );
     if ( !success )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "failed parsing the RHS of an assignment" );
       return false;
     }
 
     if ( token != ";" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `;`", token.c_str() );
       return false;
     }
@@ -930,7 +930,7 @@ public:
   {
     if ( reader.has_gate( token ) == false )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "the loaded library does not contain the gate `{}`", token.c_str() );
       return false;
     }
@@ -940,7 +940,7 @@ public:
     valid = get_token( token );
     if ( !valid )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -953,7 +953,7 @@ public:
     valid = get_token( token );
     if ( !valid )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -977,7 +977,7 @@ public:
         valid = get_token( token );
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
@@ -1036,7 +1036,7 @@ public:
       valid = get_token( token );
       if ( !valid )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1071,7 +1071,7 @@ public:
     valid = get_token( token );
     if ( !valid )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -1082,7 +1082,7 @@ public:
       valid = get_token( token ); // (
       if ( !valid || token != "(" )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1092,7 +1092,7 @@ public:
         valid = get_token( token ); // param
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
@@ -1101,7 +1101,7 @@ public:
         valid = get_token( token ); // ,
         if ( !valid )
         {
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "`{}` is not a valid token", token.c_str() );
           return false;
         }
@@ -1109,7 +1109,7 @@ public:
 
       if ( !valid || token != ")" )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1117,7 +1117,7 @@ public:
       valid = get_token( token );
       if ( !valid )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1128,7 +1128,7 @@ public:
     valid = get_token( token );
     if ( !valid || token != "(" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -1140,7 +1140,7 @@ public:
 
       if ( !valid )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1163,7 +1163,7 @@ public:
       valid = get_token( token );
       if ( !valid || token != "(" )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1171,7 +1171,7 @@ public:
       valid = get_token( token );
       if ( !valid )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1180,7 +1180,7 @@ public:
       valid = get_token( token );
       if ( !valid || token != ")" )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1188,7 +1188,7 @@ public:
       valid = get_token( token );
       if ( !valid )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
@@ -1198,7 +1198,7 @@ public:
 
     if ( !valid || token != ")" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -1206,7 +1206,7 @@ public:
     valid = get_token( token );
     if ( !valid || token != ";" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -1249,7 +1249,7 @@ public:
     valid = get_token( token ); // name or \name
     if ( !valid || token == "[" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return std::nullopt;
     }
@@ -1271,7 +1271,7 @@ public:
           valid = get_token( token ); // size
           if ( !valid )
           {
-            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+            rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                          "`{}` is not a valid token", token.c_str() );
             return std::nullopt;
           }
@@ -1280,7 +1280,7 @@ public:
           valid = get_token( token ); // should be "]"
           if ( !valid || token != "]" )
           {
-            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+            rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                          "`{}` is not a valid token", token.c_str() );
             return std::nullopt;
           }
@@ -1291,7 +1291,7 @@ public:
       valid = get_token( token ); // name or \name
       if ( !valid || token == "[" )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return std::nullopt;
       }
@@ -1300,7 +1300,7 @@ public:
       return lhs;
     else
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `=`", token.c_str() );
       return std::nullopt;
     }
@@ -1311,7 +1311,7 @@ public:
     valid = get_token( token );
     if ( !valid )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "`{}` is not a valid token", token.c_str() );
       return false;
     }
@@ -1339,7 +1339,7 @@ public:
           valid = get_token( token ); // size
           if ( !valid )
           {
-            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+            rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                          "`{}` is not a valid token", token.c_str() );
             return false;
           }
@@ -1348,7 +1348,7 @@ public:
           valid = get_token( token ); // should be "]"
           if ( !valid || token != "]" )
           {
-            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+            rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                          "`{}` is not a valid token", token.c_str() );
             return false;
           }
@@ -1359,14 +1359,14 @@ public:
       valid = get_token( token ); // name or \name
       if ( !valid || token == "[" )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
     }
     if ( token != ";" )
     {
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "token `{}` should be `;`", token.c_str() );
       return false;
     }
@@ -1397,7 +1397,7 @@ public:
           {
             const char* arg1 = name.c_str();
             const char* arg2 = lhs[l].c_str();
-            REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+            rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                          "failed assigning `{}` to `{}`", arg1, arg2 );
             return false;
           }
@@ -1411,7 +1411,7 @@ public:
         {
           const char* arg1 = rhs[r].c_str();
           const char* arg2 = lhs[l].c_str();
-          REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+          rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                        "failed assigning `{}` to `{}`", arg1, arg2 );
           return false;
         }
@@ -1425,7 +1425,7 @@ public:
       std::string lstr = std::to_string( l );
       const char* arg1 = lstr.c_str();
       const char* arg2 = rstr.c_str();
-      REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+      rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                    "different number of entries in LHS and RHS of assign `{}` != `{}`", arg1, arg2 );
       return false;
     }
@@ -1453,7 +1453,7 @@ public:
       valid = get_token( token );
       if ( !valid )
       {
-        REPORT_DIAG( tok.file_line, diag, lorina::diagnostic_level::fatal,
+        rinox::diagnostics::REPORT_DIAG( diag, lorina::diagnostic_level::fatal,
                      "`{}` is not a valid token", token.c_str() );
         return false;
       }
