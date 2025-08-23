@@ -33,6 +33,8 @@
 
 #include "../boolean/boolean.hpp"
 #include "../evaluation/evaluation.hpp"
+#include "../io/utils/reader.hpp"
+#include "../io/verilog/verilog.hpp"
 #include "../io/verilog/write_verilog.hpp"
 #include "../network/utils.hpp"
 #include <kitty/kitty.hpp>
@@ -169,6 +171,26 @@ public:
   {
     return lib_;
   }
+
+#pragma region loading
+
+  void load( std::istream& file )
+  {
+    /* load the database */
+    auto const& gates = lib_.get_raw_gates();
+    NtkDb ntk_ext( gates );
+    rinox::io::reader<NtkDb> read( ntk_ext );
+    auto parse_status = rinox::io::verilog::read_verilog( file, read );
+    assert( parse_status == lorina::return_code::success );
+    /* output-by-output add the entry */
+    std::vector<typename NtkDb::signal> inputs;
+    ntk_ext.foreach_pi( [&]( auto const& n ) { inputs.push_back( ntk_ext.make_signal( n ) ); } );
+    ntk_ext.foreach_po( [&]( auto const& f ) {
+      add( ntk_ext, inputs, f );
+    } );
+  }
+
+#pragma endregion
 
 #pragma region Saving
 
