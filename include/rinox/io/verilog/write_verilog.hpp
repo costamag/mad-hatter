@@ -364,7 +364,7 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
   }
   else
   {
-    signal_names[ntk.get_constant( false )] = "0";
+    signal_names[ntk.get_constant( false )] = "1'b0";
   }
 
   if ( ntk.has_binding( ntk.get_constant( true ) ) )
@@ -377,7 +377,7 @@ void write_verilog( network::bound_network<DesignStyle, MaxNumOutputs> const& nt
   }
   else
   {
-    signal_names[ntk.get_constant( true )] = "1";
+    signal_names[ntk.get_constant( true )] = "1'b1";
   }
 
   /* add wires */

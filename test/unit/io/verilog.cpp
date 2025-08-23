@@ -248,7 +248,7 @@ TEST_CASE( "Corner case 1 - assign constant", "[verilog_reader]" )
       "module top( a , y );\n"
       "  input a ;\n"
       "  output y ;\n"
-      "  buf   g0( .a (0), .O (y) );\n"
+      "  buf   g0( .a (1'b0), .O (y) );\n"
       "endmodule\n";
 
   CHECK( out.str() == expected );
@@ -452,9 +452,9 @@ endmodule
       "  input [0:1] b ;\n"
       "  output [0:7] xyz_inst.out1 ;\n"
       "  wire n6 , n7 , n8 , n9 , n10 , n11 ;\n"
-      "  inv2  g00( .a (0), .O (xyz_inst.out1[0]) );\n"
-      "  inv2  g01( .a (0), .O (xyz_inst.out1[1]) );\n"
-      "  inv2  g02( .a (0), .O (xyz_inst.out1[2]) );\n"
+      "  inv2  g00( .a (1'b0), .O (xyz_inst.out1[0]) );\n"
+      "  inv2  g01( .a (1'b0), .O (xyz_inst.out1[1]) );\n"
+      "  inv2  g02( .a (1'b0), .O (xyz_inst.out1[2]) );\n"
       "  buf   g03( .a (b[0]), .O (n11) );\n"
       "  inv2  g04( .a (n11), .O (xyz_inst.out1[3]) );\n"
       "  buf   g05( .a (a[1]), .O (n10) );\n"

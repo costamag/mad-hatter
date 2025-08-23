@@ -103,8 +103,8 @@ public:
 
     if constexpr ( mockturtle::has_set_name_v<Ntk> )
     {
-      ntk_.set_name( signals_["0"], "0" );
-      ntk_.set_name( signals_["1"], "1" );
+      ntk_.set_name( signals_["0"], "1'b0" );
+      ntk_.set_name( signals_["1"], "1'b1" );
     }
   }
 
