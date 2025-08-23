@@ -19,11 +19,11 @@ struct resynthesis_t
 };
 
 template<class Params>
-inline resynthesis_t<Params> load_resynthesis_params( rapidjson::Document const& doc, lorina::diagnostic_engine * diag )
+inline resynthesis_t<Params> load_resynthesis_params( rapidjson::Document const& doc, lorina::diagnostic_engine* diag )
 {
   resynthesis_t<Params> res;
-  Params & ps = res.ps;
-  
+  Params& ps = res.ps;
+
   if ( !doc.HasMember( "resynthesis" ) || !doc["resynthesis"].IsObject() )
     return res;
 

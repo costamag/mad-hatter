@@ -4,6 +4,7 @@
 #include "../common/env.hpp"
 #include "../common/rinox/opto/algorithms/resynthesis.hpp"
 #include <iostream>
+#include <rinox/analyzers/trackers/arrival_times_tracker.hpp>
 #include <rinox/network/converters.hpp>
 #include <rinox/opto/algorithms/resynthesize.hpp>
 #include <string>
@@ -97,11 +98,13 @@ int main()
     auto static constexpr design_t = rinox::network::design_type_t::CELL_BASED;
     static constexpr uint32_t max_num_outputs = 2u;
     using Ntk = rinox::network::bound_network<design_t, max_num_outputs>;
-    using NtkSrc = mockturtle::cell_view<mockturtle::block_network>;
-    /* Store the report */
     Ntk ntk = rinox::network::convert_mapped_to_bound( ntk_sota, *gates );
+    rinox::analyzers::trackers::arrival_times_tracker times_track( ntk );
 
-    exp( name, ntk_sota.compute_area(), ntk.area(), ntk_sota.compute_worst_delay(), 0, mockturtle::to_seconds( st_sota.time_total ), 0, false, false );
+    rinox::opto::algorithms::resynthesis_stats rst;
+    // rinox::opto::algorithms::area_resynthesize( ntk, Database& database, rsy.ps, &rst );
+    /* Store the report */
+    exp( name, ntk_sota.compute_area(), ntk.area(), ntk_sota.compute_worst_delay(), times_track.worst_delay(), mockturtle::to_seconds( st_sota.time_total ), 0, false, false );
     return true;
   } );
 

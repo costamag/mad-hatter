@@ -488,6 +488,7 @@ TEST_CASE( "Saving a mapped database", "[mapped_database]" )
       "endmodule\n";
   CHECK( out.str() == expected );
 }
+
 TEST_CASE( "Database look-up with 2-input completely specified function", "[mapped_database]" )
 {
   using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
@@ -615,4 +616,40 @@ TEST_CASE( "Database look-up with 3-input completely specified function", "[mapp
   } );
 
   CHECK( arrival.worst_delay() == 70 );
+}
+
+TEST_CASE( "Loading a mapped database", "[mapped_database]" )
+{
+  using bound_network = rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED, 2>;
+  std::vector<gate> gates;
+
+  std::istringstream in_lib( symmetric_library );
+  auto result = lorina::read_genlib( in_lib, genlib_reader( gates ) );
+  CHECK( result == lorina::return_code::success );
+
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED> lib( gates );
+  static constexpr uint32_t MaxNumVars = 4u;
+
+  std::string const stored =
+      "module top( x0 , x1 , x2 , x3 , y0 , y1 );\n"
+      "  input x0 ;\n"
+      "  input x1 ;\n"
+      "  input x2 ;\n"
+      "  input x3 ;\n"
+      "  output y0 ;\n"
+      "  output y1 ;\n"
+      "  wire n7 , n8 ;\n"
+      "  XOR2   g0( .A (x2), .B (x3), .Y (y0) );\n"
+      "  INV    g1( .A (x3), .Y (n7) );\n"
+      "  AND2   g2( .A (x2), .B (n7), .Y (n8) );\n"
+      "  MAJ3   g3( .A (x0), .B (x1), .C (n8), .Y (y1) );\n"
+      "endmodule\n";
+
+  rinox::databases::mapped_database<bound_network, 4u> db( lib );
+  std::istringstream in( stored );
+  db.load( in );
+
+  std::ostringstream out;
+  db.commit( out );
+  CHECK( out.str() == stored );
 }
