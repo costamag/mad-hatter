@@ -9,7 +9,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.000891872972715646,
+        "T(sota)": 0.0008023200207389891,
         "benchmark": "c17"
       },
       {
@@ -20,7 +20,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.022334877401590347,
+        "T(sota)": 0.017028599977493286,
         "benchmark": "c432"
       },
       {
@@ -31,7 +31,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.066131092607975,
+        "T(sota)": 0.05066501349210739,
         "benchmark": "c499"
       },
       {
@@ -42,7 +42,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.046169597655534744,
+        "T(sota)": 0.03907954692840576,
         "benchmark": "c880"
       },
       {
@@ -53,7 +53,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.06300372630357742,
+        "T(sota)": 0.046379778534173965,
         "benchmark": "c1355"
       },
       {
@@ -64,7 +64,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.04814699664711952,
+        "T(sota)": 0.059807926416397095,
         "benchmark": "c1908"
       },
       {
@@ -75,7 +75,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.10546241700649261,
+        "T(sota)": 0.1582041084766388,
         "benchmark": "c2670"
       },
       {
@@ -86,7 +86,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.16162724792957306,
+        "T(sota)": 0.19663934409618378,
         "benchmark": "c3540"
       },
       {
@@ -97,7 +97,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.17266981303691864,
+        "T(sota)": 0.24211595952510834,
         "benchmark": "c5315"
       },
       {
@@ -108,7 +108,7 @@
         "E(opto)": false,
         "E(sota)": false,
         "T(opto)": 0.0,
-        "T(sota)": 0.26149848103523254,
+        "T(sota)": 0.3035416007041931,
         "benchmark": "c6288"
       }
     ],
